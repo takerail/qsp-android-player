@@ -25,18 +25,21 @@ public class QspImageGetter implements ImageGetter {
           {
         	  source = mDirectory.concat(source);
               drawable = Drawable.createFromPath(source);
-              int nWidth = (int) ((int)drawable.getIntrinsicWidth()*0.75);
-              int nHeight = (int) ((int)drawable.getIntrinsicHeight()*0.75);
-              
-              if (nWidth>mScreenWidth)
+              if (drawable != null)
               {
-            	  float k = mScreenWidth;
-            	  k = k/nWidth;
-            	  nWidth = mScreenWidth;
-            	  nHeight = (int) ((int)nHeight*k);
+	              int nWidth = (int) ((int)drawable.getIntrinsicWidth()*0.75);
+	              int nHeight = (int) ((int)drawable.getIntrinsicHeight()*0.75);
+	              
+	              if (nWidth>mScreenWidth)
+	              {
+	            	  float k = mScreenWidth;
+	            	  k = k/nWidth;
+	            	  nWidth = mScreenWidth;
+	            	  nHeight = (int) ((int)nHeight*k);
+	              }
+	              
+	              drawable.setBounds(0, 0, nWidth, nHeight);
               }
-              
-              drawable.setBounds(0, 0, nWidth, nHeight);
           }
           return drawable;
     }

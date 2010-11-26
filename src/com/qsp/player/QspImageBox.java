@@ -29,6 +29,11 @@ public class QspImageBox extends Activity implements OnClickListener {
         Bundle b = this.getIntent().getExtras();
         String file=b.getString("imageboxFile");
         Drawable drawable = Drawable.createFromPath(file);
+        if (drawable == null)
+        {
+        	finish();
+        	return;
+        }
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         
         //assign to view
