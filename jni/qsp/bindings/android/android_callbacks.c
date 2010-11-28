@@ -291,15 +291,19 @@ int qspCallGetMSCount()
 {
 	/* Здесь получаем количество миллисекунд, прошедших с момента последнего вызова функции */
 	QSPCallState state;
-	int count;
-	if (qspCallBacks[QSP_CALL_GETMSCOUNT])
+	int count = 0;
+	qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);	
+	
+    jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
+    jmethodID mid = 
+         (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "GetMSCount", "()I");
+    if (mid != NULL)
 	{
-		qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
-		count = qspCallBacks[QSP_CALL_GETMSCOUNT]();
-		qspRestoreCallState(&state);
-		return count;
+		count = (int)(*qspCallbackEnv)->CallIntMethod(qspCallbackEnv, qspCallbackObject, mid);
 	}
-	return 0;
+	
+	qspRestoreCallState(&state);	
+	return count;
 }
 
 void qspCallCloseFile(QSP_CHAR *file)
