@@ -172,39 +172,43 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         
         if (QSPLoadGameWorldFromData(inputBuffer, size, fileName ))
         {
-        	QSPRestartGame(true);
+            //init acts callbacks
+            ListView lvAct = (ListView)findViewById(R.id.acts);
+            lvAct.setTextFilterEnabled(true);
+            lvAct.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+            lvAct.setFocusableInTouchMode(true);
+            lvAct.setFocusable(true);
+            lvAct.setItemsCanFocus(true);
+            lvAct.setOnItemClickListener(actListClickListener);
+            lvAct.setOnItemSelectedListener(actListSelectedListener);        
+
+            //init objs callbacks
+            ListView lvInv = (ListView)findViewById(R.id.inv);
+            lvInv.setTextFilterEnabled(true);
+            lvInv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+            lvInv.setFocusableInTouchMode(true);
+            lvInv.setFocusable(true);
+            lvInv.setItemsCanFocus(true);
+            lvInv.setOnItemClickListener(objListClickListener);
+            lvInv.setOnItemSelectedListener(objListSelectedListener);        
+
+            //Запускаем таймер
+            timerInterval = 500;
+            timerStartTime = System.currentTimeMillis();
+            timerHandler.removeCallbacks(timerUpdateTask);
+            timerHandler.postDelayed(timerUpdateTask, timerInterval);
+            
+            //Запускаем счетчик миллисекунд
+            gameStartTime = System.currentTimeMillis();
+
+            //Все готово, запускаем игру
+            QSPRestartGame(true);
         }
         else
         {
         	String s = "Not able to parse file: "+Integer.toString(QSPGetLastErrorData());
         	tv.setText(s);
         }
-    
-        //init acts callbacks
-        ListView lvAct = (ListView)findViewById(R.id.acts);
-        lvAct.setTextFilterEnabled(true);
-        lvAct.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        lvAct.setFocusableInTouchMode(true);
-        lvAct.setFocusable(true);
-        lvAct.setItemsCanFocus(true);
-        lvAct.setOnItemClickListener(actListClickListener);
-        lvAct.setOnItemSelectedListener(actListSelectedListener);        
-
-        //init objs callbacks
-        ListView lvInv = (ListView)findViewById(R.id.inv);
-        lvInv.setTextFilterEnabled(true);
-        lvInv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        lvInv.setFocusableInTouchMode(true);
-        lvInv.setFocusable(true);
-        lvInv.setItemsCanFocus(true);
-        lvInv.setOnItemClickListener(objListClickListener);
-        lvInv.setOnItemSelectedListener(objListSelectedListener);        
-
-        //Запускаем таймер
-        timerInterval = 500;
-        timerStartTime = System.currentTimeMillis();
-        timerHandler.removeCallbacks(timerUpdateTask);
-        timerHandler.postDelayed(timerUpdateTask, timerInterval);
     }
     
     
@@ -410,6 +414,11 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     	//!!! STUB
     	return "stub";
     }
+    
+    private int GetMSCount()
+    {
+    	return (int) (System.currentTimeMillis() - gameStartTime);
+    }
     //******************************************************************************
     //******************************************************************************
     //****** \ QSP  LIBRARY  REQUIRED  CALLBACKS / *********************************
@@ -497,6 +506,7 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     Vector<MusicContent>	mediaPlayersList;
     Handler					timerHandler;
 	long					timerStartTime;
+	long					gameStartTime;
 	int						timerInterval;
 
     
