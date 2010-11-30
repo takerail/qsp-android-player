@@ -48,6 +48,11 @@ import java.util.Vector;
 
 public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
 
+	public QspPlayerStart() {
+		gameIsRunning = false;
+		qspInited = false;
+	}
+	
 
 	/** Called when the activity is first created. */
     @Override
@@ -101,6 +106,40 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         timerHandler = new Handler();
     }
     
+    @Override
+    public void onPause() {
+    	super.onPause();
+    	
+    	//Очищаем ВСЕ на выходе
+    	if (qspInited)
+    	{
+    		if (gameIsRunning)
+    		{
+                //останавливаем таймер
+                timerHandler.removeCallbacks(timerUpdateTask);
+
+                //останавливаем музыку
+                CloseFile(null);
+                
+                //отключаем колбэки действий
+                ListView lvAct = (ListView)findViewById(R.id.acts);
+                lvAct.setOnItemClickListener(null);
+                lvAct.setOnItemSelectedListener(null);        
+
+                //отключаем колбэки инвентаря
+                ListView lvInv = (ListView)findViewById(R.id.inv);
+                lvInv.setOnItemClickListener(null);
+                lvInv.setOnItemSelectedListener(null);
+                
+                gameIsRunning = false;
+    		}
+    		//Очищаем библиотеку
+    		QSPDeInit();
+    		curGameDir = "";
+    		qspInited = false;
+    	}
+    }
+    
     private Runnable timerUpdateTask = new Runnable() {
     	   public void run() {
     		   QSPExecCounter(true);
@@ -134,6 +173,7 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     private void runGame(String fileName)
     {
         QSPInit();
+        qspInited = true;
         //String fileName = item. "/mnt/sdcard/The Punisher.gam";
         //String fileName = qspGames.get(which).getPath();
         File tqsp = new File (fileName); 
@@ -203,6 +243,8 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
 
             //Все готово, запускаем игру
             QSPRestartGame(true);
+            
+            gameIsRunning = true;
         }
         else
         {
@@ -514,6 +556,8 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
 	long					timerStartTime;
 	long					gameStartTime;
 	int						timerInterval;
+	boolean					gameIsRunning;
+	boolean					qspInited;
 
     
     QspLinkMovementMethod 	qspLinkMovementMethod; 

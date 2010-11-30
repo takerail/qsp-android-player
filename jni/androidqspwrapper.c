@@ -10,14 +10,16 @@ JNIEnv* qspCallbackEnv;
 void Java_com_qsp_player_QspPlayerStart_QSPInit(JNIEnv * env, jobject this)
 {
 	//__android_log_print(ANDROID_LOG_DEBUG, DEBUG_TAG, "NDK:LC: [%s]", szLogThis);
-	QSPInit();
 	qspCallbackObject = this;
 	qspCallbackEnv = env;
+	QSPInit();
 }
 
 void Java_com_qsp_player_QspPlayerStart_QSPDeInit(JNIEnv * env, jobject this)
 {
 	QSPDeInit();
+	qspCallbackObject = NULL;
+	qspCallbackEnv = NULL;
 }
 
 jboolean Java_com_qsp_player_QspPlayerStart_QSPIsInCallBack(JNIEnv * env, jobject this)
