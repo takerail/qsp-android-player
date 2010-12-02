@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -101,6 +100,9 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         
         //Создаем список для звуков и музыки
         mediaPlayersList = new Vector<MusicContent>();
+        
+        //Создаем список для всплывающего меню
+        menuList = new Vector<MenuItem>();
         
         //Создаем объект для таймера
         timerHandler = new Handler();
@@ -467,6 +469,26 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     {
     	return (int) (System.currentTimeMillis() - gameStartTime);
     }
+    
+    private void AddMenuItem(String name, String imgPath)
+    {
+    	//!!! STUB
+    	MenuItem item = new MenuItem();
+    	item.imgPath = imgPath;
+    	item.name = name;
+    	menuList.add(item);
+    }
+    
+    private void ShowMenu()
+    {
+    	//!!! STUB
+    	
+    }
+    
+    private void DeleteMenu()
+    {
+    	menuList.clear();
+    }
     //******************************************************************************
     //******************************************************************************
     //****** \ QSP  LIBRARY  REQUIRED  CALLBACKS / *********************************
@@ -558,7 +580,8 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
 	int						timerInterval;
 	boolean					gameIsRunning;
 	boolean					qspInited;
-
+	Vector<MenuItem>		menuList;
+	
     
     QspLinkMovementMethod 	qspLinkMovementMethod; 
     
@@ -606,8 +629,9 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     public native boolean 	QSPSaveGame(String fileName, boolean isRefresh);
     public native Object 	QSPSaveGameAsString(boolean isRefresh);//!!!STUB
     public native boolean 	QSPOpenSavedGame(String fileName, boolean isRefresh);
-    public native Object 	QSPOpenSavedGameFromString(String str, boolean isRefresh);//!!!STUB
+    public native Object 	QSPOpenSavedGameFromData(String str, boolean isRefresh);//!!!STUB
     public native boolean 	QSPRestartGame(boolean isRefresh);
+    public native void		QSPSelectMenuItem(int index); 
     //public native void QSPSetCallBack(int type, QSP_CALLBACK func) 
 
     static {
