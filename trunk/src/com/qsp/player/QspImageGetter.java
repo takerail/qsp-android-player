@@ -2,7 +2,6 @@ package com.qsp.player;
 
 import android.graphics.drawable.Drawable;
 import android.text.Html.ImageGetter;
-import android.view.Display;
 
 public class QspImageGetter implements ImageGetter {
 	private String mDirectory;

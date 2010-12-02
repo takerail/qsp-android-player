@@ -107,12 +107,27 @@ void qspCallAddMenuItem(QSP_CHAR *name, QSP_CHAR *imgPath)
 {
 	/* Здесь добавляем пункт меню */
 	QSPCallState state;
-	if (qspCallBacks[QSP_CALL_ADDMENUITEM])
-	{
-		qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
-		qspCallBacks[QSP_CALL_ADDMENUITEM](name, imgPath);
-		qspRestoreCallState(&state);
-	}
+	qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
+		
+	char * sz = qspW2C(name);
+	jstring menuItemName = (*qspCallbackEnv)->NewStringUTF(qspCallbackEnv, sz);
+	if (sz!=NULL)
+		free(sz);
+		
+	sz = qspW2C(imgPath);
+	jstring menuItemImg = (*qspCallbackEnv)->NewStringUTF(qspCallbackEnv, sz);
+	if (sz!=NULL)
+		free(sz);
+
+	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
+	jmethodID mid = 
+		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "AddMenuItem", "(Ljava/lang/String;Ljava/lang/String;)V");
+	if (mid == NULL)
+		return; /* method not found */
+
+	(*qspCallbackEnv)->CallVoidMethod(qspCallbackEnv, qspCallbackObject, mid, menuItemName, menuItemImg);
+	
+	qspRestoreCallState(&state);
 }
 
 void qspCallSystem(QSP_CHAR *cmd)
@@ -180,12 +195,20 @@ void qspCallShowMenu()
 {
 	/* Здесь показываем меню */
 	QSPCallState state;
-	if (qspCallBacks[QSP_CALL_SHOWMENU])
-	{
-		qspSaveCallState(&state, QSP_FALSE, QSP_TRUE);
-		qspCallBacks[QSP_CALL_SHOWMENU]();
-		qspRestoreCallState(&state);
-	}
+
+	qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
+	
+	
+    jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
+    jmethodID mid = 
+         (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "ShowMenu", "()V");
+    if (mid == NULL)
+        return; /* method not found */
+
+    (*qspCallbackEnv)->CallVoidMethod(qspCallbackEnv, qspCallbackObject, mid);
+	
+	
+	qspRestoreCallState(&state);
 }
 
 void qspCallShowPicture(QSP_CHAR *file)
@@ -332,12 +355,20 @@ void qspCallDeleteMenu()
 {
 	/* Здесь удаляем текущее меню */
 	QSPCallState state;
-	if (qspCallBacks[QSP_CALL_DELETEMENU])
-	{
-		qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
-		qspCallBacks[QSP_CALL_DELETEMENU]();
-		qspRestoreCallState(&state);
-	}
+
+	qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
+	
+	
+    jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
+    jmethodID mid = 
+         (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "DeleteMenu", "()V");
+    if (mid == NULL)
+        return; /* method not found */
+
+    (*qspCallbackEnv)->CallVoidMethod(qspCallbackEnv, qspCallbackObject, mid);
+	
+	
+	qspRestoreCallState(&state);
 }
 
 QSP_CHAR *qspCallInputBox(QSP_CHAR *text)

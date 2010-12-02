@@ -15,8 +15,6 @@ package com.qsp.player;
  * limitations under the License.
  */
 
-import android.content.Intent;
-import android.net.Uri;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.text.*;
@@ -87,8 +85,6 @@ extends ScrollingMovementMethod
     }
 
     private boolean action(int what, TextView widget, Spannable buffer) {
-        boolean handled = false;
-
         Layout layout = widget.getLayout();
 
         int padding = widget.getTotalPaddingTop() +
