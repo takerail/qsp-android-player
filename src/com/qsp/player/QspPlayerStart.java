@@ -70,30 +70,6 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
                 .setIndicator("Доп. Описание")
                 .setContent(R.id.vars_desc));
         
-        //Ищем все файлы .qsp и .gam в корне флэшки
-        File sdcardRoot = new File ("/mnt/sdcard/");
-        File[] sdcardFiles = sdcardRoot.listFiles();
-        qspGames = new ArrayList<File>();
-        for (File currentFile : sdcardFiles)
-        {
-        	if (currentFile.getName().endsWith(".qsp") || currentFile.getName().endsWith(".gam"))
-        		qspGames.add(currentFile);
-        }
-        
-        int total = qspGames.size();
-        final CharSequence[] items = new String[total];
-        for (int i=0; i<total; i++)
-        {
-        	items[i] = qspGames.get(i).getName();
-        }
-        
-        //Показываем диалог выбора файла
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Выберите файл с игрой");
-        builder.setItems(items, browseFileClick);
-        AlertDialog alert = builder.create();
-        alert.show();
-        
         //Создаем объект для обработки ссылок
         qspLinkMovementMethod = QspLinkMovementMethod.getQspInstance();
         qspLinkMovementMethod.setCatcher(this);
@@ -106,6 +82,9 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         
         //Создаем объект для таймера
         timerHandler = new Handler();
+        
+        //Выбираем игру
+        BrowseGame(GetDefaultPath(), true);
     }
     
     @Override
@@ -154,7 +133,23 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
 		@Override
 		public void onClick(DialogInterface dialog, int which) 
 		{
-			runGame(qspGames.get(which).getPath());
+			boolean canGoUp = backPath.compareTo("") != 0;
+			int shift = 0;
+			if (canGoUp)
+				shift = 1;
+			if (which == 0 && canGoUp)
+			{
+				dialog.dismiss();
+				BrowseGame(backPath, false);
+			}
+			else
+			{
+				File f = qspGames.get(which - shift);
+				if (f.isDirectory())
+					BrowseGame(f.getPath(), false);
+				else
+					runGame(f.getPath());
+			}
 		}    	
     };
     
@@ -253,6 +248,82 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         	String s = "Not able to parse file: "+Integer.toString(QSPGetLastErrorData());
         	tv.setText(s);
         }
+    }
+    
+    private void BrowseGame(String startpath, boolean start)
+    {
+    	if (startpath == null)
+    		return;
+    	
+    	//Устанавливаем путь "выше"    	
+    	if (!start)
+    		if (startRootPath.compareTo(startpath) == 0)
+    			start = true;
+    	if (!start)
+    	{
+    		int slash = startpath.lastIndexOf(File.separator, startpath.length() - 2);
+    		if (slash >= 0)
+    			backPath = startpath.substring(0, slash + 1);
+    		else
+    			start = true;
+    	}
+    	if (start)
+    	{
+    		startRootPath = startpath;
+    		backPath = "";
+    	}
+    	
+        //Ищем все файлы .qsp и .gam в корне флэшки
+        File sdcardRoot = new File (startpath);
+        File[] sdcardFiles = sdcardRoot.listFiles();        
+        qspGames = new ArrayList<File>();
+        //Сначала добавляем все папки
+        for (File currentFile : sdcardFiles)
+        {
+        	if (currentFile.isDirectory() && !currentFile.isHidden() && !currentFile.getName().startsWith("."))
+        		qspGames.add(currentFile);
+        }
+        //Потом добавляем все QSP-игры
+        for (File currentFile : sdcardFiles)
+        {
+        	if (!currentFile.isHidden() && (currentFile.getName().endsWith(".qsp") || currentFile.getName().endsWith(".gam")))
+        		qspGames.add(currentFile);
+        }
+        
+        //Если мы не на самом верхнем уровне, то добавляем ссылку 
+        int shift = 0;
+        if (!start)
+        	shift = 1;
+        int total = qspGames.size() + shift;
+        final CharSequence[] items = new String[total];
+        if (!start)
+            items[0] = "[..]";
+        for (int i=shift; i<total; i++)
+        {
+        	File f = qspGames.get(i - shift);
+        	String displayName = f.getName();
+        	if (f.isDirectory())
+        		displayName = "["+ displayName + "]";
+        	items[i] = displayName;
+        }
+        
+        //Показываем диалог выбора файла
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Выберите файл с игрой");
+        builder.setItems(items, browseFileClick);
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+    
+    private String GetDefaultPath()
+    {
+    	//Возвращаем путь к папке с играми.
+    	String flashCard = "/mnt/sdcard/";    	
+    	String tryFull = flashCard + "/qsp/games/";
+    	File f = new File(tryFull);
+    	if (f.exists())
+    		return tryFull;    	
+    	return flashCard;
     }
     
     
@@ -572,6 +643,8 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     static QspImageGetter imgGetter = new QspImageGetter();
     
     ArrayList<File> 		qspGames;
+    String					startRootPath;
+    String					backPath;
     String 					curGameDir;
     Vector<MusicContent>	mediaPlayersList;
     Handler					timerHandler;
