@@ -11,8 +11,20 @@ public final class R {
     public static final class attr {
     }
     public static final class drawable {
-        public static final int icon=0x7f020000;
-        public static final int translucent_background=0x7f020001;
+        public static final int ic_tab_inv=0x7f020000;
+        public static final int ic_tab_inv_selected=0x7f020001;
+        public static final int ic_tab_inv_unselected=0x7f020002;
+        public static final int ic_tab_main=0x7f020003;
+        public static final int ic_tab_main_selected=0x7f020004;
+        public static final int ic_tab_main_unselected=0x7f020005;
+        public static final int ic_tab_upd=0x7f020006;
+        public static final int ic_tab_upd_selected=0x7f020007;
+        public static final int ic_tab_upd_unselected=0x7f020008;
+        public static final int ic_tab_vars=0x7f020009;
+        public static final int ic_tab_vars_selected=0x7f02000a;
+        public static final int ic_tab_vars_unselected=0x7f02000b;
+        public static final int icon=0x7f02000c;
+        public static final int translucent_background=0x7f02000d;
     }
     public static final class id {
         public static final int acts=0x7f060003;

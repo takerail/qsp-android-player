@@ -4,18 +4,21 @@ import android.app.AlertDialog;
 import android.app.TabActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TextView;
@@ -47,6 +50,9 @@ import java.util.Vector;
 
 public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
 
+	private Resources res;
+	private TabHost tabHost;
+	
 	public QspPlayerStart() {
 		gameIsRunning = false;
 		qspInited = false;
@@ -58,17 +64,20 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        TabHost tabHost = getTabHost();
+        res = getResources();
+        tabHost = getTabHost();
         LayoutInflater.from(getApplicationContext()).inflate(R.layout.main, tabHost.getTabContentView(), true);
         tabHost.addTab(tabHost.newTabSpec("main")
-                .setIndicator("Описание")
+                .setIndicator("Описание", res.getDrawable(R.drawable.ic_tab_main))
                 .setContent(R.id.main_tab));
         tabHost.addTab(tabHost.newTabSpec("inv")
-                .setIndicator("Инвентарь")
+                .setIndicator("Инвентарь", res.getDrawable(R.drawable.ic_tab_inv))
                 .setContent(R.id.inv));
         tabHost.addTab(tabHost.newTabSpec("vars_desc")
-                .setIndicator("Доп. Описание")
+                .setIndicator("Доп. Описание", res.getDrawable(R.drawable.ic_tab_vars))
                 .setContent(R.id.vars_desc));
+        
+        tabHost.setOnTabChangedListener(tabChangeListener);
         
         //Создаем объект для обработки ссылок
         qspLinkMovementMethod = QspLinkMovementMethod.getQspInstance();
@@ -385,6 +394,9 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         //инвентарь
     	if (QSPIsObjectsChanged())
     	{
+    		if(tabHost.getCurrentTab()!=1){
+    			tabIconChange(1, R.drawable.ic_tab_upd);
+    		}
     		//Toast.makeText(this, "инвентарь", Toast.LENGTH_SHORT).show();
 	        ListView lvInv = (ListView)findViewById(R.id.inv);
 	        int nObjsCount = QSPGetObjectsCount();
@@ -413,6 +425,9 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         //доп. описание
     	if (QSPIsVarsDescChanged())
     	{
+    		if(tabHost.getCurrentTab()!=2){
+    			tabIconChange(2, R.drawable.ic_tab_upd);
+    		}
     		//Toast.makeText(this, "доп. описание", Toast.LENGTH_SHORT).show();
 			TextView tvVarsDesc = (TextView) findViewById(R.id.vars_desc);
 			String txtVarsDesc = QSPGetVarsDesc();
@@ -544,10 +559,10 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     private void AddMenuItem(String name, String imgPath)
     {
     	//!!! STUB
-    	MenuItem item = new MenuItem();
-    	item.imgPath = imgPath;
-    	item.name = name;
-    	menuList.add(item);
+//    	MenuItem item = new MenuItem();
+//    	item..imgPath = imgPath;
+//    	item.name = name;
+//    	menuList.add(item);
     }
     
     private void ShowMenu()
@@ -587,8 +602,26 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
 	    	}
     	}
     }
+ 
+    private void tabIconChange(int id, int icon) {
+			ImageView iv = (ImageView)tabHost.getTabWidget().getChildTabViewAt(id).findViewById(android.R.id.icon);
+			iv.setImageDrawable(res.getDrawable(icon));				    	
+    }
     
-    //Callback for click on selected act
+    //Callback for tab changed 
+    private TabHost.OnTabChangeListener tabChangeListener = new TabHost.OnTabChangeListener() {
+		
+		@Override
+		public void onTabChanged(String tabId) {
+			if(tabHost.getCurrentTab()==1){
+	   			tabIconChange(1, R.drawable.ic_tab_inv);				
+			}else if(tabHost.getCurrentTab()==2){
+	   			tabIconChange(2, R.drawable.ic_tab_vars);				
+			}
+		}
+	};
+
+	//Callback for click on selected act
     private OnItemClickListener actListClickListener = new OnItemClickListener() 
     {
     	@Override
