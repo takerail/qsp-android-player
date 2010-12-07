@@ -466,6 +466,12 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     	//Если проигрывается, ничего не делаем.
     	if (IsPlayingFile(file))
     		return;
+
+	//Проверяем, существует ли файл.
+	//Если нет, ничего не делаем.
+	File mediaFile = new File(curGameDir, file);
+        if (!mediaFile.exists())
+        	return;
     	
     	MediaPlayer mediaPlayer = new MediaPlayer();
 	    try {
