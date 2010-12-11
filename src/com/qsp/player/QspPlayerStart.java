@@ -545,8 +545,8 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     	
     	//Проверяем, существует ли файл.
     	//Если нет - выходим
-    	File mediaFile = new File(curGameDir, file);
-        if (!mediaFile.exists())
+    	File gfxFile = new File(prefix.concat(file));
+        if (!gfxFile.exists())
         	return;
 
         Intent imageboxIntent = new Intent();
