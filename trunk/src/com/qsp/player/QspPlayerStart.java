@@ -55,6 +55,7 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
 	public QspPlayerStart() {
 		gameIsRunning = false;
 		qspInited = false;
+		waitForImageBox = false;
 	}
 	
 
@@ -95,12 +96,20 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         BrowseGame(GetDefaultPath(), true);
     }
     
+    @Override 
+    public void onResume()
+    {
+    	super.onResume();
+    	
+    	waitForImageBox = false;
+    }
+    
     @Override
     public void onPause() {
     	super.onPause();
     	
     	//Очищаем ВСЕ на выходе
-    	if (qspInited)
+    	if (!waitForImageBox && qspInited)
     	{
     		if (gameIsRunning)
     		{
@@ -549,6 +558,8 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         if (!gfxFile.exists())
         	return;
 
+        waitForImageBox = true;
+        
         Intent imageboxIntent = new Intent();
     	imageboxIntent.setClassName("com.qsp.player", "com.qsp.player.QspImageBox");
     	Bundle b = new Bundle();
@@ -698,6 +709,7 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
 	int						timerInterval;
 	boolean					gameIsRunning;
 	boolean					qspInited;
+	boolean					waitForImageBox;
 	Vector<QspMenuItem>		menuList;
 	
     
