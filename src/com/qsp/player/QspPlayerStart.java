@@ -11,7 +11,6 @@ import android.os.Handler;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -87,7 +86,7 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         mediaPlayersList = new Vector<MusicContent>();
         
         //Создаем список для всплывающего меню
-        menuList = new Vector<MenuItem>();
+        menuList = new Vector<QspMenuItem>();
         
         //Создаем объект для таймера
         timerHandler = new Handler();
@@ -467,9 +466,9 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     	if (IsPlayingFile(file))
     		return;
 
-	//Проверяем, существует ли файл.
-	//Если нет, ничего не делаем.
-	File mediaFile = new File(curGameDir, file);
+		//Проверяем, существует ли файл.
+		//Если нет, ничего не делаем.
+		File mediaFile = new File(curGameDir, file);
         if (!mediaFile.exists())
         	return;
     	
@@ -543,7 +542,14 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     	String prefix = "";
     	if (curGameDir != null)
     		prefix = curGameDir;
-    	Intent imageboxIntent = new Intent();
+    	
+    	//Проверяем, существует ли файл.
+    	//Если нет - выходим
+    	File mediaFile = new File(curGameDir, file);
+        if (!mediaFile.exists())
+        	return;
+
+        Intent imageboxIntent = new Intent();
     	imageboxIntent.setClassName("com.qsp.player", "com.qsp.player.QspImageBox");
     	Bundle b = new Bundle();
     	b.putString("imageboxFile", prefix.concat(file));
@@ -565,10 +571,10 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     private void AddMenuItem(String name, String imgPath)
     {
     	//!!! STUB
-//    	MenuItem item = new MenuItem();
-//    	item..imgPath = imgPath;
-//    	item.name = name;
-//    	menuList.add(item);
+    	QspMenuItem item = new QspMenuItem();
+    	item.imgPath = imgPath;
+    	item.name = name;
+    	menuList.add(item);
     }
     
     private void ShowMenu()
@@ -692,7 +698,7 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
 	int						timerInterval;
 	boolean					gameIsRunning;
 	boolean					qspInited;
-	Vector<MenuItem>		menuList;
+	Vector<QspMenuItem>		menuList;
 	
     
     QspLinkMovementMethod 	qspLinkMovementMethod; 
