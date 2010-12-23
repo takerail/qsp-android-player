@@ -196,7 +196,7 @@ void qspCallShowMenu()
 	/* Здесь показываем меню */
 	QSPCallState state;
 
-	qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
+	qspSaveCallState(&state, QSP_FALSE, QSP_TRUE);
 	
 	
     jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
