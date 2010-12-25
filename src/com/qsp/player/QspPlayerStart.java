@@ -1,27 +1,31 @@
 package com.qsp.player;
 
+import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.TabActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.gesture.Gesture;
+import android.gesture.GestureOverlayView;
+import android.gesture.GestureStroke;
+import android.gesture.GestureOverlayView.OnGesturePerformedListener;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
-import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
 import android.view.View.OnClickListener;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.TabHost;
 import android.widget.TextView;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -47,10 +51,36 @@ import java.util.Vector;
 };
 */
 
-public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
+public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGesturePerformedListener{
 
-	private Resources res;
-	private TabHost tabHost;
+    public static final int SWIPE_MIN = 120;
+    public static final int WIN_INV = 0;
+    public static final int WIN_MAIN = 1;
+    public static final int WIN_EXT = 2;
+	Resources res;
+	boolean invUnread, varUnread;
+	int currentWin;
+	
+	public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
+		if(gesture.getLength()>SWIPE_MIN) {
+			ArrayList<GestureStroke> strokes = gesture.getStrokes();
+			float[] points = strokes.get(0).points; 
+//			Toast.makeText(this, "Получен жест! ", Toast.LENGTH_SHORT).show();
+			if(points[0]<points[points.length-1]){
+                //swipe left
+            	if(currentWin>0)
+            		currentWin--;
+            	else
+            		currentWin = 2;
+			}else{
+            	if(currentWin<2) 
+            		currentWin++;
+            	else
+            		currentWin = 0;
+			}
+			setCurrentWin(currentWin); 				
+		}
+	}	
 	
 	public QspPlayerStart() {
 		gameIsRunning = false;
@@ -63,21 +93,17 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        //будем использовать свой вид заголовка
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        setContentView(R.layout.main);
         res = getResources();
-        tabHost = getTabHost();
-        LayoutInflater.from(getApplicationContext()).inflate(R.layout.main, tabHost.getTabContentView(), true);
-        tabHost.addTab(tabHost.newTabSpec("main")
-                .setIndicator("Описание", res.getDrawable(R.drawable.ic_tab_main))
-                .setContent(R.id.main_tab));
-        tabHost.addTab(tabHost.newTabSpec("inv")
-                .setIndicator("Инвентарь", res.getDrawable(R.drawable.ic_tab_inv))
-                .setContent(R.id.inv));
-        tabHost.addTab(tabHost.newTabSpec("vars_desc")
-                .setIndicator("Доп. Описание", res.getDrawable(R.drawable.ic_tab_vars))
-                .setContent(R.id.vars_desc));
         
-        tabHost.setOnTabChangedListener(tabChangeListener);
+        //подключаем жесты
+        GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
+        gestures.addOnGesturePerformedListener(this);
+        
+   		//текущий вид - основное описание
+    	setCurrentWin(currentWin=WIN_MAIN);
         
         //Создаем объект для обработки ссылок
         qspLinkMovementMethod = QspLinkMovementMethod.getQspInstance();
@@ -135,6 +161,65 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     		QSPDeInit();
     		curGameDir = "";
     		qspInited = false;
+    	}
+    }
+ 
+    private void setTitle(String second) {
+   		TextView winTitle = (TextView) findViewById(R.id.title_text);
+   		winTitle.setText(second);
+		updateTitle();
+    }	
+    
+    private void updateTitle() {
+		ImageButton image = (ImageButton) findViewById(R.id.title_button_1);
+    	if(invUnread){
+    		Animation update = AnimationUtils.loadAnimation(this, R.anim.update);
+    		image.startAnimation(update);
+    	}else
+    		image.clearAnimation();
+		image = (ImageButton) findViewById(R.id.title_button_2);
+    	if(varUnread){
+    		Animation update = AnimationUtils.loadAnimation(this, R.anim.update);
+    		image.startAnimation(update);
+    	}else
+    		image.clearAnimation();
+    }	
+    
+    //обработчик "Home" в заголовке
+    public void onHomeClick(View v) {
+    	setCurrentWin(WIN_MAIN);
+    }
+    
+    public void onInvClick(View v) {
+    	setCurrentWin(WIN_INV);
+    }
+    
+    public void onExtClick(View v) {
+    	setCurrentWin(WIN_EXT);
+    }
+    
+    private void setCurrentWin(int win) {
+    	switch(win){
+    	case WIN_INV: 
+       		findViewById(R.id.inv).setVisibility(View.VISIBLE);
+       		findViewById(R.id.main_tab).setVisibility(View.GONE);
+       		findViewById(R.id.vars_desc).setVisibility(View.GONE);
+       		invUnread = false;
+       		setTitle("Инвентарь");
+       		break;
+    	case WIN_MAIN: 
+       		findViewById(R.id.inv).setVisibility(View.GONE);
+       		findViewById(R.id.main_tab).setVisibility(View.VISIBLE);
+       		findViewById(R.id.vars_desc).setVisibility(View.GONE);
+       		setTitle("Описание");
+       		break;
+    	case WIN_EXT: 
+       		findViewById(R.id.inv).setVisibility(View.GONE);
+       		findViewById(R.id.main_tab).setVisibility(View.GONE);
+       		findViewById(R.id.vars_desc).setVisibility(View.VISIBLE);
+       		varUnread = false;
+       		setTitle("Доп. описание");
+       		break;
     	}
     }
     
@@ -402,8 +487,9 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         //инвентарь
     	if (QSPIsObjectsChanged())
     	{
-    		if(tabHost.getCurrentTab()!=1){
-    			tabIconChange(1, R.drawable.ic_tab_upd);
+    		if(currentWin!=WIN_INV){
+    			invUnread = true;
+    			updateTitle();
     		}
     		//Toast.makeText(this, "инвентарь", Toast.LENGTH_SHORT).show();
 	        ListView lvInv = (ListView)findViewById(R.id.inv);
@@ -433,8 +519,9 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
         //доп. описание
     	if (QSPIsVarsDescChanged())
     	{
-    		if(tabHost.getCurrentTab()!=2){
-    			tabIconChange(2, R.drawable.ic_tab_upd);
+    		if(currentWin!=WIN_EXT) {
+    			varUnread = true;
+    			updateTitle();
     		}
     		//Toast.makeText(this, "доп. описание", Toast.LENGTH_SHORT).show();
 			TextView tvVarsDesc = (TextView) findViewById(R.id.vars_desc);
@@ -626,24 +713,6 @@ public class QspPlayerStart extends TabActivity implements UrlClickCatcher{
     	}
     }
  
-    private void tabIconChange(int id, int icon) {
-			ImageView iv = (ImageView)tabHost.getTabWidget().getChildTabViewAt(id).findViewById(android.R.id.icon);
-			iv.setImageDrawable(res.getDrawable(icon));				    	
-    }
-    
-    //Callback for tab changed 
-    private TabHost.OnTabChangeListener tabChangeListener = new TabHost.OnTabChangeListener() {
-		
-		@Override
-		public void onTabChanged(String tabId) {
-			if(tabHost.getCurrentTab()==1){
-	   			tabIconChange(1, R.drawable.ic_tab_inv);				
-			}else if(tabHost.getCurrentTab()==2){
-	   			tabIconChange(2, R.drawable.ic_tab_vars);				
-			}
-		}
-	};
-
 	//Callback for click on selected act
     private OnItemClickListener actListClickListener = new OnItemClickListener() 
     {
