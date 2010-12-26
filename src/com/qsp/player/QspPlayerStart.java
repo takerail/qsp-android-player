@@ -2,6 +2,7 @@ package com.qsp.player;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -12,8 +13,11 @@ import android.gesture.GestureOverlayView.OnGesturePerformedListener;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.View.OnClickListener;
@@ -23,15 +27,19 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Vector;
+import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 
@@ -61,6 +69,12 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	boolean invUnread, varUnread;
 	int currentWin;
 	
+	final private Context uiContext = this;
+	final private ReentrantLock musicLock = new ReentrantLock();
+	
+	private boolean gui_debug_mode = true; 
+
+
 	public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
 		if(gesture.getLength()>SWIPE_MIN) {
 			ArrayList<GestureStroke> strokes = gesture.getStrokes();
@@ -83,21 +97,25 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	}	
 	
 	public QspPlayerStart() {
-		gameIsRunning = false;
-		qspInited = false;
-		waitForImageBox = false;
+    	//Контекст UI
 	}
 	
 
 	/** Called when the activity is first created. */
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {    	
+    	WriteLog("onCreate\\");
+    	//Контекст UI
         super.onCreate(savedInstanceState);
         //будем использовать свой вид заголовка
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
         res = getResources();
-        
+
+		gameIsRunning = false;
+		qspInited = false;
+		waitForImageBox = false;
+
         //подключаем жесты
         GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
         gestures.addOnGesturePerformedListener(this);
@@ -115,55 +133,149 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         //Создаем список для всплывающего меню
         menuList = new Vector<QspMenuItem>();
         
+        //Создаем диалог ввода текста
+        LayoutInflater factory = LayoutInflater.from(uiContext);
+        View textEntryView = factory.inflate(R.layout.inputbox, null);
+        inputboxDialog = new AlertDialog.Builder(uiContext)
+        .setView(textEntryView)
+        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+            	EditText edit = (EditText)inputboxDialog.findViewById(R.id.inputbox_edit);
+            	inputboxResult = edit.getText().toString();
+				dialogHasResult = true;
+				WriteLog("InputBox(UI): OK clicked, unparking library thread");
+            	setThreadUnpark();
+            }
+        })
+        .setCancelable(false)
+        .create();
+        
         //Создаем объект для таймера
         timerHandler = new Handler();
         
         //Выбираем игру
         BrowseGame(GetDefaultPath(), true);
+        
+        //Запускаем поток библиотеки
+        StartLibThread();
+    	WriteLog("onCreate/");
     }
     
-    @Override 
+    @Override
     public void onResume()
     {
+    	WriteLog("onResume\\");    	
+    	//Контекст UI
     	super.onResume();
     	
     	waitForImageBox = false;
+    	WriteLog("onResume/");    	
     }
     
     @Override
     public void onPause() {
+    	WriteLog("onPause\\");    	
+    	//Контекст UI
     	super.onPause();
     	
-    	//Очищаем ВСЕ на выходе
-    	if (!waitForImageBox && qspInited)
+    	if (waitForImageBox)
     	{
-    		if (gameIsRunning)
-    		{
-                //останавливаем таймер
-                timerHandler.removeCallbacks(timerUpdateTask);
-
-                //останавливаем музыку
-                CloseFile(null);
-                
-                //отключаем колбэки действий
-                ListView lvAct = (ListView)findViewById(R.id.acts);
-                lvAct.setOnItemClickListener(null);
-                lvAct.setOnItemSelectedListener(null);        
-
-                //отключаем колбэки инвентаря
-                ListView lvInv = (ListView)findViewById(R.id.inv);
-                lvInv.setOnItemClickListener(null);
-                lvInv.setOnItemSelectedListener(null);
-                
-                gameIsRunning = false;
-    		}
-    		//Очищаем библиотеку
-    		QSPDeInit();
-    		curGameDir = "";
-    		qspInited = false;
+        	WriteLog("onPause/ (waitForImageBox)");    	
+    		return;
     	}
+
+    	//Очищаем ВСЕ на выходе
+    	if (qspInited)
+    	{
+        	WriteLog("onPause: stopping game");    	
+    		StopGame();
+    	}
+    	//Останавливаем поток библиотеки
+   		StopLibThread();
+    	WriteLog("onPause/");  
+    	finish();
     }
- 
+    
+    private void WriteLog(String msg)
+    {
+    	Log.i("QSP", msg);
+    }
+    
+    //******************************************************************************
+    //******************************************************************************
+    //****** / THREADS \ ***********************************************************
+    //******************************************************************************
+    //******************************************************************************
+    /** паркует-останавливает указанный тред, и сохраняет на него указатель в parkThread */
+    protected void setThreadPark()    {
+    	WriteLog("setThreadPark: enter ");    	
+    	//Контекст библиотеки
+    	if (libThread == null)
+    	{
+    		WriteLog("setThreadPark: failed, libthread is null");
+    		return;
+    	}
+        parkThread = libThread;
+        LockSupport.park();
+    	WriteLog("setThreadPark: success ");    	
+    }
+    
+    /** возобновляет работу треда сохраненного в указателе parkThread */
+    protected boolean setThreadUnpark()    {
+    	WriteLog("setThreadUnPark: enter ");    	
+    	//Контекст UI
+        if (parkThread!=null && parkThread.isAlive()) {
+            LockSupport.unpark(parkThread);
+        	WriteLog("setThreadUnPark: success ");    	
+            return true;
+        }
+    	WriteLog("setThreadUnPark: failed, ");
+    	if (parkThread==null)
+        	WriteLog("parkThread is null ");
+    	else
+        	WriteLog("parkThread is dead ");
+        return false;
+    }
+    
+    protected void StartLibThread()
+    {
+    	WriteLog("StartLibThread: enter ");    	
+    	//Контекст UI
+    	if (libThread!=null)
+    	{
+        	WriteLog("StartLibThread: failed, libThread is null");    	
+    		return;
+    	}
+    	//Запускаем поток библиотеки
+    	Thread t = new Thread() {
+            public void run() {
+    			Looper.prepare();
+    			libThreadHandler = new Handler();
+            	WriteLog("LibThread runnable: libThreadHandler is set");    	
+        		Looper.loop();
+            	WriteLog("LibThread runnable: library thread exited");    	
+            }
+        };
+        libThread = t;
+        t.start();
+    	WriteLog("StartLibThread: success ");    	
+    }
+    
+    protected void StopLibThread()
+    {
+    	WriteLog("StopLibThread: enter ");    	
+    	//Контекст UI
+    	//Останавливаем поток библиотеки
+       	libThreadHandler.getLooper().quit();
+		libThread = null;		
+    	WriteLog("StopLibThread: success ");    	
+    }
+    //******************************************************************************
+    //******************************************************************************
+    //****** \ THREADS / ***********************************************************
+    //******************************************************************************
+    //******************************************************************************
+
     private void setTitle(String second) {
    		TextView winTitle = (TextView) findViewById(R.id.title_text);
    		winTitle.setText(second);
@@ -224,14 +336,24 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     }
     
     private Runnable timerUpdateTask = new Runnable() {
-    	   public void run() {
-    		   QSPExecCounter(true);
-    	       timerHandler.postDelayed(this, timerInterval);
-    	   }
-    	};
+    	//Контекст UI
+		public void run() {
+			libThreadHandler.post(new Runnable() {
+				public void run() {
+					if (libraryThreadIsRunning)
+						return;
+			    	libraryThreadIsRunning = true;
+				   	QSPExecCounter(true);
+					libraryThreadIsRunning = false;
+				}
+			});
+			timerHandler.postDelayed(this, timerInterval);
+		}
+	};
     
     android.content.DialogInterface.OnClickListener browseFileClick = new DialogInterface.OnClickListener()
     {
+    	//Контекст UI
 		@Override
 		public void onClick(DialogInterface dialog, int which) 
 		{
@@ -257,6 +379,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     //LINKS HACKS
     static class InternalURLSpan extends ClickableSpan {
+    	//Контекст UI
     	OnClickListener mListener;
 
     	public InternalURLSpan(OnClickListener listener) {
@@ -271,89 +394,151 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void runGame(String fileName)
     {
-        QSPInit();
-        qspInited = true;
-        //String fileName = item. "/mnt/sdcard/The Punisher.gam";
-        //String fileName = qspGames.get(which).getPath();
-        File tqsp = new File (fileName); 
-        
-        curGameDir = fileName.substring(0, fileName.lastIndexOf(File.separator, fileName.length() - 1) + 1);
+    	//Контекст UI
+    	if (libThreadHandler==null)
+    	{
+    		WriteLog("runGame: failed, libThreadHandler is null");
+    		return;
+    	}
+
+		if (libraryThreadIsRunning)
+		{
+    		WriteLog("runGame: failed, library thread is already running");
+			return;
+		}
+    	
+    	qspInited = true;
+    	final String gameFileName = fileName;
+        curGameDir = gameFileName.substring(0, gameFileName.lastIndexOf(File.separator, gameFileName.length() - 1) + 1);
         imgGetter.SetDirectory(curGameDir);
         imgGetter.SetScreenWidth(getWindow().getWindowManager().getDefaultDisplay().getWidth());
-        
-        FileInputStream fIn = null;
-        int size = 0;
-		try {
-			fIn = new FileInputStream(tqsp);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-        	e.printStackTrace();
-		}
-		try {
-			size = fIn.available();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        
-		byte[] inputBuffer = new byte[size];
-		try {
-		// Fill the Buffer with data from the file
-		fIn.read(inputBuffer);
-		fIn.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 
-		
-		TextView tv = (TextView) findViewById(R.id.main_desc); 
-        
-        if (QSPLoadGameWorldFromData(inputBuffer, size, fileName ))
-        {
-            //init acts callbacks
-            ListView lvAct = (ListView)findViewById(R.id.acts);
-            lvAct.setTextFilterEnabled(true);
-            lvAct.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-            lvAct.setFocusableInTouchMode(true);
-            lvAct.setFocusable(true);
-            lvAct.setItemsCanFocus(true);
-            lvAct.setOnItemClickListener(actListClickListener);
-            lvAct.setOnItemSelectedListener(actListSelectedListener);        
+        libThreadHandler.post(new Runnable() {
+    		public void run() {
+    	        QSPInit();
+    	        File tqsp = new File (gameFileName);
+    	        FileInputStream fIn = null;
+    	        int size = 0;
+    			try {
+    				fIn = new FileInputStream(tqsp);
+    			} catch (FileNotFoundException e) {
+    	        	e.printStackTrace();
+    			}
+    			try {
+    				size = fIn.available();
+    			} catch (IOException e) {
+    				e.printStackTrace();
+    			}
+    	        
+    			byte[] inputBuffer = new byte[size];
+    			try {
+    			// Fill the Buffer with data from the file
+    			fIn.read(inputBuffer);
+    			fIn.close();
+    			} catch (IOException e) {
+    				e.printStackTrace();
+    			}
 
-            //init objs callbacks
-            ListView lvInv = (ListView)findViewById(R.id.inv);
-            lvInv.setTextFilterEnabled(true);
-            lvInv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-            lvInv.setFocusableInTouchMode(true);
-            lvInv.setFocusable(true);
-            lvInv.setItemsCanFocus(true);
-            lvInv.setOnItemClickListener(objListClickListener);
-            lvInv.setOnItemSelectedListener(objListSelectedListener);        
+    			final boolean gameLoaded = QSPLoadGameWorldFromData(inputBuffer, size, gameFileName );
+    			
+    			runOnUiThread(new Runnable() {
+    				public void run() {
+    	    			TextView tv = (TextView) findViewById(R.id.main_desc); 
+    	    	        
+    	    	        if (gameLoaded)
+    	    	        {
+        		    		//init acts callbacks
+    	    	            ListView lvAct = (ListView)findViewById(R.id.acts);
+    	    	            lvAct.setTextFilterEnabled(true);
+    	    	            lvAct.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+    	    	            lvAct.setFocusableInTouchMode(true);
+    	    	            lvAct.setFocusable(true);
+    	    	            lvAct.setItemsCanFocus(true);
+    	    	            lvAct.setOnItemClickListener(actListClickListener);
+    	    	            lvAct.setOnItemSelectedListener(actListSelectedListener);        
 
-            //Запускаем таймер
-            timerInterval = 500;
-            timerStartTime = System.currentTimeMillis();
+    	    	            //init objs callbacks
+    	    	            ListView lvInv = (ListView)findViewById(R.id.inv);
+    	    	            lvInv.setTextFilterEnabled(true);
+    	    	            lvInv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+    	    	            lvInv.setFocusableInTouchMode(true);
+    	    	            lvInv.setFocusable(true);
+    	    	            lvInv.setItemsCanFocus(true);
+    	    	            lvInv.setOnItemClickListener(objListClickListener);
+    	    	            lvInv.setOnItemSelectedListener(objListSelectedListener);        
+
+    	    	            //Запускаем таймер
+    	    	            timerInterval = 500;
+    	    	            timerStartTime = System.currentTimeMillis();
+    	    	            timerHandler.removeCallbacks(timerUpdateTask);
+    	    	            timerHandler.postDelayed(timerUpdateTask, timerInterval);
+    	    	            
+    	    	            //Запускаем счетчик миллисекунд
+    	    	            gameStartTime = System.currentTimeMillis();
+
+    	    	            //Все готово, запускаем игру
+    	    	            libThreadHandler.post(new Runnable() {
+    	    	        		public void run() {
+    	    	                	libraryThreadIsRunning = true;
+    	    	        			QSPRestartGame(true);
+    	    	                	libraryThreadIsRunning = false;
+    	    	        		}
+    	    	            } );
+    	    	            
+    	    	            gameIsRunning = true;
+    	    	        }
+    	    	        else
+    	    	        {
+    	    	        	String s = "Not able to parse file: "+Integer.toString(QSPGetLastErrorData());
+    	    	        	tv.setText(s);
+    	    	        }
+    				}
+    			});
+    		}
+    	});
+    }
+    
+    private void StopGame()
+    {
+    	//Контекст UI
+		if (gameIsRunning)
+		{    			
+            //останавливаем таймер
             timerHandler.removeCallbacks(timerUpdateTask);
-            timerHandler.postDelayed(timerUpdateTask, timerInterval);
-            
-            //Запускаем счетчик миллисекунд
-            gameStartTime = System.currentTimeMillis();
 
-            //Все готово, запускаем игру
-            QSPRestartGame(true);
+            //останавливаем музыку
+            CloseFileUI(null);
             
-            gameIsRunning = true;
-        }
-        else
-        {
-        	String s = "Not able to parse file: "+Integer.toString(QSPGetLastErrorData());
-        	tv.setText(s);
-        }
+            //отключаем колбэки действий
+            ListView lvAct = (ListView)findViewById(R.id.acts);
+            lvAct.setOnItemClickListener(null);
+            lvAct.setOnItemSelectedListener(null);        
+
+            //отключаем колбэки инвентаря
+            ListView lvInv = (ListView)findViewById(R.id.inv);
+            lvInv.setOnItemClickListener(null);
+            lvInv.setOnItemSelectedListener(null);
+            
+            gameIsRunning = false;
+		}
+		curGameDir = "";
+		qspInited = false;
+
+		//Очищаем библиотеку
+		if (libraryThreadIsRunning)
+			return;
+        libThreadHandler.post(new Runnable() {
+    		public void run() {
+            	libraryThreadIsRunning = true;
+        		QSPDeInit();
+            	libraryThreadIsRunning = false;
+    		}
+        } );
     }
     
     private void BrowseGame(String startpath, boolean start)
     {
+    	//Контекст UI
     	if (startpath == null)
     		return;
     	
@@ -419,6 +604,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private String GetDefaultPath()
     {
+    	//Контекст UI
+
     	//Возвращаем путь к папке с играми.
     	String flashCard = "/mnt/sdcard/";    	
     	String tryFull = flashCard + "/qsp/games/";
@@ -427,139 +614,16 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     		return tryFull;    	
     	return flashCard;
     }
-    
-    
-    //******************************************************************************
-    //******************************************************************************
-    //****** / QSP  LIBRARY  REQUIRED  CALLBACKS \ *********************************
-    //******************************************************************************
-    //******************************************************************************
-    private void RefreshInt() 
-    {
-    	JniResult htmlResult = (JniResult) QSPGetVarValues("USEHTML", 0);
-    	boolean html = htmlResult.success && (htmlResult.int1 == 1);
-    	
-    	
-    	//основное описание
-    	if (QSPIsMainDescChanged())
-    	{
-			TextView tvDesc = (TextView) findViewById(R.id.main_desc);
-			String txtMainDesc = QSPGetMainDesc(); 
-			if (html)
-			{
-				tvDesc.setText(Utility.QspStrToHtml(txtMainDesc, imgGetter));
-				tvDesc.setMovementMethod(QspLinkMovementMethod.getInstance());
-			}
-			else
-				tvDesc.setText(txtMainDesc);
-    	}
-    
-    	//список действий
-    	if (QSPIsActionsChanged())
-    	{
-	        ListView lvAct = (ListView)findViewById(R.id.acts);
-	        int nActsCount = QSPGetActionsCount();
-			if (html)
-			{
-		        Spanned []acts = new Spanned[nActsCount];
-		        for (int i=0;i<nActsCount;i++)
-		        {
-		        	JniResult actsResult = (JniResult) QSPGetActionData(i);
-		        	acts[i] = Utility.QspStrToHtml(actsResult.str1, imgGetter);
-		        }
-		        lvAct.setAdapter(new ArrayAdapter<Spanned>(this, R.layout.act_item, acts));
-			}
-			else
-			{
-		        String []acts = new String[nActsCount];
-		        for (int i=0;i<nActsCount;i++)
-		        {
-		        	JniResult actsResult = (JniResult) QSPGetActionData(i);
-		        	acts[i] = actsResult.str1;
-		        }
-		        lvAct.setAdapter(new ArrayAdapter<String>(this, R.layout.act_item, acts));
-			}
-	        
-	        //Разворачиваем список действий
-	        Utility.setListViewHeightBasedOnChildren(lvAct);
-    	}
-        
-        //инвентарь
-    	if (QSPIsObjectsChanged())
-    	{
-    		if(currentWin!=WIN_INV){
-    			invUnread = true;
-    			updateTitle();
-    		}
-    		//Toast.makeText(this, "инвентарь", Toast.LENGTH_SHORT).show();
-	        ListView lvInv = (ListView)findViewById(R.id.inv);
-	        int nObjsCount = QSPGetObjectsCount();
-			if (html)
-			{
-		        Spanned []objs = new Spanned[nObjsCount];
-		        for (int i=0;i<nObjsCount;i++)
-		        {
-		        	JniResult objsResult = (JniResult) QSPGetObjectData(i);
-		        	objs[i] = Utility.QspStrToHtml(objsResult.str1, imgGetter);
-		        }
-		        lvInv.setAdapter(new ArrayAdapter<Spanned>(this, R.layout.obj_item, objs));
-			}
-			else
-			{
-		        String []objs = new String[nObjsCount];
-		        for (int i=0;i<nObjsCount;i++)
-		        {
-		        	JniResult objsResult = (JniResult) QSPGetObjectData(i);
-		        	objs[i] = objsResult.str1;
-		        }
-		        lvInv.setAdapter(new ArrayAdapter<String>(this, R.layout.obj_item, objs));
-			}
-    	}
-        
-        //доп. описание
-    	if (QSPIsVarsDescChanged())
-    	{
-    		if(currentWin!=WIN_EXT) {
-    			varUnread = true;
-    			updateTitle();
-    		}
-    		//Toast.makeText(this, "доп. описание", Toast.LENGTH_SHORT).show();
-			TextView tvVarsDesc = (TextView) findViewById(R.id.vars_desc);
-			String txtVarsDesc = QSPGetVarsDesc();
-			if (html)
-			{
-				tvVarsDesc.setText(Utility.QspStrToHtml(txtVarsDesc, imgGetter));
-				tvVarsDesc.setMovementMethod(QspLinkMovementMethod.getInstance());
-			}
-			else
-				tvVarsDesc.setText(txtVarsDesc);
-    	}
-    }
-    
-    private void SetTimer(int msecs)
-    {
-    	timerInterval = msecs;
-    }
 
-    private void ShowMessage(String message)
+    private void PlayFileUI(String file, int volume)
     {
-    	//Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-    	new AlertDialog.Builder(this)
-        .setMessage(message)
-        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) { }
-        })
-        .show();
-    }
-    
-    private void PlayFile(String file, int volume)
-    {
+    	//Контекст UI
     	if (file == null || file.length() == 0)
     		return;
     	
     	//Проверяем, проигрывается ли уже этот файл.
     	//Если проигрывается, ничего не делаем.
-    	if (IsPlayingFile(file))
+    	if (IsPlayingFileUI(file))
     		return;
 
 		//Проверяем, существует ли файл.
@@ -590,85 +654,383 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			e.printStackTrace();
 			return;
 		}
+		final String fileName = file;
+		mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+			@Override
+			public void onCompletion(MediaPlayer mp) {
+		        musicLock.lock();
+		        try {
+			    	for (int i=0; i<mediaPlayersList.size(); i++)
+			    	{
+			    		MusicContent it = mediaPlayersList.elementAt(i);    		
+			    		if (it.path.compareTo(fileName)==0)
+			    		{
+			    			mediaPlayersList.remove(it);
+			    			break;
+			    		}
+			    	}
+		        } finally {
+		        	musicLock.unlock();
+		        }
+			}
+		});
 	    mediaPlayer.start();
 	    MusicContent musicContent = new MusicContent();
 	    musicContent.path = file;
 	    musicContent.player = mediaPlayer;
-	    mediaPlayersList.add(musicContent);
-    }
-    
-    private boolean IsPlayingFile(String file)
-    {
-    	if (file == null || file.length() == 0)
-    		return false;
-    	for (int i=0; i<mediaPlayersList.size(); i++)
-    	{
-    		MusicContent it = mediaPlayersList.elementAt(i);
-    		if (it.path.compareTo(file)==0 && it.player.isPlaying())
-    			return true;
-    	}
-    	return false;
+        musicLock.lock();
+        try {
+        	mediaPlayersList.add(musicContent);
+        } finally {
+        	musicLock.unlock();
+        }
     }
 
-    private void CloseFile(String file)
+    private boolean IsPlayingFileUI(String file)
     {
+    	//Контекст UI
+    	if (file == null || file.length() == 0)
+    		return false;
+    	boolean foundPlaying = false; 
+        musicLock.lock();
+        try {
+	    	for (int i=0; i<mediaPlayersList.size(); i++)
+	    	{
+	    		MusicContent it = mediaPlayersList.elementAt(i);
+	    		if (it.path.compareTo(file)==0)
+	    		{
+	    			foundPlaying = true;
+	    			break;
+	    		}
+	    	}
+        } finally {
+        	musicLock.unlock();
+        }
+    	return foundPlaying;
+    }
+    
+    private void CloseFileUI(String file)
+    {
+    	//Контекст UI
     	//Если вместо имени файла пришел null, значит закрываем все файлы(CLOSE ALL)
     	boolean bCloseAll = false;
     	if (file == null)
     		bCloseAll = true;
     	else if (file.length() == 0)
     		return;
-    	for (int i=0; i<mediaPlayersList.size(); i++)
+        musicLock.lock();
+        try {
+	    	for (int i=0; i<mediaPlayersList.size(); i++)
+	    	{
+	    		MusicContent it = mediaPlayersList.elementAt(i);    		
+	    		if (bCloseAll || it.path.compareTo(file)==0)
+	    		{
+	    			if (it.player.isPlaying())
+	    				it.player.stop();
+	    			it.player.release();
+	    			mediaPlayersList.remove(it);
+	    			break;
+	    		}
+	    	}
+        } finally {
+        	musicLock.unlock();
+        }
+    }
+    
+    //******************************************************************************
+    //******************************************************************************
+    //****** / QSP  LIBRARY  REQUIRED  CALLBACKS \ *********************************
+    //******************************************************************************
+    //******************************************************************************
+    private void RefreshInt() 
+    {
+    	//Контекст библиотеки
+    	JniResult htmlResult = (JniResult) QSPGetVarValues("USEHTML", 0);
+    	final boolean html = htmlResult.success && (htmlResult.int1 == 1);
+    	
+    	
+    	//основное описание
+    	if (QSPIsMainDescChanged())
     	{
-    		MusicContent it = mediaPlayersList.elementAt(i);    		
-    		if (bCloseAll || it.path.compareTo(file)==0)
-    		{
-    			it.player.stop();
-    			it.player.release();
-    			mediaPlayersList.remove(it);
-    			break;
-    		}
+			final String txtMainDesc = QSPGetMainDesc();
+			runOnUiThread(new Runnable() {
+				public void run() {
+					TextView tvDesc = (TextView) findViewById(R.id.main_desc);
+					if (html)
+					{
+						tvDesc.setText(Utility.QspStrToHtml(txtMainDesc, imgGetter));
+						tvDesc.setMovementMethod(QspLinkMovementMethod.getInstance());
+					}
+					else
+						tvDesc.setText(txtMainDesc);
+				}
+			} );
     	}
+    
+    	//список действий
+    	if (QSPIsActionsChanged())
+    	{
+	        int nActsCount = QSPGetActionsCount();
+			if (html)
+			{
+		        final Spanned []acts = new Spanned[nActsCount];
+		        for (int i=0;i<nActsCount;i++)
+		        {
+		        	JniResult actsResult = (JniResult) QSPGetActionData(i);
+		        	acts[i] = Utility.QspStrToHtml(actsResult.str1, imgGetter);
+		        }
+				runOnUiThread(new Runnable() {
+					public void run() {
+				        ListView lvAct = (ListView)findViewById(R.id.acts);
+				        lvAct.setAdapter(new ArrayAdapter<Spanned>(uiContext, R.layout.act_item, acts));
+				        //Разворачиваем список действий
+				        Utility.setListViewHeightBasedOnChildren(lvAct);
+					}
+				} );
+			}
+			else
+			{
+		        final String []acts = new String[nActsCount];
+		        for (int i=0;i<nActsCount;i++)
+		        {
+		        	JniResult actsResult = (JniResult) QSPGetActionData(i);
+		        	acts[i] = actsResult.str1;
+		        }
+				runOnUiThread(new Runnable() {
+					public void run() {
+				        ListView lvAct = (ListView)findViewById(R.id.acts);
+				        lvAct.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.act_item, acts));
+				        //Разворачиваем список действий
+				        Utility.setListViewHeightBasedOnChildren(lvAct);
+					}
+				} );
+			}
+    	}
+        
+        //инвентарь
+    	if (QSPIsObjectsChanged())
+    	{
+			runOnUiThread(new Runnable() {
+				public void run() {
+					if(currentWin!=WIN_INV){
+						invUnread = true;
+						updateTitle();
+					}
+				}
+			} );
+	        int nObjsCount = QSPGetObjectsCount();
+			if (html)
+			{
+		        final Spanned []objs = new Spanned[nObjsCount];
+		        for (int i=0;i<nObjsCount;i++)
+		        {
+		        	JniResult objsResult = (JniResult) QSPGetObjectData(i);
+		        	objs[i] = Utility.QspStrToHtml(objsResult.str1, imgGetter);
+		        }
+				runOnUiThread(new Runnable() {
+					public void run() {
+				        ListView lvInv = (ListView)findViewById(R.id.inv);
+				        lvInv.setAdapter(new ArrayAdapter<Spanned>(uiContext, R.layout.obj_item, objs));
+					}
+				} );
+			}
+			else
+			{
+		        final String []objs = new String[nObjsCount];
+		        for (int i=0;i<nObjsCount;i++)
+		        {
+		        	JniResult objsResult = (JniResult) QSPGetObjectData(i);
+		        	objs[i] = objsResult.str1;
+		        }
+				runOnUiThread(new Runnable() {
+					public void run() {
+				        ListView lvInv = (ListView)findViewById(R.id.inv);
+				        lvInv.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.obj_item, objs));
+					}
+				} );
+			}
+    	}
+        
+        //доп. описание
+    	if (QSPIsVarsDescChanged())
+    	{
+			final String txtVarsDesc = QSPGetVarsDesc();			
+			runOnUiThread(new Runnable() {
+				public void run() {
+					if(currentWin!=WIN_EXT) {
+						varUnread = true;
+						updateTitle();
+					}
+					TextView tvVarsDesc = (TextView) findViewById(R.id.vars_desc);
+					if (html)
+					{
+						tvVarsDesc.setText(Utility.QspStrToHtml(txtVarsDesc, imgGetter));
+						tvVarsDesc.setMovementMethod(QspLinkMovementMethod.getInstance());
+					}
+					else
+						tvVarsDesc.setText(txtVarsDesc);
+				}
+			} );
+    	}
+    }
+    
+    private void SetTimer(int msecs)
+    {
+    	//Контекст библиотеки
+    	final int timeMsecs = msecs;
+		runOnUiThread(new Runnable() {
+			public void run() {
+				timerInterval = timeMsecs;
+			}
+		} );
+    }
+
+    private void ShowMessage(String message)
+    {
+    	//Контекст библиотеки
+		if (libThread==null)
+		{
+			WriteLog("ShowMessage: failed, libThread is null");
+			return;
+		}
+
+		String msgValue = "";
+		if ( message != null )
+			msgValue = message;
+		
+		dialogHasResult = false;
+
+    	final String msg = msgValue;
+		runOnUiThread(new Runnable() {
+			public void run() {
+		    	new AlertDialog.Builder(uiContext)
+		        .setMessage(msg)
+		        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						dialogHasResult = true;
+						WriteLog("ShowMessage(UI): OK clicked, unparking library thread");
+		            	setThreadUnpark();
+		            }
+		        })
+		        .setCancelable(false)
+		        .show();
+				WriteLog("ShowMessage(UI): dialog showed");
+			}
+		} );
+    	
+		WriteLog("ShowMessage: parking library thread");
+        while (!dialogHasResult) {
+        	setThreadPark();
+        }
+        parkThread = null;
+		WriteLog("ShowMessage: library thread unparked, finishing");
+    }
+    
+    private void PlayFile(String file, int volume)
+    {
+    	//Контекст библиотеки
+    	final String musicFile = file;
+    	final int musicVolume = volume;
+    	runOnUiThread(new Runnable() {
+    		public void run() {
+    			PlayFileUI(musicFile, musicVolume);
+    		}
+    	});
+    }
+    
+    private boolean IsPlayingFile(String file)
+    {
+    	//Контекст библиотеки
+    	return IsPlayingFileUI(file);
+    }
+
+    private void CloseFile(String file)
+    {
+    	//Контекст библиотеки
+    	final String musicFile = file;
+    	runOnUiThread(new Runnable() {
+    		public void run() {
+    			CloseFileUI(musicFile);
+    		}
+    	});
     }
     
     private void ShowPicture(String file)
     {
+    	//Контекст библиотеки
     	if (file == null || file.length() == 0)
     		return;
-    	String prefix = "";
-    	if (curGameDir != null)
-    		prefix = curGameDir;
     	
-    	//Проверяем, существует ли файл.
-    	//Если нет - выходим
-    	File gfxFile = new File(prefix.concat(file));
-        if (!gfxFile.exists())
-        	return;
-
-        waitForImageBox = true;
-        
-        Intent imageboxIntent = new Intent();
-    	imageboxIntent.setClassName("com.qsp.player", "com.qsp.player.QspImageBox");
-    	Bundle b = new Bundle();
-    	b.putString("imageboxFile", prefix.concat(file));
-    	imageboxIntent.putExtras(b);
-    	startActivity(imageboxIntent);    	
+    	final String fileName = file;
+    	
+		runOnUiThread(new Runnable() {
+			public void run() {
+		    	String prefix = "";
+		    	if (curGameDir != null)
+		    		prefix = curGameDir;
+		    	
+		    	//Проверяем, существует ли файл.
+		    	//Если нет - выходим
+		    	File gfxFile = new File(prefix.concat(fileName));
+		        if (!gfxFile.exists())
+		        	return;
+		
+		        waitForImageBox = true;
+		        
+		    	Intent imageboxIntent = new Intent();
+		    	imageboxIntent.setClassName("com.qsp.player", "com.qsp.player.QspImageBox");
+		    	Bundle b = new Bundle();
+		    	b.putString("imageboxFile", prefix.concat(fileName));
+		    	imageboxIntent.putExtras(b);
+		    	startActivity(imageboxIntent);
+			}
+		});    	    	
     }
     
     private String InputBox(String prompt)
     {
-    	//!!! STUB
-    	return "stub";
+    	//Контекст библиотеки
+		if (libThread==null)
+		{
+			WriteLog("InputBox: failed, libThread is null");
+			return "";
+		}
+    	
+		String promptValue = "";
+		if ( prompt != null )
+			promptValue = prompt;
+		
+		dialogHasResult = false;
+
+    	final String inputboxTitle = promptValue;
+    	
+		runOnUiThread(new Runnable() {
+			public void run() {
+				inputboxResult = "";
+			    inputboxDialog.setTitle(inputboxTitle);
+			    inputboxDialog.show();
+				WriteLog("InputBox(UI): dialog showed");
+			}
+		} );
+    	
+		WriteLog("InputBox: parking library thread");
+        while (!dialogHasResult) {
+        	setThreadPark();
+        }
+        parkThread = null;
+		WriteLog("InputBox: library thread unparked, finishing");
+    	return inputboxResult;
     }
     
     private int GetMSCount()
     {
+    	//Контекст библиотеки
     	return (int) (System.currentTimeMillis() - gameStartTime);
     }
     
     private void AddMenuItem(String name, String imgPath)
     {
-    	//!!! STUB
+    	//Контекст библиотеки
     	QspMenuItem item = new QspMenuItem();
     	item.imgPath = imgPath;
     	item.name = name;
@@ -677,12 +1039,64 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void ShowMenu()
     {
-    	//!!! STUB
+    	//Контекст библиотеки
+		if (libThread==null)
+		{
+			WriteLog("ShowMenu: failed, libThread is null");
+			return;
+		}
     	
+		dialogHasResult = false;
+		menuResult = -1;
+
+		int total = menuList.size();
+        final CharSequence[] items = new String[total];
+        for (int i=0; i<total; i++)
+        {
+        	items[i] = menuList.elementAt(i).name;
+        }
+    	
+		runOnUiThread(new Runnable() {
+			public void run() {
+		        new AlertDialog.Builder(uiContext)
+		        .setItems(items, new DialogInterface.OnClickListener()
+		        {
+		    		@Override
+		    		public void onClick(DialogInterface dialog, int which) 
+		    		{
+		               	menuResult = which;
+		    			dialogHasResult = true;
+		    			WriteLog("ShowMenu(UI): menu item selected, unparking library thread");
+		               	setThreadUnpark();
+		    		}
+		        })
+		        .setOnCancelListener(new DialogInterface.OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						dialogHasResult = true;
+						WriteLog("ShowMenu(UI): menu cancelled, unparking library thread");
+			           	setThreadUnpark();
+					}
+				})
+				.show();
+			    WriteLog("ShowMenu(UI): dialog showed");
+			}
+		} );
+    	
+		WriteLog("ShowMenu: parking library thread");
+        while (!dialogHasResult) {
+        	setThreadPark();
+        }
+        parkThread = null;
+		WriteLog("ShowMenu: library thread unparked, finishing");
+    	
+		if (menuResult != -1)
+			QSPSelectMenuItem(menuResult);
     }
     
     private void DeleteMenu()
     {
+    	//Контекст библиотеки
     	menuList.clear();
     }
     //******************************************************************************
@@ -694,43 +1108,84 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     public void OnUrlClicked (String href)
     {
+    	//Контекст UI
     	String tag = href.substring(0, 5).toLowerCase();
     	if (tag.compareTo("exec:") == 0)
     	{
-    		String code = href.substring(5);
-	    	boolean bExec = QSPExecString(code, true);
-	    	if (!bExec)
-	    	{
-	    		int nError = QSPGetLastErrorData();
-	    		String txtError = "Error: "+String.valueOf(nError);  
-	    		new AlertDialog.Builder(this)
-	            .setMessage(txtError)
-	            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-	                public void onClick(DialogInterface dialog, int whichButton) { }
-	            })
-	            .show();
-	    	}
+    		if (libraryThreadIsRunning)
+    			return;
+    		final String code = href.substring(5);
+    		libThreadHandler.post(new Runnable() {
+    			public void run() {
+    	    		if (libraryThreadIsRunning)
+    	    			return;
+                	libraryThreadIsRunning = true;
+                	
+        	    	boolean bExec = QSPExecString(code, true);
+        	    	if (!bExec)
+        	    	{
+        	    		int nError = QSPGetLastErrorData();
+        	    		final String txtError = "Error: "+String.valueOf(nError);  
+        	    		runOnUiThread(new Runnable() {
+        	    			public void run() {
+		        	    		new AlertDialog.Builder(uiContext)
+		        	            .setMessage(txtError)
+		        	            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+		        	                public void onClick(DialogInterface dialog, int whichButton) { }
+		        	            })
+		        	            .show();
+        	    			}
+        	    		});
+        	    	}
+                	
+            		libraryThreadIsRunning = false;
+    			}
+    		});
     	}
     }
- 
+
 	//Callback for click on selected act
     private OnItemClickListener actListClickListener = new OnItemClickListener() 
     {
+    	//Контекст UI
     	@Override
     	public void onItemClick(AdapterView<?> parent, View arg1, int position, long arg3) 
     	{
-    		QSPSetSelActionIndex(position, false);
-    		QSPExecuteSelActionCode(true);
+    		if (libraryThreadIsRunning)
+    			return;
+    		final int actionIndex = position;
+    		libThreadHandler.post(new Runnable() {
+    			public void run() {
+    	    		if (libraryThreadIsRunning)
+    	    			return;
+                	libraryThreadIsRunning = true;
+            		QSPSetSelActionIndex(actionIndex, false);
+            		QSPExecuteSelActionCode(true);
+            		libraryThreadIsRunning = false;
+    			}
+    		});
     	}
     };
     
     //Callback for select act
     private OnItemSelectedListener actListSelectedListener = new OnItemSelectedListener() 
     {
+    	//Контекст UI
 		@Override
 		public void onItemSelected(AdapterView<?> arg0, View arg1,
 				int arg2, long arg3) {
-			QSPSetSelActionIndex(arg2, true);
+    		if (libraryThreadIsRunning)
+    			return;
+    		final int actionIndex = arg2;
+    		libThreadHandler.post(new Runnable() {
+    			public void run() {
+    	    		if (libraryThreadIsRunning)
+    	    			return;
+                	libraryThreadIsRunning = true;
+    				QSPSetSelActionIndex(actionIndex, true);
+            		libraryThreadIsRunning = false;
+    			}
+    		});
 		}
 
 		@Override
@@ -742,20 +1197,44 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     //Callback for click on selected object
     private OnItemClickListener objListClickListener = new OnItemClickListener() 
     {
+    	//Контекст UI
     	@Override
     	public void onItemClick(AdapterView<?> parent, View arg1, int position, long arg3) 
     	{
-    		QSPSetSelObjectIndex(position, true);
+    		if (libraryThreadIsRunning)
+    			return;
+    		final int itemIndex = position;
+    		libThreadHandler.post(new Runnable() {
+    			public void run() {
+    	    		if (libraryThreadIsRunning)
+    	    			return;
+                	libraryThreadIsRunning = true;
+            		QSPSetSelObjectIndex(itemIndex, true);
+            		libraryThreadIsRunning = false;
+    			}
+    		});
     	}
     };
     
     //Callback for select object
     private OnItemSelectedListener objListSelectedListener = new OnItemSelectedListener() 
     {
+    	//Контекст UI
 		@Override
 		public void onItemSelected(AdapterView<?> arg0, View arg1,
 				int arg2, long arg3) {
-			QSPSetSelObjectIndex(arg2, true);
+    		if (libraryThreadIsRunning)
+    			return;
+    		final int itemIndex = arg2;
+    		libThreadHandler.post(new Runnable() {
+    			public void run() {
+    	    		if (libraryThreadIsRunning)
+    	    			return;
+                	libraryThreadIsRunning = true;
+            		QSPSetSelObjectIndex(itemIndex, true);
+            		libraryThreadIsRunning = false;
+    			}
+    		});
 		}
 
 		@Override
@@ -766,6 +1245,25 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     //Для отображения картинок в HTML
     static QspImageGetter imgGetter = new QspImageGetter();
+    
+    //Хэндлер для UI-потока
+    final Handler uiThreadHandler = new Handler();
+
+    //Хэндлер для потока библиотеки
+    private Handler libThreadHandler;
+    
+    //Поток библиотеки
+    private Thread libThread;
+    private Thread parkThread;
+    
+    //Запущен ли поток библиотеки
+    boolean					libraryThreadIsRunning = false;
+ 
+    //Есть ответ от MessageBox, InputBox либо Menu
+    private boolean 		dialogHasResult;
+    String					inputboxResult;
+    int						menuResult;
+    AlertDialog				inputboxDialog;
     
     ArrayList<File> 		qspGames;
     String					startRootPath;
