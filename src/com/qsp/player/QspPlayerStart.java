@@ -276,63 +276,89 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     //******************************************************************************
     //******************************************************************************
 
+    //устанавливаем текст заголовка окна
     private void setTitle(String second) {
    		TextView winTitle = (TextView) findViewById(R.id.title_text);
    		winTitle.setText(second);
 		updateTitle();
     }	
     
+    //анимация иконок при смене содержимого скрытых окон
     private void updateTitle() {
 		ImageButton image = (ImageButton) findViewById(R.id.title_button_1);
-    	if(invUnread){
+		image.clearAnimation();
+		if(invUnread){
     		Animation update = AnimationUtils.loadAnimation(this, R.anim.update);
     		image.startAnimation(update);
-    	}else
-    		image.clearAnimation();
+    		invUnread = false;
+    	}
 		image = (ImageButton) findViewById(R.id.title_button_2);
+		image.clearAnimation();
     	if(varUnread){
     		Animation update = AnimationUtils.loadAnimation(this, R.anim.update);
     		image.startAnimation(update);
-    	}else
-    		image.clearAnimation();
+    		varUnread = false;
+    	}	
     }	
     
-    //обработчик "Home" в заголовке
+    //обработчик "Описание" в заголовке
     public void onHomeClick(View v) {
     	setCurrentWin(WIN_MAIN);
     }
     
+    //обработчик "Инвентарь" в заголовке
     public void onInvClick(View v) {
     	setCurrentWin(WIN_INV);
     }
     
+    //обработчик "Доп" в заголовке
     public void onExtClick(View v) {
     	setCurrentWin(WIN_EXT);
     }
     
+    //смена активного экрана
     private void setCurrentWin(int win) {
     	switch(win){
     	case WIN_INV: 
-       		findViewById(R.id.inv).setVisibility(View.VISIBLE);
-       		findViewById(R.id.main_tab).setVisibility(View.GONE);
-       		findViewById(R.id.vars_desc).setVisibility(View.GONE);
+       		toggleInv(true);
+       		toggleMain(false);
+       		toggleExt(false);
        		invUnread = false;
        		setTitle("Инвентарь");
        		break;
     	case WIN_MAIN: 
-       		findViewById(R.id.inv).setVisibility(View.GONE);
-       		findViewById(R.id.main_tab).setVisibility(View.VISIBLE);
-       		findViewById(R.id.vars_desc).setVisibility(View.GONE);
+       		toggleInv(false);
+       		toggleMain(true);
+       		toggleExt(false);
        		setTitle("Описание");
        		break;
     	case WIN_EXT: 
-       		findViewById(R.id.inv).setVisibility(View.GONE);
-       		findViewById(R.id.main_tab).setVisibility(View.GONE);
-       		findViewById(R.id.vars_desc).setVisibility(View.VISIBLE);
+       		toggleInv(false);
+       		toggleMain(false);
+       		toggleExt(true);
        		varUnread = false;
        		setTitle("Доп. описание");
        		break;
     	}
+    }
+    
+    private void toggleInv(boolean vis) {
+   		findViewById(R.id.inv).setVisibility(vis ? View.VISIBLE : View.GONE);
+   		findViewById(R.id.title_sep_1).setVisibility(vis ? View.GONE : View.VISIBLE);
+   		findViewById(R.id.title_button_1).setVisibility(vis ? View.GONE : View.VISIBLE);    	
+    }
+    
+    private void toggleMain(boolean vis) {
+   		findViewById(R.id.main_desc).setVisibility(vis ? View.VISIBLE : View.GONE);
+   		findViewById(R.id.acts).setVisibility(vis ? View.VISIBLE : View.GONE);
+   		findViewById(R.id.title_home_button).setVisibility(vis ? View.GONE : View.VISIBLE);
+   		findViewById(R.id.title_home_button_sep).setVisibility(vis ? View.GONE : View.VISIBLE);    	
+    }
+    
+    private void toggleExt(boolean vis) {
+   		findViewById(R.id.vars_desc).setVisibility(vis ? View.VISIBLE : View.GONE);
+   		findViewById(R.id.title_sep_2).setVisibility(vis ? View.GONE : View.VISIBLE);
+   		findViewById(R.id.title_button_2).setVisibility(vis ? View.GONE : View.VISIBLE);    	
     }
     
     private Runnable timerUpdateTask = new Runnable() {
