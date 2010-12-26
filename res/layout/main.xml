@@ -9,6 +9,9 @@ android:layout_width="fill_parent" android:layout_height="fill_parent" android:o
     android:id="@+id/gestures"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:uncertainGestureColor="#00000000"
+    android:orientation="vertical"
+    android:gestureColor="#00000000"
     android:eventsInterceptionEnabled="true">
 
 <ScrollView
