@@ -31,6 +31,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -79,7 +80,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		if(gesture.getLength()>SWIPE_MIN) {
 			ArrayList<GestureStroke> strokes = gesture.getStrokes();
 			float[] points = strokes.get(0).points; 
-//			Toast.makeText(this, "Получен жест! ", Toast.LENGTH_SHORT).show();
 			if(points[0]<points[points.length-1]){
                 //swipe left
             	if(currentWin>0)
@@ -290,6 +290,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		if(invUnread){
     		Animation update = AnimationUtils.loadAnimation(this, R.anim.update);
     		image.startAnimation(update);
+    		image.setBackgroundResource(R.drawable.btn_bg_selected);
     		invUnread = false;
     	}
 		image = (ImageButton) findViewById(R.id.title_button_2);
@@ -297,6 +298,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	if(varUnread){
     		Animation update = AnimationUtils.loadAnimation(this, R.anim.update);
     		image.startAnimation(update);
+    		image.setBackgroundResource(R.drawable.btn_bg_selected);
     		varUnread = false;
     	}	
     }	
@@ -345,7 +347,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     private void toggleInv(boolean vis) {
    		findViewById(R.id.inv).setVisibility(vis ? View.VISIBLE : View.GONE);
    		findViewById(R.id.title_sep_1).setVisibility(vis ? View.GONE : View.VISIBLE);
-   		findViewById(R.id.title_button_1).setVisibility(vis ? View.GONE : View.VISIBLE);    	
+   		findViewById(R.id.title_button_1).setVisibility(vis ? View.GONE : View.VISIBLE);
+   		if(vis)
+   			findViewById(R.id.title_button_1).setBackgroundDrawable(null);
     }
     
     private void toggleMain(boolean vis) {
@@ -359,7 +363,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
    		findViewById(R.id.vars_desc).setVisibility(vis ? View.VISIBLE : View.GONE);
    		findViewById(R.id.title_sep_2).setVisibility(vis ? View.GONE : View.VISIBLE);
    		findViewById(R.id.title_button_2).setVisibility(vis ? View.GONE : View.VISIBLE);    	
-    }
+   		if(vis)
+   			findViewById(R.id.title_button_2).setBackgroundDrawable(null);
+   }
     
     private Runnable timerUpdateTask = new Runnable() {
     	//Контекст UI
