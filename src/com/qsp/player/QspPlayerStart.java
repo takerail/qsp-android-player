@@ -184,6 +184,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	{
     		//Запускаем таймер
             timerHandler.postDelayed(timerUpdateTask, timerInterval);
+
+            //Запускаем музыку
+    	    PauseMusic(false);
     	}
     	waitForImageBox = false;
     	
@@ -200,6 +203,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         	WriteLog("onPause: pausing game");    	
     	    //Останавливаем таймер
     	    timerHandler.removeCallbacks(timerUpdateTask);
+    	    
+    	    //Приостанавливаем музыку
+    	    PauseMusic(true);
     	}
     	
     	WriteLog("onPause/");  
@@ -932,6 +938,29 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         } finally {
         	musicLock.unlock();
         }
+    }
+    
+    private void PauseMusic(boolean pause)
+    {
+    	//Контекст UI
+    	//pause == true : приостанавливаем
+    	//pause == false : запускаем
+        musicLock.lock();
+        try {
+	    	for (int i=0; i<mediaPlayersList.size(); i++)
+	    	{
+	    		MusicContent it = mediaPlayersList.elementAt(i);    		
+    			if (pause)
+    			{
+    				if (it.player.isPlaying())
+    					it.player.pause();
+    			}
+    			else
+    				it.player.start();
+	    	}
+	    } finally {
+	    	musicLock.unlock();
+	    }
     }
     
     //******************************************************************************
