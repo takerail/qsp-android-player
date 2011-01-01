@@ -17,7 +17,12 @@ import android.os.Looper;
 import android.text.Spanned;
 import android.text.style.ClickableSpan;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.Window;
 import android.view.View.OnClickListener;
@@ -31,7 +36,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -66,7 +70,11 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     public static final int WIN_INV = 0;
     public static final int WIN_MAIN = 1;
     public static final int WIN_EXT = 2;
+    public static final int SLOTS_MAX = 5;
 	Resources res;
+	
+	private Menu menuMain;
+	
 	boolean invUnread, varUnread;
 	int currentWin;
 	
@@ -77,6 +85,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 
 
 	public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
+    	//Контекст UI
 		if(gesture.getLength()>SWIPE_MIN) {
 			ArrayList<GestureStroke> strokes = gesture.getStrokes();
 			float[] points = strokes.get(0).points; 
@@ -98,8 +107,24 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	
 	public QspPlayerStart() {
     	//Контекст UI
+    	WriteLog("constructor\\");
+    	
+		gameIsRunning = false;
+		qspInited = false;
+		waitForImageBox = false;
+
+        //Создаем список для звуков и музыки
+        mediaPlayersList = new Vector<MusicContent>();
+        
+        //Создаем список для всплывающего меню
+        menuList = new Vector<QspMenuItem>();
+
+        //Создаем объект для таймера
+        timerHandler = new Handler();
+
+        //Запускаем поток библиотеки
+        StartLibThread();
 	}
-	
 
 	/** Called when the activity is first created. */
     @Override
@@ -112,26 +137,14 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         setContentView(R.layout.main);
         res = getResources();
 
-		gameIsRunning = false;
-		qspInited = false;
-		waitForImageBox = false;
 
         //подключаем жесты
         GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
         gestures.addOnGesturePerformedListener(this);
         
-   		//текущий вид - основное описание
-    	setCurrentWin(currentWin=WIN_MAIN);
-        
         //Создаем объект для обработки ссылок
         qspLinkMovementMethod = QspLinkMovementMethod.getQspInstance();
         qspLinkMovementMethod.setCatcher(this);
-        
-        //Создаем список для звуков и музыки
-        mediaPlayersList = new Vector<MusicContent>();
-        
-        //Создаем список для всплывающего меню
-        menuList = new Vector<QspMenuItem>();
         
         //Создаем диалог ввода текста
         LayoutInflater factory = LayoutInflater.from(uiContext);
@@ -150,52 +163,176 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         .setCancelable(false)
         .create();
         
-        //Создаем объект для таймера
-        timerHandler = new Handler();
-        
-        //Выбираем игру
-        BrowseGame(GetDefaultPath(), true);
-        
-        //Запускаем поток библиотеки
-        StartLibThread();
+        if (!gameIsRunning)
+        {
+       		//текущий вид - основное описание
+        	setCurrentWin(currentWin=WIN_MAIN);
+        	BrowseGame(GetDefaultPath(), true);
+        }
+
     	WriteLog("onCreate/");
     }
     
     @Override
     public void onResume()
     {
-    	WriteLog("onResume\\");    	
+    	WriteLog("onResume\\");
     	//Контекст UI
     	super.onResume();
     	
+    	if (gameIsRunning && !waitForImageBox)
+    	{
+    		//Запускаем таймер
+            timerHandler.postDelayed(timerUpdateTask, timerInterval);
+    	}
     	waitForImageBox = false;
+    	
     	WriteLog("onResume/");    	
     }
     
     @Override
     public void onPause() {
-    	WriteLog("onPause\\");    	
     	//Контекст UI
-    	super.onPause();
+    	WriteLog("onPause\\");
     	
-    	if (waitForImageBox)
+    	if (gameIsRunning && !waitForImageBox)
     	{
-        	WriteLog("onPause/ (waitForImageBox)");    	
-    		return;
+        	WriteLog("onPause: pausing game");    	
+    	    //Останавливаем таймер
+    	    timerHandler.removeCallbacks(timerUpdateTask);
     	}
-
-    	//Очищаем ВСЕ на выходе
-    	if (qspInited)
-    	{
-        	WriteLog("onPause: stopping game");    	
-    		StopGame();
-    	}
-    	//Останавливаем поток библиотеки
-   		StopLibThread();
+    	
     	WriteLog("onPause/");  
-    	finish();
+    	super.onPause();
     }
     
+    @Override
+    public void onDestroy() {
+    	//Контекст UI
+    	WriteLog("onDestroy\\");
+    	FreeResources();
+    	WriteLog("onDestroy/");  
+    	super.onDestroy();
+    }
+    
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event)  {
+    	//Контекст UI
+    	//Ловим кнопку "Back", и не закрываем активити, а только
+    	//отправляем в бэкграунд (как будто нажали "Home")
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+        	WriteLog("Back pressed! Going to background");
+        	moveTaskToBack(true);
+        	return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+    	//Контекст UI
+        // Сохраняем ссылку
+        menuMain = menu;
+        
+        // Загружаем меню из XML-файла
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+        
+        return true;
+    }
+    
+    @Override
+    public boolean onPrepareOptionsMenu (Menu menu) {
+    	//Контекст UI
+    	//Прячем или показываем группу пунктов меню "Начать заново", "Загрузить", "Сохранить"
+    	menu.setGroupVisible(R.id.menugroup_running, gameIsRunning);
+    	if (gameIsRunning)
+    	{
+    		//Заполняем слоты
+    		MenuItem loadItem = menu.findItem(R.id.menu_loadgame);
+    		LoadSlots(loadItem, "Загрузить");
+    		MenuItem saveItem = menu.findItem(R.id.menu_savegame);
+    		LoadSlots(saveItem, "Сохранить");
+    	}
+    	return true;
+    }
+    
+    private void LoadSlots(MenuItem rootItem, String name)
+    {
+    	//Контекст UI
+		if (rootItem == null)
+			return;
+		
+		SubMenu slotsMenu = null;
+		
+		int stub_id = rootItem.getItemId();
+		if (rootItem.hasSubMenu())
+		{
+			slotsMenu = rootItem.getSubMenu();
+			slotsMenu.clear();
+		}
+		else
+		{
+			int id = rootItem.getItemId();
+			menuMain.removeItem(id);
+			slotsMenu = menuMain.addSubMenu(Menu.NONE, id, Menu.NONE, name);
+			slotsMenu.setHeaderTitle("Выберите слот");
+		}
+		//!!! STUB - временно делаем неактивными пункты "Загрузить" и "Сохранить",
+		//до реализации этих опций
+		MenuItem stub_item = menuMain.findItem(stub_id);
+		stub_item.setEnabled(false);
+		
+		for (int i=0; i<SLOTS_MAX; i++)
+		{
+			String title = String.valueOf(i+1).concat(": ");
+			//!!! STUB - вставить проверку на наличие сохранения в этот слот
+			if (false)
+			{
+				//!!! STUB - вставить дату и время сохранения
+				title = title.concat("");
+			}
+			else
+				title = title.concat("[пусто]");
+			slotsMenu.add(title);
+		}
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	//Контекст UI
+        switch (item.getItemId()) {
+            case R.id.menu_gamestock:
+                //Выбираем игру
+                BrowseGame(GetDefaultPath(), true);
+                return true;
+
+            case R.id.menu_options:
+                //!!! STUB
+                return true;
+
+            case R.id.menu_about:
+            	//!!! STUB
+                return true;
+
+            case R.id.menu_newgame:
+            	String gameFile = curGameFile;
+            	StopGame(true);
+            	runGame(gameFile);
+                return true;
+
+            case R.id.menu_loadgame:
+            	//!!! STUB
+                return true;
+
+            case R.id.menu_savegame:
+            	//!!! STUB
+                return true;
+        }        
+        return false;
+    }
+
     private void WriteLog(String msg)
     {
     	Log.i("QSP", msg);
@@ -222,7 +359,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     /** возобновляет работу треда сохраненного в указателе parkThread */
     protected boolean setThreadUnpark()    {
-    	WriteLog("setThreadUnPark: enter ");    	
+    	WriteLog("setThreadUnPark: enter ");
     	//Контекст UI
         if (parkThread!=null && parkThread.isAlive()) {
             LockSupport.unpark(parkThread);
@@ -267,7 +404,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	//Контекст UI
     	//Останавливаем поток библиотеки
        	libThreadHandler.getLooper().quit();
-		libThread = null;		
+		libThread = null;
     	WriteLog("StopLibThread: success ");    	
     }
     //******************************************************************************
@@ -372,6 +509,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		public void run() {
 			libThreadHandler.post(new Runnable() {
 				public void run() {
+					if (!gameIsRunning)
+						return;
 					if (libraryThreadIsRunning)
 						return;
 			    	libraryThreadIsRunning = true;
@@ -424,6 +563,27 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	}
     }
     
+    private void FreeResources()
+    {
+    	//Контекст UI
+    	
+    	//Процедура "честного" высвобождения всех ресурсов - в т.ч. остановка потока библиотеки
+    	//Сейчас не вызывается вообще, т.к. у нас нет соотв. пункта меню.
+
+    	//Вызовется только при закрытии активити в обработчике onDestroy(завершение активити),
+    	//но этого не произойдет при нормальной работе, т.к. кнопка Back не закрывает, а только
+    	//останавливает активити.
+    	
+    	//Очищаем ВСЕ на выходе
+    	if (qspInited)
+    	{
+        	WriteLog("onDestroy: stopping game");
+    		StopGame(false);
+    	}
+    	//Останавливаем поток библиотеки
+   		StopLibThread();
+    }
+    
     private void runGame(String fileName)
     {
     	//Контекст UI
@@ -439,15 +599,18 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			return;
 		}
     	
+        final boolean inited = qspInited;
     	qspInited = true;
     	final String gameFileName = fileName;
+    	curGameFile = gameFileName;
         curGameDir = gameFileName.substring(0, gameFileName.lastIndexOf(File.separator, gameFileName.length() - 1) + 1);
         imgGetter.SetDirectory(curGameDir);
         imgGetter.SetScreenWidth(getWindow().getWindowManager().getDefaultDisplay().getWidth());
-
+        
         libThreadHandler.post(new Runnable() {
     		public void run() {
-    	        QSPInit();
+        		if (!inited)
+        			QSPInit();
     	        File tqsp = new File (gameFileName);
     	        FileInputStream fIn = null;
     	        int size = 0;
@@ -471,7 +634,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     				e.printStackTrace();
     			}
 
-    			final boolean gameLoaded = QSPLoadGameWorldFromData(inputBuffer, size, gameFileName );
+    			final boolean gameLoaded = QSPLoadGameWorldFromData(inputBuffer, size, gameFileName);
     			
     			runOnUiThread(new Runnable() {
     				public void run() {
@@ -515,7 +678,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	    	        			QSPRestartGame(true);
     	    	                	libraryThreadIsRunning = false;
     	    	        		}
-    	    	            } );
+    	    	            });
     	    	            
     	    	            gameIsRunning = true;
     	    	        }
@@ -530,15 +693,15 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	});
     }
     
-    private void StopGame()
+    private void StopGame(boolean restart)
     {
     	//Контекст UI
 		if (gameIsRunning)
-		{    			
+		{
             //останавливаем таймер
-            timerHandler.removeCallbacks(timerUpdateTask);
+    	    timerHandler.removeCallbacks(timerUpdateTask);
 
-            //останавливаем музыку
+    	    //останавливаем музыку
             CloseFileUI(null);
             
             //отключаем колбэки действий
@@ -554,18 +717,20 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             gameIsRunning = false;
 		}
 		curGameDir = "";
-		qspInited = false;
+		curGameFile = "";
 
 		//Очищаем библиотеку
-		if (libraryThreadIsRunning)
+		if (restart || libraryThreadIsRunning)
 			return;
+
+		qspInited = false;
         libThreadHandler.post(new Runnable() {
     		public void run() {
             	libraryThreadIsRunning = true;
         		QSPDeInit();
             	libraryThreadIsRunning = false;
     		}
-        } );
+        });
     }
     
     private void BrowseGame(String startpath, boolean start)
@@ -796,7 +961,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 					else
 						tvDesc.setText(txtMainDesc);
 				}
-			} );
+			});
     	}
     
     	//список действий
@@ -818,7 +983,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 				        //Разворачиваем список действий
 				        Utility.setListViewHeightBasedOnChildren(lvAct);
 					}
-				} );
+				});
 			}
 			else
 			{
@@ -835,7 +1000,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 				        //Разворачиваем список действий
 				        Utility.setListViewHeightBasedOnChildren(lvAct);
 					}
-				} );
+				});
 			}
     	}
         
@@ -849,7 +1014,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 						updateTitle();
 					}
 				}
-			} );
+			});
 	        int nObjsCount = QSPGetObjectsCount();
 			if (html)
 			{
@@ -864,7 +1029,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 				        ListView lvInv = (ListView)findViewById(R.id.inv);
 				        lvInv.setAdapter(new ArrayAdapter<Spanned>(uiContext, R.layout.obj_item, objs));
 					}
-				} );
+				});
 			}
 			else
 			{
@@ -879,7 +1044,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 				        ListView lvInv = (ListView)findViewById(R.id.inv);
 				        lvInv.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.obj_item, objs));
 					}
-				} );
+				});
 			}
     	}
         
@@ -902,7 +1067,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 					else
 						tvVarsDesc.setText(txtVarsDesc);
 				}
-			} );
+			});
     	}
     }
     
@@ -914,7 +1079,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			public void run() {
 				timerInterval = timeMsecs;
 			}
-		} );
+		});
     }
 
     private void ShowMessage(String message)
@@ -927,7 +1092,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		}
 
 		String msgValue = "";
-		if ( message != null )
+		if (message != null)
 			msgValue = message;
 		
 		dialogHasResult = false;
@@ -948,7 +1113,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		        .show();
 				WriteLog("ShowMessage(UI): dialog showed");
 			}
-		} );
+		});
     	
 		WriteLog("ShowMessage: parking library thread");
         while (!dialogHasResult) {
@@ -1006,9 +1171,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		    	File gfxFile = new File(prefix.concat(fileName));
 		        if (!gfxFile.exists())
 		        	return;
-		
-		        waitForImageBox = true;
 		        
+		        waitForImageBox = true;
+		
 		    	Intent imageboxIntent = new Intent();
 		    	imageboxIntent.setClassName("com.qsp.player", "com.qsp.player.QspImageBox");
 		    	Bundle b = new Bundle();
@@ -1029,7 +1194,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		}
     	
 		String promptValue = "";
-		if ( prompt != null )
+		if (prompt != null)
 			promptValue = prompt;
 		
 		dialogHasResult = false;
@@ -1043,7 +1208,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			    inputboxDialog.show();
 				WriteLog("InputBox(UI): dialog showed");
 			}
-		} );
+		});
     	
 		WriteLog("InputBox: parking library thread");
         while (!dialogHasResult) {
@@ -1113,7 +1278,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 				.show();
 			    WriteLog("ShowMenu(UI): dialog showed");
 			}
-		} );
+		});
     	
 		WriteLog("ShowMenu: parking library thread");
         while (!dialogHasResult) {
@@ -1301,6 +1466,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     String					startRootPath;
     String					backPath;
     String 					curGameDir;
+    String					curGameFile;
     Vector<MusicContent>	mediaPlayersList;
     Handler					timerHandler;
 	long					timerStartTime;
@@ -1354,7 +1520,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     public native int 		QSPGetLastErrorData();//!!!STUB
     public native String 	QSPGetErrorDesc(int errorNum);
     public native boolean 	QSPLoadGameWorld(String fileName);
-    public native boolean 	QSPLoadGameWorldFromData(byte data[], int dataSize, String fileName );
+    public native boolean 	QSPLoadGameWorldFromData(byte data[], int dataSize, String fileName);
     public native boolean 	QSPSaveGame(String fileName, boolean isRefresh);
     public native Object 	QSPSaveGameAsString(boolean isRefresh);//!!!STUB
     public native boolean 	QSPOpenSavedGame(String fileName, boolean isRefresh);
