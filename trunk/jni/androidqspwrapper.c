@@ -477,13 +477,13 @@ jboolean Java_com_qsp_player_QspPlayerStart_QSPLoadGameWorld(JNIEnv * env, jobje
 jboolean Java_com_qsp_player_QspPlayerStart_QSPLoadGameWorldFromData(JNIEnv * env, jobject this, jbyteArray data, jint dataSize, jstring fileName )
 {
 	//converting data
-	jbyte jbuf[dataSize];
+	jbyte* jbuf = malloc(dataSize * sizeof (jbyte));
+	if (jbuf == NULL)
+		return JNI_FALSE;
+
 	(*env)->GetByteArrayRegion(env, data, 0, dataSize, jbuf);
 	int size = dataSize;
-	char mydata[size];
-	int i;
-	for (i=0; i<size; i++)
-		mydata[i] = jbuf[i];
+	char* mydata = (char*)jbuf;
 
     /* assume the prompt string and user input has less than 128
         characters */
@@ -492,12 +492,14 @@ jboolean Java_com_qsp_player_QspPlayerStart_QSPLoadGameWorldFromData(JNIEnv * en
     const jbyte *str;
     str = (*env)->GetStringUTFChars(env, fileName, NULL);
     if (str == NULL) {
+	    free(jbuf);
         return JNI_FALSE; /* OutOfMemoryError already thrown */
     }
 
     jboolean result = QSPLoadGameWorldFromData(mydata, size, str);
     (*env)->ReleaseStringUTFChars(env, fileName, str);
 
+    free(jbuf);
 	return result;
 }
 ///* Сохранение состояния в файл */
