@@ -12,6 +12,7 @@ import android.gesture.GestureStroke;
 import android.gesture.GestureOverlayView.OnGesturePerformedListener;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Spanned;
@@ -810,7 +811,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	//Контекст UI
 
     	//Возвращаем путь к папке с играми.
-    	String flashCard = "/mnt/sdcard/";    	
+    	File sdDir = Environment.getExternalStorageDirectory();
+    	String flashCard = sdDir.getPath();
     	String tryFull = flashCard + "/qsp/games/";
     	File f = new File(tryFull);
     	if (f.exists())
