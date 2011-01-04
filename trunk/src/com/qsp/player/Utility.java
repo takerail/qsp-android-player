@@ -1,8 +1,12 @@
 package com.qsp.player;
 
+import java.io.File;
+
+import android.os.Environment;
 import android.text.Html;
 import android.text.Html.ImageGetter;
 import android.text.Spanned;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListAdapter;
@@ -37,5 +41,24 @@ public class Utility {
     		result = Html.fromHtml(str, imgGetter, null);
     	}
     	return result;
+    }
+
+    public static String GetDefaultPath()
+    {
+    	//Возвращаем путь к папке с играми.
+    	if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED))
+    		return null;
+    	File sdDir = Environment.getExternalStorageDirectory();
+    	String flashCard = sdDir.getPath();
+    	String tryFull = flashCard + "/qsp/games/";
+    	File f = new File(tryFull);
+    	if (f.exists())
+    		return tryFull;    	
+    	return flashCard;
+    }
+
+    public static void WriteLog(String msg)
+    {
+    	Log.i("QSP", msg);
     }
 }
