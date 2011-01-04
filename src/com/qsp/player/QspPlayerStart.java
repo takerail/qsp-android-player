@@ -72,6 +72,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     public static final int WIN_MAIN = 1;
     public static final int WIN_EXT = 2;
     public static final int SLOTS_MAX = 5;
+    public static final int ACTIVITY_SELECT_GAME = 0;
 	Resources res;
 	
 	private Menu menuMain;
@@ -108,7 +109,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	
 	public QspPlayerStart() {
     	//Контекст UI
-    	WriteLog("constructor\\");
+    	Utility.WriteLog("constructor\\");
     	
 		gameIsRunning = false;
 		qspInited = false;
@@ -130,7 +131,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {    	
-    	WriteLog("onCreate\\");
+    	Utility.WriteLog("onCreate\\");
     	//Контекст UI
         super.onCreate(savedInstanceState);
         //будем использовать свой вид заголовка
@@ -157,7 +158,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             	EditText edit = (EditText)inputboxDialog.findViewById(R.id.inputbox_edit);
             	inputboxResult = edit.getText().toString();
 				dialogHasResult = true;
-				WriteLog("InputBox(UI): OK clicked, unparking library thread");
+				Utility.WriteLog("InputBox(UI): OK clicked, unparking library thread");
             	setThreadUnpark();
             }
         })
@@ -168,16 +169,18 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         {
        		//текущий вид - основное описание
         	setCurrentWin(currentWin=WIN_MAIN);
-        	BrowseGame(GetDefaultPath(), true);
+        	Intent myIntent = new Intent();
+        	myIntent.setClassName("com.qsp.player", "com.qsp.player.QspGameStock");
+        	startActivityForResult(myIntent, ACTIVITY_SELECT_GAME);
         }
 
-    	WriteLog("onCreate/");
+    	Utility.WriteLog("onCreate/");
     }
     
     @Override
     public void onResume()
     {
-    	WriteLog("onResume\\");
+    	Utility.WriteLog("onResume\\");
     	//Контекст UI
     	super.onResume();
     	
@@ -191,17 +194,17 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	}
     	waitForImageBox = false;
     	
-    	WriteLog("onResume/");    	
+    	Utility.WriteLog("onResume/");    	
     }
     
     @Override
     public void onPause() {
     	//Контекст UI
-    	WriteLog("onPause\\");
+    	Utility.WriteLog("onPause\\");
     	
     	if (gameIsRunning && !waitForImageBox)
     	{
-        	WriteLog("onPause: pausing game");    	
+        	Utility.WriteLog("onPause: pausing game");    	
     	    //Останавливаем таймер
     	    timerHandler.removeCallbacks(timerUpdateTask);
     	    
@@ -209,16 +212,16 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	    PauseMusic(true);
     	}
     	
-    	WriteLog("onPause/");  
+    	Utility.WriteLog("onPause/");  
     	super.onPause();
     }
     
     @Override
     public void onDestroy() {
     	//Контекст UI
-    	WriteLog("onDestroy\\");
+    	Utility.WriteLog("onDestroy\\");
     	FreeResources();
-    	WriteLog("onDestroy/");  
+    	Utility.WriteLog("onDestroy/");  
     	super.onDestroy();
     }
     
@@ -228,7 +231,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	//Ловим кнопку "Back", и не закрываем активити, а только
     	//отправляем в бэкграунд (как будто нажали "Home")
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-        	WriteLog("Back pressed! Going to background");
+        	Utility.WriteLog("Back pressed! Going to background");
         	moveTaskToBack(true);
         	return true;
         }
@@ -312,7 +315,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         switch (item.getItemId()) {
             case R.id.menu_gamestock:
                 //Выбираем игру
-                BrowseGame(GetDefaultPath(), true);
+            	Intent myIntent = new Intent();
+            	myIntent.setClassName("com.qsp.player", "com.qsp.player.QspGameStock");
+            	startActivityForResult(myIntent, ACTIVITY_SELECT_GAME);
                 return true;
 
             case R.id.menu_options:
@@ -340,9 +345,19 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         return false;
     }
 
-    private void WriteLog(String msg)
-    {
-    	Log.i("QSP", msg);
+    protected void onActivityResult(int requestCode, int resultCode,
+            Intent data) {
+        if (requestCode == ACTIVITY_SELECT_GAME) {
+            if (resultCode == RESULT_OK) {
+                //Игра выбрана, запускаем ее
+            	if (data == null)
+            		return;
+            	String file_name = data.getStringExtra("file_name");
+            	if (file_name == null)
+            		return;
+            	runGame(file_name);
+            }
+        }
     }
     
     //******************************************************************************
@@ -352,42 +367,42 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     //******************************************************************************
     /** паркует-останавливает указанный тред, и сохраняет на него указатель в parkThread */
     protected void setThreadPark()    {
-    	WriteLog("setThreadPark: enter ");    	
+    	Utility.WriteLog("setThreadPark: enter ");    	
     	//Контекст библиотеки
     	if (libThread == null)
     	{
-    		WriteLog("setThreadPark: failed, libthread is null");
+    		Utility.WriteLog("setThreadPark: failed, libthread is null");
     		return;
     	}
         parkThread = libThread;
         LockSupport.park();
-    	WriteLog("setThreadPark: success ");    	
+    	Utility.WriteLog("setThreadPark: success ");    	
     }
     
     /** возобновляет работу треда сохраненного в указателе parkThread */
     protected boolean setThreadUnpark()    {
-    	WriteLog("setThreadUnPark: enter ");
+    	Utility.WriteLog("setThreadUnPark: enter ");
     	//Контекст UI
         if (parkThread!=null && parkThread.isAlive()) {
             LockSupport.unpark(parkThread);
-        	WriteLog("setThreadUnPark: success ");    	
+        	Utility.WriteLog("setThreadUnPark: success ");    	
             return true;
         }
-    	WriteLog("setThreadUnPark: failed, ");
+    	Utility.WriteLog("setThreadUnPark: failed, ");
     	if (parkThread==null)
-        	WriteLog("parkThread is null ");
+        	Utility.WriteLog("parkThread is null ");
     	else
-        	WriteLog("parkThread is dead ");
+        	Utility.WriteLog("parkThread is dead ");
         return false;
     }
     
     protected void StartLibThread()
     {
-    	WriteLog("StartLibThread: enter ");    	
+    	Utility.WriteLog("StartLibThread: enter ");    	
     	//Контекст UI
     	if (libThread!=null)
     	{
-        	WriteLog("StartLibThread: failed, libThread is null");    	
+        	Utility.WriteLog("StartLibThread: failed, libThread is null");    	
     		return;
     	}
     	//Запускаем поток библиотеки
@@ -395,24 +410,24 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             public void run() {
     			Looper.prepare();
     			libThreadHandler = new Handler();
-            	WriteLog("LibThread runnable: libThreadHandler is set");    	
+            	Utility.WriteLog("LibThread runnable: libThreadHandler is set");    	
         		Looper.loop();
-            	WriteLog("LibThread runnable: library thread exited");    	
+            	Utility.WriteLog("LibThread runnable: library thread exited");    	
             }
         };
         libThread = t;
         t.start();
-    	WriteLog("StartLibThread: success ");    	
+    	Utility.WriteLog("StartLibThread: success ");    	
     }
     
     protected void StopLibThread()
     {
-    	WriteLog("StopLibThread: enter ");    	
+    	Utility.WriteLog("StopLibThread: enter ");    	
     	//Контекст UI
     	//Останавливаем поток библиотеки
        	libThreadHandler.getLooper().quit();
 		libThread = null;
-    	WriteLog("StopLibThread: success ");    	
+    	Utility.WriteLog("StopLibThread: success ");    	
     }
     //******************************************************************************
     //******************************************************************************
@@ -529,32 +544,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		}
 	};
     
-    android.content.DialogInterface.OnClickListener browseFileClick = new DialogInterface.OnClickListener()
-    {
-    	//Контекст UI
-		@Override
-		public void onClick(DialogInterface dialog, int which) 
-		{
-			boolean canGoUp = backPath.compareTo("") != 0;
-			int shift = 0;
-			if (canGoUp)
-				shift = 1;
-			if (which == 0 && canGoUp)
-			{
-				dialog.dismiss();
-				BrowseGame(backPath, false);
-			}
-			else
-			{
-				File f = qspGames.get(which - shift);
-				if (f.isDirectory())
-					BrowseGame(f.getPath(), false);
-				else
-					runGame(f.getPath());
-			}
-		}    	
-    };
-    
     //LINKS HACKS
     static class InternalURLSpan extends ClickableSpan {
     	//Контекст UI
@@ -584,7 +573,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	//Очищаем ВСЕ на выходе
     	if (qspInited)
     	{
-        	WriteLog("onDestroy: stopping game");
+        	Utility.WriteLog("onDestroy: stopping game");
     		StopGame(false);
     	}
     	//Останавливаем поток библиотеки
@@ -596,13 +585,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	//Контекст UI
     	if (libThreadHandler==null)
     	{
-    		WriteLog("runGame: failed, libThreadHandler is null");
+    		Utility.WriteLog("runGame: failed, libThreadHandler is null");
     		return;
     	}
 
 		if (libraryThreadIsRunning)
 		{
-    		WriteLog("runGame: failed, library thread is already running");
+    		Utility.WriteLog("runGame: failed, library thread is already running");
 			return;
 		}
     	
@@ -651,7 +640,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	    	        {
         		    		//init acts callbacks
     	    	            ListView lvAct = (ListView)findViewById(R.id.acts);
-    	    	            lvAct.setTextFilterEnabled(true);
     	    	            lvAct.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
     	    	            lvAct.setFocusableInTouchMode(true);
     	    	            lvAct.setFocusable(true);
@@ -661,7 +649,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 
     	    	            //init objs callbacks
     	    	            ListView lvInv = (ListView)findViewById(R.id.inv);
-    	    	            lvInv.setTextFilterEnabled(true);
     	    	            lvInv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
     	    	            lvInv.setFocusableInTouchMode(true);
     	    	            lvInv.setFocusable(true);
@@ -740,86 +727,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         });
     }
     
-    private void BrowseGame(String startpath, boolean start)
-    {
-    	//Контекст UI
-    	if (startpath == null)
-    		return;
-    	
-    	//Устанавливаем путь "выше"    	
-    	if (!start)
-    		if (startRootPath.compareTo(startpath) == 0)
-    			start = true;
-    	if (!start)
-    	{
-    		int slash = startpath.lastIndexOf(File.separator, startpath.length() - 2);
-    		if (slash >= 0)
-    			backPath = startpath.substring(0, slash + 1);
-    		else
-    			start = true;
-    	}
-    	if (start)
-    	{
-    		startRootPath = startpath;
-    		backPath = "";
-    	}
-    	
-        //Ищем все файлы .qsp и .gam в корне флэшки
-        File sdcardRoot = new File (startpath);
-        File[] sdcardFiles = sdcardRoot.listFiles();        
-        qspGames = new ArrayList<File>();
-        //Сначала добавляем все папки
-        for (File currentFile : sdcardFiles)
-        {
-        	if (currentFile.isDirectory() && !currentFile.isHidden() && !currentFile.getName().startsWith("."))
-        		qspGames.add(currentFile);
-        }
-        //Потом добавляем все QSP-игры
-        for (File currentFile : sdcardFiles)
-        {
-        	if (!currentFile.isHidden() && (currentFile.getName().endsWith(".qsp") || currentFile.getName().endsWith(".gam")))
-        		qspGames.add(currentFile);
-        }
-        
-        //Если мы не на самом верхнем уровне, то добавляем ссылку 
-        int shift = 0;
-        if (!start)
-        	shift = 1;
-        int total = qspGames.size() + shift;
-        final CharSequence[] items = new String[total];
-        if (!start)
-            items[0] = "[..]";
-        for (int i=shift; i<total; i++)
-        {
-        	File f = qspGames.get(i - shift);
-        	String displayName = f.getName();
-        	if (f.isDirectory())
-        		displayName = "["+ displayName + "]";
-        	items[i] = displayName;
-        }
-        
-        //Показываем диалог выбора файла
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Выберите файл с игрой");
-        builder.setItems(items, browseFileClick);
-        AlertDialog alert = builder.create();
-        alert.show();
-    }
-    
-    private String GetDefaultPath()
-    {
-    	//Контекст UI
-
-    	//Возвращаем путь к папке с играми.
-    	File sdDir = Environment.getExternalStorageDirectory();
-    	String flashCard = sdDir.getPath();
-    	String tryFull = flashCard + "/qsp/games/";
-    	File f = new File(tryFull);
-    	if (f.exists())
-    		return tryFull;    	
-    	return flashCard;
-    }
-
     private void PlayFileUI(String file, int volume)
     {
     	//Контекст UI
@@ -868,7 +775,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			    	for (int i=0; i<mediaPlayersList.size(); i++)
 			    	{
 			    		MusicContent it = mediaPlayersList.elementAt(i);    		
-			    		if (it.path.compareTo(fileName)==0)
+			    		if (it.path.equals(fileName))
 			    		{
 			    			mediaPlayersList.remove(it);
 			    			break;
@@ -902,7 +809,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	    	for (int i=0; i<mediaPlayersList.size(); i++)
 	    	{
 	    		MusicContent it = mediaPlayersList.elementAt(i);
-	    		if (it.path.compareTo(file)==0)
+	    		if (it.path.equals(file))
 	    		{
 	    			foundPlaying = true;
 	    			break;
@@ -928,7 +835,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	    	for (int i=0; i<mediaPlayersList.size(); i++)
 	    	{
 	    		MusicContent it = mediaPlayersList.elementAt(i);    		
-	    		if (bCloseAll || it.path.compareTo(file)==0)
+	    		if (bCloseAll || it.path.equals(file))
 	    		{
 	    			if (it.player.isPlaying())
 	    				it.player.stop();
@@ -1118,7 +1025,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	//Контекст библиотеки
 		if (libThread==null)
 		{
-			WriteLog("ShowMessage: failed, libThread is null");
+			Utility.WriteLog("ShowMessage: failed, libThread is null");
 			return;
 		}
 
@@ -1136,22 +1043,22 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int whichButton) {
 						dialogHasResult = true;
-						WriteLog("ShowMessage(UI): OK clicked, unparking library thread");
+						Utility.WriteLog("ShowMessage(UI): OK clicked, unparking library thread");
 		            	setThreadUnpark();
 		            }
 		        })
 		        .setCancelable(false)
 		        .show();
-				WriteLog("ShowMessage(UI): dialog showed");
+				Utility.WriteLog("ShowMessage(UI): dialog showed");
 			}
 		});
     	
-		WriteLog("ShowMessage: parking library thread");
+		Utility.WriteLog("ShowMessage: parking library thread");
         while (!dialogHasResult) {
         	setThreadPark();
         }
         parkThread = null;
-		WriteLog("ShowMessage: library thread unparked, finishing");
+		Utility.WriteLog("ShowMessage: library thread unparked, finishing");
     }
     
     private void PlayFile(String file, int volume)
@@ -1220,7 +1127,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	//Контекст библиотеки
 		if (libThread==null)
 		{
-			WriteLog("InputBox: failed, libThread is null");
+			Utility.WriteLog("InputBox: failed, libThread is null");
 			return "";
 		}
     	
@@ -1237,16 +1144,16 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 				inputboxResult = "";
 			    inputboxDialog.setTitle(inputboxTitle);
 			    inputboxDialog.show();
-				WriteLog("InputBox(UI): dialog showed");
+				Utility.WriteLog("InputBox(UI): dialog showed");
 			}
 		});
     	
-		WriteLog("InputBox: parking library thread");
+		Utility.WriteLog("InputBox: parking library thread");
         while (!dialogHasResult) {
         	setThreadPark();
         }
         parkThread = null;
-		WriteLog("InputBox: library thread unparked, finishing");
+		Utility.WriteLog("InputBox: library thread unparked, finishing");
     	return inputboxResult;
     }
     
@@ -1270,7 +1177,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	//Контекст библиотеки
 		if (libThread==null)
 		{
-			WriteLog("ShowMenu: failed, libThread is null");
+			Utility.WriteLog("ShowMenu: failed, libThread is null");
 			return;
 		}
     	
@@ -1294,7 +1201,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		    		{
 		               	menuResult = which;
 		    			dialogHasResult = true;
-		    			WriteLog("ShowMenu(UI): menu item selected, unparking library thread");
+		    			Utility.WriteLog("ShowMenu(UI): menu item selected, unparking library thread");
 		               	setThreadUnpark();
 		    		}
 		        })
@@ -1302,21 +1209,21 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 					@Override
 					public void onCancel(DialogInterface dialog) {
 						dialogHasResult = true;
-						WriteLog("ShowMenu(UI): menu cancelled, unparking library thread");
+						Utility.WriteLog("ShowMenu(UI): menu cancelled, unparking library thread");
 			           	setThreadUnpark();
 					}
 				})
 				.show();
-			    WriteLog("ShowMenu(UI): dialog showed");
+			    Utility.WriteLog("ShowMenu(UI): dialog showed");
 			}
 		});
     	
-		WriteLog("ShowMenu: parking library thread");
+		Utility.WriteLog("ShowMenu: parking library thread");
         while (!dialogHasResult) {
         	setThreadPark();
         }
         parkThread = null;
-		WriteLog("ShowMenu: library thread unparked, finishing");
+		Utility.WriteLog("ShowMenu: library thread unparked, finishing");
     	
 		if (menuResult != -1)
 			QSPSelectMenuItem(menuResult);
@@ -1338,7 +1245,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     {
     	//Контекст UI
     	String tag = href.substring(0, 5).toLowerCase();
-    	if (tag.compareTo("exec:") == 0)
+    	if (tag.equals("exec:"))
     	{
     		if (libraryThreadIsRunning)
     			return;
@@ -1493,9 +1400,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     int						menuResult;
     AlertDialog				inputboxDialog;
     
-    ArrayList<File> 		qspGames;
-    String					startRootPath;
-    String					backPath;
     String 					curGameDir;
     String					curGameFile;
     Vector<MusicContent>	mediaPlayersList;
