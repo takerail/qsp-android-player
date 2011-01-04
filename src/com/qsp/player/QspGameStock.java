@@ -1,14 +1,22 @@
 package com.qsp.player;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.http.util.ByteArrayBuffer;
 import org.xmlpull.v1.XmlPullParser;
@@ -16,11 +24,13 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.app.TabActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -71,6 +81,11 @@ public class QspGameStock extends TabActivity {
 	private String xmlGameListCached;
 	private boolean openDefaultTab;	
 
+    public static final int MAX_SPINNER = 1024;
+	
+	private String _zipFile; 
+	private String _location; 
+	
     String					startRootPath;
     String					backPath;
     ArrayList<File> 		qspGamesBrowseList;
@@ -80,6 +95,7 @@ public class QspGameStock extends TabActivity {
 	ListView lvAll;
 	ListView lvDownloaded;
 	ListView lvStarred;
+    ProgressDialog downloadProgressDialog;
 	
 	
 
@@ -176,17 +192,189 @@ public class QspGameStock extends TabActivity {
     		else
     		{
     			//Игра не загружена, пытаемся загрузить с сервера
-    			//!!! STUB
+    			DownloadGame(selectedGame.file_url, selectedGame.title);
     		}
     	}
     };
+    
+    private void DownloadGame(String file_url, String name)
+    {
+    	final String urlToDownload = file_url;
+    	final String unzipLocation = Utility.GetDefaultPath().concat("/").concat(name).concat("/");
+    	final String gameName = name;
+    	downloadProgressDialog = new ProgressDialog(uiContext);
+    	downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+    	downloadProgressDialog.setMax(MAX_SPINNER);
+    	Thread t = new Thread() {
+            public void run() {
+            	try {
+            		//set the download URL, a url that points to a file on the internet
+            		//this is the file to be downloaded
+            		URL url = new URL(urlToDownload);
+
+            		//create the new connection
+            		HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+            		//set up some things on the connection
+            		urlConnection.setRequestMethod("GET");
+            		urlConnection.setDoOutput(true);
+
+            		//and connect!
+            		urlConnection.connect();
+
+            		//set the path where we want to save the file
+            		//in this case, going to save it on the root directory of the
+            		//sd card.
+            		File SDCardRoot = Environment.getExternalStorageDirectory();
+            		
+            		File cacheDir = new File (SDCardRoot.getPath().concat("/Android/data/com.qsp.player/cache/"));
+            		if (!cacheDir.exists())
+            		{
+            			if (!cacheDir.mkdirs())
+            			{
+            				Utility.WriteLog("Cannot create cache folder");
+            				return;
+            			}
+            		}
+
+            		//create a new file, specifying the path, and the filename
+            		//which we want to save the file as.
+            		String filename = String.valueOf(System.currentTimeMillis()).concat("_game.zip");
+            		
+            		File file = new File(cacheDir, filename);
+
+            		//this will be used to write the downloaded data into the file we created
+            		FileOutputStream fileOutput = new FileOutputStream(file);
+
+            		//this will be used in reading the data from the internet
+            		InputStream inputStream = urlConnection.getInputStream();
+
+            		//create a buffer...
+            		byte[] buffer = new byte[1024];
+            		int bufferLength = 0; //used to store a temporary size of the buffer
+
+            		//now, read through the input buffer and write the contents to the file
+            		while ( (bufferLength = inputStream.read(buffer)) > 0 ) {
+            			//add the data in the buffer to the file in the file output stream (the file on the sd card
+            			fileOutput.write(buffer, 0, bufferLength);
+            			//this is where you would do something to report the prgress, like this maybe
+            			updateSpinnerProgress(true, gameName, "Скачивается...", bufferLength);
+            		}
+            		//close the output stream when done
+            		fileOutput.close();
+            		
+            		updateSpinnerProgress(false, "", "", 0);
+
+            		//Unzip
+            		Unzip(file.getPath(), unzipLocation, gameName);
+            	 
+            		updateSpinnerProgress(false, "", "", 0);
+
+            		runOnUiThread(new Runnable() {
+            			public void run() {
+            				RefreshLists();
+            			}
+            		});
+
+            	//catch some possible errors...
+            	} catch (MalformedURLException e) {
+            		e.printStackTrace();
+            	} catch (IOException e) {
+            		e.printStackTrace();
+            	}
+            }
+        };
+        
+        t.start();
+    }
+    
+    private void Unzip(String zipFile, String location, String gameName)
+    {
+    	_zipFile = zipFile;
+    	_location = location;
+
+    	updateSpinnerProgress(true, gameName, "Распаковывается...", -1);
+
+    	_dirChecker("");
+
+    	try  { 
+    		FileInputStream fin = new FileInputStream(_zipFile); 
+    		ZipInputStream zin = new ZipInputStream(fin);
+    		BufferedInputStream in = new BufferedInputStream(zin);
+
+    		ZipEntry ze = null; 
+    		while ((ze = zin.getNextEntry()) != null) { 
+    			Log.v("Decompress", "Unzipping " + ze.getName()); 
+
+    			if(ze.isDirectory()) { 
+    				_dirChecker(ze.getName()); 
+    			} else { 
+    				FileOutputStream fout = new FileOutputStream(_location + ze.getName()); 
+    				BufferedOutputStream out = new BufferedOutputStream(fout);
+    				byte b[] = new byte[1024];
+    				int n;
+    				while ((n = in.read(b,0,1024)) >= 0) {
+    					out.write(b,0,n);
+    					updateSpinnerProgress(true, gameName, "Распаковывается...", n);
+    				}
+
+    				zin.closeEntry();
+    				out.close();
+    				fout.close();
+    			} 
+
+    		} 
+    		in.close();
+    		zin.close(); 
+    	} catch(Exception e) { 
+    		Log.e("Decompress", "unzip", e); 
+    	} 
+    }
+    
+    private void _dirChecker(String dir) { 
+    	File f = new File(_location + dir); 
+
+    	if(!f.isDirectory()) { 
+    		f.mkdirs(); 
+    	} 
+    }
+
+    private void updateSpinnerProgress(boolean enabled, String title, String message, int nProgress)
+    {
+    	final boolean show = enabled;
+    	final String dialogTitle = title;
+    	final String dialogMessage = message;
+    	final int nCount = nProgress;
+		runOnUiThread(new Runnable() {
+			public void run() {
+				if (!show)
+				{
+					downloadProgressDialog.dismiss();
+					return;
+				}
+				if (nCount>=0)
+					downloadProgressDialog.incrementProgressBy(nCount);
+				else
+					downloadProgressDialog.setProgress(0);
+				if (show && !downloadProgressDialog.isShowing())
+				{
+					downloadProgressDialog.setTitle(dialogTitle);
+					downloadProgressDialog.setMessage(dialogMessage);
+					downloadProgressDialog.show();
+				}
+			}
+		});
+    }
 
     private void RefreshLists()
     {
-		if (!ParseGameList(xmlGameListCached))
-			return;
+    	gamesMap.clear();
+    	
+		ParseGameList(xmlGameListCached);
+
 		if (!ScanDownloadedGames())
 			return;
+		
 		GetCheckedGames();
 		
 		
@@ -195,7 +383,6 @@ public class QspGameStock extends TabActivity {
     
     private boolean ScanDownloadedGames()
     {
-    	//!!! STUB
     	//Заполняем список скачанных игр
     	
     	String path = Utility.GetDefaultPath();
@@ -254,7 +441,6 @@ public class QspGameStock extends TabActivity {
    
     private void RefreshAllTabs()
     {
-    	//!!! STUB
     	//Выводим списки игр на экран
 
     	//Все
@@ -304,7 +490,6 @@ public class QspGameStock extends TabActivity {
     private boolean ParseGameList(String xml)
     {
     	boolean parsed = false;
-    	gamesMap.clear();
     	GameItem curItem = null;
     	try {
     		XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
@@ -420,6 +605,11 @@ public class QspGameStock extends TabActivity {
     			});
             } catch (Exception e) {
             	Utility.WriteLog("Exception occured while trying to load game list");
+    			runOnUiThread(new Runnable() {
+    				public void run() {
+    					RefreshLists();
+    				}
+    			});
             }
         }
     };
