@@ -37,8 +37,18 @@ public class Utility {
     	Spanned result = Html.fromHtml("");
     	if (str!=null && str.length() > 0)
     	{
-    		str = str.replaceAll("\\n", "<br>");
+    		str = str.replaceAll("\r", "<br>");
     		result = Html.fromHtml(str, imgGetter, null);
+    	}
+    	return result;
+    }
+    
+    public static String QspStrToStr(String str)
+    {
+    	String result = "";
+    	if (str!=null && str.length() > 0)
+    	{
+    		result = str.replaceAll("\r", "");
     	}
     	return result;
     }
