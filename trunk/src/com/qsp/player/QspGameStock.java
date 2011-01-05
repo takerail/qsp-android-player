@@ -452,7 +452,7 @@ public class QspGameStock extends TabActivity {
         	gamesAll[i] = e.getKey();
         	i++;
         }
-        lvAll.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.act_item, gamesAll));
+        lvAll.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.game_item, gamesAll));
 
         //Загруженные
 		Vector<String> gamesDownloaded = new Vector<String>();
@@ -462,12 +462,12 @@ public class QspGameStock extends TabActivity {
         		gamesDownloaded.add(e.getKey());
         }
         String []gamesD = gamesDownloaded.toArray(new String[gamesDownloaded.size()]);
-        lvDownloaded.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.act_item, gamesD));
+        lvDownloaded.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.game_item, gamesD));
         
         //Отмеченные
         //!!! STUB
         String []gamesStarred = new String[0];
-        lvStarred.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.act_item, gamesStarred));
+        lvStarred.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.game_item, gamesStarred));
         
         //Определяем, какую вкладку открыть
         if (openDefaultTab)
