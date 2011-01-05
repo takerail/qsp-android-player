@@ -895,7 +895,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 						tvDesc.setMovementMethod(QspLinkMovementMethod.getInstance());
 					}
 					else
-						tvDesc.setText(txtMainDesc);
+						tvDesc.setText(Utility.QspStrToStr(txtMainDesc));
 				}
 			});
     	}
