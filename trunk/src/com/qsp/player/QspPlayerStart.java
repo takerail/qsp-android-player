@@ -274,7 +274,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		
 		SubMenu slotsMenu = null;
 		
-		int stub_id = rootItem.getItemId();
 		if (rootItem.hasSubMenu())
 		{
 			slotsMenu = rootItem.getSubMenu();
@@ -287,19 +286,16 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			slotsMenu = menuMain.addSubMenu(Menu.NONE, id, Menu.NONE, name);
 			slotsMenu.setHeaderTitle("Выберите слот");
 		}
-		//!!! STUB - временно делаем неактивными пункты "Загрузить" и "Сохранить",
-		//до реализации этих опций
-		MenuItem stub_item = menuMain.findItem(stub_id);
-		stub_item.setEnabled(false);
 		
 		for (int i=0; i<SLOTS_MAX; i++)
 		{
-			String title = String.valueOf(i+1).concat(": ");
-			//!!! STUB - вставить проверку на наличие сохранения в этот слот
-			if (false)
+			String title = String.valueOf(i + 1).concat(": ");
+			String Slotname = String.valueOf(i + 1).concat(".sav");
+			File checkSlot = new File(curGameDir.concat(Slotname));
+			if (checkSlot.exists())
 			{
-				//!!! STUB - вставить дату и время сохранения
-				title = title.concat("");
+				String datetime = (String) android.text.format.DateFormat.format("yyyy-MM-dd hh:mm:ss", checkSlot.lastModified());
+				title = title.concat(datetime);
 			}
 			else
 				title = title.concat("[пусто]");
@@ -339,8 +335,58 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             case R.id.menu_savegame:
             	//!!! STUB
                 return true;
+                
+            default:
+            {
+            	MenuItem l = menuMain.findItem(R.id.menu_loadgame);
+            	SubMenu ls = l.getSubMenu();
+            	if (ls != null)
+            	{
+            		for (int i=0;i<SLOTS_MAX; i++)
+            		{
+            			MenuItem li = ls.getItem(i);
+            			if (li == item)
+            			{
+                   			LoadSlot(i + 1);                   			
+            			}
+            		}
+            	}
+            	MenuItem s = menuMain.findItem(R.id.menu_savegame);
+            	SubMenu ss = s.getSubMenu();
+            	if (ss != null)
+            	{
+            		for (int i=0;i<SLOTS_MAX; i++)
+            		{
+            			MenuItem si = ss.getItem(i);
+            			if (si == item)
+            			{
+                   			SaveSlot(i + 1);
+            			}
+            		}
+            	}
+            }
+            	break;
         }        
         return false;
+    }
+    
+    private void LoadSlot(int index)
+    {
+    	String path = curGameDir.concat(String.valueOf(index)).concat(".sav");
+    	File f = new File(path);
+    	if (f.exists())
+    	{
+    		//!!! STUB
+    		//QSPOpenSavedGameFromData(String str, boolean isRefresh);
+    	}
+    }
+    
+    private void SaveSlot(int index)
+    {
+    	String path = curGameDir.concat(String.valueOf(index)).concat(".sav");
+    	File f = new File(path);
+    	//!!! STUB
+    	//QSPSaveGameAsString(boolean isRefresh);
     }
 
     protected void onActivityResult(int requestCode, int resultCode,
