@@ -10,6 +10,7 @@ import android.gesture.Gesture;
 import android.gesture.GestureOverlayView;
 import android.gesture.GestureStroke;
 import android.gesture.GestureOverlayView.OnGesturePerformedListener;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +24,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
@@ -33,6 +35,7 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -76,6 +79,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	private Menu menuMain;
 	
 	boolean invUnread, varUnread;
+	int invBack, varBack;
 	int currentWin;
 	
 	final private Context uiContext = this;
@@ -103,7 +107,56 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			}
 			setCurrentWin(currentWin); 				
 		}
-	}	
+	}
+	
+	private class QSPItem {
+		private Drawable icon;
+		private String text;
+		
+		public QSPItem(Drawable i, String t) {
+			icon = i;
+			text = t;
+		}
+		
+		public Drawable getIcon() {
+			return icon;
+		}
+		
+		public String getText() {
+			return text;
+		}
+	}
+	
+	private class QSPListAdapter extends ArrayAdapter<QSPItem> {
+		
+		private QSPItem [] items;
+		
+		public QSPListAdapter(Context context, int textViewResourceId, QSPItem[] acts) {
+            super(context, textViewResourceId, acts);
+            this.items = acts;
+		}    
+
+		@Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+                View v = convertView;
+                if (v == null) {
+                    LayoutInflater vi = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                    v = vi.inflate(R.layout.act_item, null);
+                }
+                QSPItem o = items[position];
+                if (o != null) {
+                        ImageView iv = (ImageView) v.findViewById(R.id.act_icon);
+                        TextView tv = (TextView) v.findViewById(R.id.act_text);
+                        if (iv != null) {
+                              iv.setImageDrawable(o.getIcon());
+                        }
+                        if(tv != null){
+                              tv.setText(o.getText());
+                        }
+                }
+                return v;
+        }
+	}
 	
 	public QspPlayerStart() {
     	//Контекст UI
@@ -166,6 +219,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         if (!gameIsRunning)
         {
        		//текущий вид - основное описание
+        	invBack = 0; //нет фона
+        	varBack = 0; //нет фона
         	setCurrentWin(currentWin=WIN_MAIN);
         	Intent myIntent = new Intent();
         	myIntent.setClassName("com.qsp.player", "com.qsp.player.QspGameStock");
@@ -493,7 +548,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		if(invUnread){
     		Animation update = AnimationUtils.loadAnimation(this, R.anim.update);
     		image.startAnimation(update);
-    		image.setBackgroundResource(R.drawable.btn_bg_selected);
+    		image.setBackgroundResource(invBack=R.drawable.btn_bg_pressed);
     		invUnread = false;
     	}
 		image = (ImageButton) findViewById(R.id.title_button_2);
@@ -501,7 +556,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	if(varUnread){
     		Animation update = AnimationUtils.loadAnimation(this, R.anim.update);
     		image.startAnimation(update);
-    		image.setBackgroundResource(R.drawable.btn_bg_selected);
+    		image.setBackgroundResource(varBack=R.drawable.btn_bg_pressed);
     		varUnread = false;
     	}	
     }	
@@ -529,6 +584,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
        		toggleMain(false);
        		toggleExt(false);
        		invUnread = false;
+       		invBack = 0;
        		setTitle("Инвентарь");
        		break;
     	case WIN_MAIN: 
@@ -542,6 +598,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
        		toggleMain(false);
        		toggleExt(true);
        		varUnread = false;
+       		varBack = 0;
        		setTitle("Доп. описание");
        		break;
     	}
@@ -549,25 +606,18 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void toggleInv(boolean vis) {
    		findViewById(R.id.inv).setVisibility(vis ? View.VISIBLE : View.GONE);
-   		findViewById(R.id.title_sep_1).setVisibility(vis ? View.GONE : View.VISIBLE);
-   		findViewById(R.id.title_button_1).setVisibility(vis ? View.GONE : View.VISIBLE);
-   		if(vis)
-   			findViewById(R.id.title_button_1).setBackgroundDrawable(null);
+		findViewById(R.id.title_button_1).setBackgroundResource(vis ? R.drawable.btn_bg_active : invBack);
     }
     
     private void toggleMain(boolean vis) {
    		findViewById(R.id.main_desc).setVisibility(vis ? View.VISIBLE : View.GONE);
    		findViewById(R.id.acts).setVisibility(vis ? View.VISIBLE : View.GONE);
-   		findViewById(R.id.title_home_button).setVisibility(vis ? View.GONE : View.VISIBLE);
-   		findViewById(R.id.title_home_button_sep).setVisibility(vis ? View.GONE : View.VISIBLE);    	
+		findViewById(R.id.title_home_button).setBackgroundResource(vis ? R.drawable.btn_bg_active : 0);
     }
     
     private void toggleExt(boolean vis) {
    		findViewById(R.id.vars_desc).setVisibility(vis ? View.VISIBLE : View.GONE);
-   		findViewById(R.id.title_sep_2).setVisibility(vis ? View.GONE : View.VISIBLE);
-   		findViewById(R.id.title_button_2).setVisibility(vis ? View.GONE : View.VISIBLE);    	
-   		if(vis)
-   			findViewById(R.id.title_button_2).setBackgroundDrawable(null);
+		findViewById(R.id.title_button_2).setBackgroundResource(vis ? R.drawable.btn_bg_active : varBack);
    }
     
     private Runnable timerUpdateTask = new Runnable() {
@@ -969,16 +1019,16 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			}
 			else
 			{
-		        final String []acts = new String[nActsCount];
+		        final QSPItem []acts = new QSPItem[nActsCount];
 		        for (int i=0;i<nActsCount;i++)
 		        {
 		        	JniResult actsResult = (JniResult) QSPGetActionData(i);
-		        	acts[i] = actsResult.str1;
+		        	acts[i] = new QSPItem(imgGetter.getDrawable(actsResult.str2), actsResult.str1);
 		        }
 				runOnUiThread(new Runnable() {
 					public void run() {
 				        ListView lvAct = (ListView)findViewById(R.id.acts);
-				        lvAct.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.act_item, acts));
+				        lvAct.setAdapter(new QSPListAdapter(uiContext, R.layout.act_item, acts));
 				        //Разворачиваем список действий
 				        Utility.setListViewHeightBasedOnChildren(lvAct);
 					}
@@ -1015,16 +1065,18 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			}
 			else
 			{
-		        final String []objs = new String[nObjsCount];
+		        final QSPItem []objs = new QSPItem[nObjsCount];
 		        for (int i=0;i<nObjsCount;i++)
 		        {
-		        	JniResult objsResult = (JniResult) QSPGetObjectData(i);
-		        	objs[i] = objsResult.str1;
+		        	JniResult actsResult = (JniResult) QSPGetObjectData(i);
+		        	objs[i] = new QSPItem(imgGetter.getDrawable(actsResult.str2), actsResult.str1);
 		        }
 				runOnUiThread(new Runnable() {
 					public void run() {
 				        ListView lvInv = (ListView)findViewById(R.id.inv);
-				        lvInv.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.obj_item, objs));
+				        lvInv.setAdapter(new QSPListAdapter(uiContext, R.layout.act_item, objs));
+				        //Разворачиваем список действий
+				        Utility.setListViewHeightBasedOnChildren(lvInv);
 					}
 				});
 			}
