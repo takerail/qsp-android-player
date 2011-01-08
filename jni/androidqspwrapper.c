@@ -169,10 +169,14 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetActionData(JNIEnv * env, jobjec
 //	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 2");
 
 	char * sz = qspW2C(qspActName);
+	char * isz = qspW2C(qspImgFileName);
 	jstring actName = (*env)->NewStringUTF(env, sz);
+	jstring actImg = (*env)->NewStringUTF(env, isz);
 //	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: qspActName[%s]", sz);
 	if (sz!=NULL)
 		free(sz);
+	if (isz!=NULL)
+		free(isz);
 //	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 3");
 
 
@@ -190,6 +194,7 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetActionData(JNIEnv * env, jobjec
 //	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 6");
 	// Attempt to find the major field.
 	jfieldID fid = (*env)->GetFieldID (env, clazz, "str1", "Ljava/lang/String;");
+	jfieldID fid2 = (*env)->GetFieldID (env, clazz, "str2", "Ljava/lang/String;");
 //	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 7");
 	// If this field does not exist then return null.
 	if (fid == 0)
@@ -197,6 +202,7 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetActionData(JNIEnv * env, jobjec
 //	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 8");
 	// Set the major field to the operating system's major version.
 	(*env)->SetObjectField (env, obj, fid, actName);
+	(*env)->SetObjectField (env, obj, fid2, actImg);
 //	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 9");
 
 	return obj;
@@ -243,6 +249,11 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetObjectData(JNIEnv * env, jobjec
 	if (sz!=NULL)
 		free(sz);
 
+	char * isz = qspW2C(qspImgFileName);
+	jstring objImg = (*env)->NewStringUTF(env, isz);
+	if (isz!=NULL)
+		free(isz);
+
 	// Attempt to find the JniResult class.
 	jclass clazz = (*env)->FindClass (env, "com/qsp/player/JniResult");
 	// If this class does not exist then return null.
@@ -253,11 +264,13 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetObjectData(JNIEnv * env, jobjec
 	jobject obj = (*env)->AllocObject (env, clazz);
 	// Attempt to find the major field.
 	jfieldID fid = (*env)->GetFieldID (env, clazz, "str1", "Ljava/lang/String;");
+	jfieldID fid2 = (*env)->GetFieldID (env, clazz, "str2", "Ljava/lang/String;");
 	// If this field does not exist then return null.
 	if (fid == 0)
 			return 0;
 	// Set the major field to the operating system's major version.
 	(*env)->SetObjectField (env, obj, fid, objName);
+	(*env)->SetObjectField (env, obj, fid2, objImg);
 
 	return obj;
 }
