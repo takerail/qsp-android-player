@@ -109,55 +109,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		}
 	}
 	
-	private class QSPItem {
-		private Drawable icon;
-		private String text;
-		
-		public QSPItem(Drawable i, String t) {
-			icon = i;
-			text = t;
-		}
-		
-		public Drawable getIcon() {
-			return icon;
-		}
-		
-		public String getText() {
-			return text;
-		}
-	}
-	
-	private class QSPListAdapter extends ArrayAdapter<QSPItem> {
-		
-		private QSPItem [] items;
-		
-		public QSPListAdapter(Context context, int textViewResourceId, QSPItem[] acts) {
-            super(context, textViewResourceId, acts);
-            this.items = acts;
-		}    
-
-		@Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-                View v = convertView;
-                if (v == null) {
-                    LayoutInflater vi = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                    v = vi.inflate(R.layout.act_item, null);
-                }
-                QSPItem o = items[position];
-                if (o != null) {
-                        ImageView iv = (ImageView) v.findViewById(R.id.act_icon);
-                        TextView tv = (TextView) v.findViewById(R.id.act_text);
-                        if (iv != null) {
-                              iv.setImageDrawable(o.getIcon());
-                        }
-                        if(tv != null){
-                              tv.setText(o.getText());
-                        }
-                }
-                return v;
-        }
-	}
-	
 	public QspPlayerStart() {
     	//Контекст UI
     	Utility.WriteLog("constructor\\");
@@ -1019,16 +970,16 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			}
 			else
 			{
-		        final QSPItem []acts = new QSPItem[nActsCount];
+				final String []acts = new String[nActsCount];
 		        for (int i=0;i<nActsCount;i++)
 		        {
 		        	JniResult actsResult = (JniResult) QSPGetActionData(i);
-		        	acts[i] = new QSPItem(imgGetter.getDrawable(actsResult.str2), actsResult.str1);
+		        	acts[i] = actsResult.str1;
 		        }
 				runOnUiThread(new Runnable() {
 					public void run() {
 				        ListView lvAct = (ListView)findViewById(R.id.acts);
-				        lvAct.setAdapter(new QSPListAdapter(uiContext, R.layout.act_item, acts));
+				        lvAct.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.act_item, acts));
 				        //Разворачиваем список действий
 				        Utility.setListViewHeightBasedOnChildren(lvAct);
 					}
@@ -1065,16 +1016,16 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			}
 			else
 			{
-		        final QSPItem []objs = new QSPItem[nObjsCount];
+				final String []objs = new String[nObjsCount];
 		        for (int i=0;i<nObjsCount;i++)
 		        {
-		        	JniResult actsResult = (JniResult) QSPGetObjectData(i);
-		        	objs[i] = new QSPItem(imgGetter.getDrawable(actsResult.str2), actsResult.str1);
+		        	JniResult objsResult = (JniResult) QSPGetObjectData(i);
+		        	objs[i] = objsResult.str1;
 		        }
 				runOnUiThread(new Runnable() {
 					public void run() {
 				        ListView lvInv = (ListView)findViewById(R.id.inv);
-				        lvInv.setAdapter(new QSPListAdapter(uiContext, R.layout.act_item, objs));
+				        lvInv.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.obj_item, objs));
 					}
 				});
 			}

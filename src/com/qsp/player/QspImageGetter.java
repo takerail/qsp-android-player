@@ -20,7 +20,7 @@ public class QspImageGetter implements ImageGetter {
 	@Override
     public Drawable getDrawable(String source) {
           Drawable drawable = null;
-          if (!source.contains("://"))
+          if ((source != null) && (!source.contains("://")))
           {
         	  source = mDirectory.concat(source);
               drawable = Drawable.createFromPath(source);
