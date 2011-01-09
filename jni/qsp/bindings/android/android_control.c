@@ -410,7 +410,7 @@ QSP_BOOL QSPSaveGame(const QSP_CHAR *fileName, QSP_BOOL isRefresh)
 	return QSP_TRUE;
 }
 /* Сохранение состояния в память */
-QSP_BOOL QSPSaveGameAsData(void *buf, int bufSize, int *realSize, QSP_BOOL isRefresh)
+QSP_BOOL QSPSaveGameAsData(void **buf, int *realSize, QSP_BOOL isRefresh)
 {
 	int len, size;
 	QSP_CHAR *data;
@@ -424,12 +424,15 @@ QSP_BOOL QSPSaveGameAsData(void *buf, int bufSize, int *realSize, QSP_BOOL isRef
 	}
 	size = len * sizeof(QSP_CHAR);
 	*realSize = size;
-	if (size > bufSize)
+
+	*buf = malloc(size);
+	if (*buf == NULL)
 	{
 		free(data);
 		return QSP_FALSE;
 	}
-	memcpy(buf, data, size);
+
+	memcpy(*buf, data, size);
 	free(data);
 	if (isRefresh) qspCallRefreshInt(QSP_FALSE);
 	return QSP_TRUE;
