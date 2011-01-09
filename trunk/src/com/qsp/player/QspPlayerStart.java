@@ -1075,8 +1075,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 					public void run() {
 				        ListView lvInv = (ListView)findViewById(R.id.inv);
 				        lvInv.setAdapter(new QSPListAdapter(uiContext, R.layout.act_item, objs));
-				        //Разворачиваем список действий
-				        Utility.setListViewHeightBasedOnChildren(lvInv);
 					}
 				});
 			}
