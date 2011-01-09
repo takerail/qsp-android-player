@@ -528,7 +528,7 @@ jboolean Java_com_qsp_player_QspPlayerStart_QSPSaveGame(JNIEnv * env, jobject th
     return result;
 }
 ///* Сохранение состояния в память */
-jobject Java_com_qsp_player_QspPlayerStart_QSPSaveGameAsString(JNIEnv * env, jobject this, jboolean isRefresh)
+jobject Java_com_qsp_player_QspPlayerStart_QSPSaveGameAsData(JNIEnv * env, jobject this, jboolean isRefresh)
 {
 	//!!!STUB
 //QSP_BOOL QSPSaveGameAsString(QSP_CHAR *strBuf, int strBufSize, int *realSize, QSP_BOOL isRefresh)

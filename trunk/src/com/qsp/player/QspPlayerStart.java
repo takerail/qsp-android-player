@@ -392,7 +392,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	String path = curGameDir.concat(String.valueOf(index)).concat(".sav");
     	File f = new File(path);
     	//!!! STUB
-    	//QSPSaveGameAsString(boolean isRefresh);
+    	//QSPSaveGameAsData(boolean isRefresh);
+    	
     }
 
     protected void onActivityResult(int requestCode, int resultCode,
@@ -1502,7 +1503,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     public native boolean 	QSPLoadGameWorld(String fileName);
     public native boolean 	QSPLoadGameWorldFromData(byte data[], int dataSize, String fileName);
     public native boolean 	QSPSaveGame(String fileName, boolean isRefresh);
-    public native Object 	QSPSaveGameAsString(boolean isRefresh);//!!!STUB
+    public native Object 	QSPSaveGameAsData(boolean isRefresh);//!!!STUB
     public native boolean 	QSPOpenSavedGame(String fileName, boolean isRefresh);
     public native Object 	QSPOpenSavedGameFromData(String str, boolean isRefresh);//!!!STUB
     public native boolean 	QSPRestartGame(boolean isRefresh);
