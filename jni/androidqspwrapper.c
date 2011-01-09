@@ -197,7 +197,7 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetActionData(JNIEnv * env, jobjec
 	jfieldID fid2 = (*env)->GetFieldID (env, clazz, "str2", "Ljava/lang/String;");
 //	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 7");
 	// If this field does not exist then return null.
-	if (fid == 0)
+	if (fid == 0 || fid2 == 0)
 			return 0;
 //	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 8");
 	// Set the major field to the operating system's major version.
@@ -266,7 +266,7 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetObjectData(JNIEnv * env, jobjec
 	jfieldID fid = (*env)->GetFieldID (env, clazz, "str1", "Ljava/lang/String;");
 	jfieldID fid2 = (*env)->GetFieldID (env, clazz, "str2", "Ljava/lang/String;");
 	// If this field does not exist then return null.
-	if (fid == 0)
+	if (fid == 0 || fid2 == 0)
 			return 0;
 	// Set the major field to the operating system's major version.
 	(*env)->SetObjectField (env, obj, fid, objName);
