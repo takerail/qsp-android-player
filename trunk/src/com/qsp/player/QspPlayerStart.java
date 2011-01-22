@@ -10,7 +10,6 @@ import android.gesture.Gesture;
 import android.gesture.GestureOverlayView;
 import android.gesture.GestureStroke;
 import android.gesture.GestureOverlayView.OnGesturePerformedListener;
-import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,7 +23,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
@@ -35,13 +33,13 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Vector;
@@ -378,22 +376,123 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void LoadSlot(int index)
     {
+    	//Контекст UI
     	String path = curGameDir.concat(String.valueOf(index)).concat(".sav");
     	File f = new File(path);
-    	if (f.exists())
+    	if (!f.exists())
     	{
-    		//!!! STUB
-    		//QSPOpenSavedGameFromData(String str, boolean isRefresh);
+    		Utility.WriteLog("LoadSlot: failed, file not found");
+    		return;
     	}
+
+        FileInputStream fIn = null;
+        int size = 0;
+		try {
+			fIn = new FileInputStream(f);
+		} catch (FileNotFoundException e) {
+        	e.printStackTrace();
+    		return;
+		}
+		try {
+			size = fIn.available();
+		} catch (IOException e) {
+			e.printStackTrace();
+    		return;
+		}
+        
+		final byte[] inputBuffer = new byte[size];		
+		try {
+		fIn.read(inputBuffer);
+		fIn.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+    		return;
+		}
+		final int bufferSize = size;
+
+	    //Останавливаем таймер
+	    timerHandler.removeCallbacks(timerUpdateTask);
+	    //Выключаем музыку
+	    CloseFileUI(null);
+	    
+		libThreadHandler.post(new Runnable() {
+			public void run() {
+	    		if (libraryThreadIsRunning)
+	    		{
+	        		Utility.WriteLog("LoadSlot: failed, library is already running");
+	    			return;
+	    		}
+            	libraryThreadIsRunning = true;
+            	
+            	boolean result = QSPOpenSavedGameFromData(inputBuffer, bufferSize, true);
+            	
+        		libraryThreadIsRunning = false;
+
+        		if (!result)
+	    		{
+	        		Utility.WriteLog("LoadSlot: failed, cannot load data from byte buffer");
+	    			return;
+	    		}
+
+	    		runOnUiThread(new Runnable() {
+	    			public void run() {
+	    	    		//Запускаем таймер
+	    	            timerHandler.postDelayed(timerUpdateTask, timerInterval);
+	    			}
+    	    	});
+			}
+		});
     }
     
     private void SaveSlot(int index)
     {
-    	String path = curGameDir.concat(String.valueOf(index)).concat(".sav");
-    	File f = new File(path);
-    	//!!! STUB
-    	//QSPSaveGameAsData(boolean isRefresh);
-    	
+    	//Контекст UI
+    	final String path = curGameDir.concat(String.valueOf(index)).concat(".sav");
+
+		libThreadHandler.post(new Runnable() {
+			public void run() {
+	    		if (libraryThreadIsRunning)
+	    		{
+	        		Utility.WriteLog("SaveSlot: failed, library is already running");
+	    			return;
+	    		}
+            	libraryThreadIsRunning = true;
+            	
+	    		final String saveFilePath = path;
+	        	final byte[] dataToSave = QSPSaveGameAsData(false);
+	        	
+	        	if (dataToSave == null)
+	    		{
+	        		Utility.WriteLog("SaveSlot: failed, cannot create save data");
+	    			return;
+	    		}
+	    		
+	    		runOnUiThread(new Runnable() {
+	    			public void run() {
+	    				
+	    		    	File f = new File(saveFilePath);
+	    				
+	            		FileOutputStream fileOutput = null;
+						try {
+							fileOutput = new FileOutputStream(f);
+						} catch (FileNotFoundException e) {
+							e.printStackTrace();
+							return;
+						}
+            			try {
+							fileOutput.write(dataToSave, 0, dataToSave.length);
+							fileOutput.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+							return;
+						}
+	    				
+	    			}
+    	    	});
+            	
+        		libraryThreadIsRunning = false;
+			}
+		});
     }
 
     protected void onActivityResult(int requestCode, int resultCode,
@@ -1218,13 +1317,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	menuList.add(item);
     }
     
-    private void ShowMenu()
+    private int ShowMenu()
     {
     	//Контекст библиотеки
 		if (libThread==null)
 		{
 			Utility.WriteLog("ShowMenu: failed, libThread is null");
-			return;
+			return -1;
 		}
     	
 		dialogHasResult = false;
@@ -1271,8 +1370,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         parkThread = null;
 		Utility.WriteLog("ShowMenu: library thread unparked, finishing");
     	
-		if (menuResult != -1)
-			QSPSelectMenuItem(menuResult);
+		return menuResult;
     }
     
     private void DeleteMenu()
@@ -1503,11 +1601,10 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     public native boolean 	QSPLoadGameWorld(String fileName);
     public native boolean 	QSPLoadGameWorldFromData(byte data[], int dataSize, String fileName);
     public native boolean 	QSPSaveGame(String fileName, boolean isRefresh);
-    public native Object 	QSPSaveGameAsData(boolean isRefresh);//!!!STUB
+    public native byte[] 	QSPSaveGameAsData(boolean isRefresh);
     public native boolean 	QSPOpenSavedGame(String fileName, boolean isRefresh);
-    public native Object 	QSPOpenSavedGameFromData(String str, boolean isRefresh);//!!!STUB
+    public native boolean 	QSPOpenSavedGameFromData(byte data[], int dataSize, boolean isRefresh);
     public native boolean 	QSPRestartGame(boolean isRefresh);
-    public native void		QSPSelectMenuItem(int index); 
     //public native void QSPSetCallBack(int type, QSP_CALLBACK func) 
 
     static {

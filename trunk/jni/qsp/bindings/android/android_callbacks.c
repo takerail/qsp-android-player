@@ -191,24 +191,27 @@ void qspCallShowMessage(QSP_CHAR *text)
 	qspRestoreCallState(&state);
 }
 
-void qspCallShowMenu()
+int qspCallShowMenu()
 {
 	/* Здесь показываем меню */
 	QSPCallState state;
 
 	qspSaveCallState(&state, QSP_FALSE, QSP_TRUE);
 	
+	int index = -1;
 	
     jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
     jmethodID mid = 
-         (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "ShowMenu", "()V");
+         (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "ShowMenu", "()I");
     if (mid == NULL)
-        return; /* method not found */
+        return -1; /* method not found */
 
-    (*qspCallbackEnv)->CallVoidMethod(qspCallbackEnv, qspCallbackObject, mid);
+    index = (*qspCallbackEnv)->CallIntMethod(qspCallbackEnv, qspCallbackObject, mid);
 	
 	
 	qspRestoreCallState(&state);
+	
+	return index;
 }
 
 void qspCallShowPicture(QSP_CHAR *file)

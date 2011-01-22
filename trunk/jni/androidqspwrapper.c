@@ -318,7 +318,7 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetVarValuesCount(JNIEnv * env, jo
 //QSP_BOOL QSPGetVarValues(const QSP_CHAR *name, int ind, int *numVal, QSP_CHAR **strVal)
 jobject Java_com_qsp_player_QspPlayerStart_QSPGetVarValues(JNIEnv * env, jobject this, jstring name, jint ind)
 {
-	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 1");
+//__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 1");
 	//Convert array name to QSP string
     const char *str = (*env)->GetStringUTFChars(env, name, NULL);
     if (str == NULL)
@@ -528,35 +528,21 @@ jboolean Java_com_qsp_player_QspPlayerStart_QSPSaveGame(JNIEnv * env, jobject th
     return result;
 }
 ///* Сохранение состояния в память */
-jobject Java_com_qsp_player_QspPlayerStart_QSPSaveGameAsData(JNIEnv * env, jobject this, jboolean isRefresh)
+jbyteArray Java_com_qsp_player_QspPlayerStart_QSPSaveGameAsData(JNIEnv * env, jobject this, jboolean isRefresh)
 {
-	//!!!STUB
-//QSP_BOOL QSPSaveGameAsString(QSP_CHAR *strBuf, int strBufSize, int *realSize, QSP_BOOL isRefresh)
-//{
-//	int len, size;
-//	QSP_CHAR *data;
-//	if (qspIsExitOnError && qspErrorNum) return QSP_FALSE;
-//	qspPrepareExecution();
-//	if (qspIsDisableCodeExec) return QSP_FALSE;
-//	if (!(len = qspSaveGameStatusToString(&data)))
-//	{
-//		*realSize = 0;
-//		return QSP_FALSE;
-//	}
-//	size = len + 1;
-//	*realSize = size;
-//	if (size > strBufSize)
-//	{
-//		free(data);
-//		return QSP_FALSE;
-//	}
-//	qspStrNCopy(strBuf, data, strBufSize - 1);
-//	free(data);
-//	strBuf[strBufSize - 1] = 0;
-//	if (isRefresh) qspCallRefreshInt(QSP_FALSE);
-//	return QSP_TRUE;
-//}
-	return NULL;
+	void * buffer = NULL;
+	int	bufferSize = 0;
+	if (QSPSaveGameAsData(&buffer, &bufferSize, (QSP_BOOL)isRefresh) == QSP_FALSE)
+		return NULL;
+
+	jbyteArray result;
+	result = (*env)->NewByteArray(env, bufferSize);
+	if (result == NULL)
+		return NULL;
+
+	(*env)->SetByteArrayRegion(env, result, 0, bufferSize, buffer);
+
+	return result;
 }
 ///* Загрузка состояния из файла */
 jboolean Java_com_qsp_player_QspPlayerStart_QSPOpenSavedGame(JNIEnv * env, jobject this, jstring fileName, jboolean isRefresh)
@@ -571,31 +557,26 @@ jboolean Java_com_qsp_player_QspPlayerStart_QSPOpenSavedGame(JNIEnv * env, jobje
     return result;
 }
 ///* Загрузка состояния из памяти */
-jobject Java_com_qsp_player_QspPlayerStart_QSPOpenSavedGameFromString(JNIEnv * env, jobject this, jstring str, jboolean isRefresh)
+jboolean Java_com_qsp_player_QspPlayerStart_QSPOpenSavedGameFromData(JNIEnv * env, jobject this, jbyteArray data, jint dataSize, jboolean isRefresh)
 {
-	//!!!STUB
-	//QSP_BOOL QSPOpenSavedGameFromString(const QSP_CHAR *str, QSP_BOOL isRefresh)
-	//{
-//	if (qspIsExitOnError && qspErrorNum) return QSP_FALSE;
-//	qspPrepareExecution();
-//	if (qspIsDisableCodeExec) return QSP_FALSE;
-//	qspOpenGameStatusFromString((QSP_CHAR *)str);
-//	if (qspErrorNum) return QSP_FALSE;
-//	if (isRefresh) qspCallRefreshInt(QSP_FALSE);
-//	return QSP_TRUE;
-	return NULL;
+	//converting data
+	jbyte* jbuf = malloc(dataSize * sizeof (jbyte));
+	if (jbuf == NULL)
+		return JNI_FALSE;
+
+	(*env)->GetByteArrayRegion(env, data, 0, dataSize, jbuf);
+	int size = dataSize;
+	void* mydata = (void*)jbuf;
+
+    jboolean result = QSPOpenSavedGameFromData(mydata, size, (QSP_BOOL)isRefresh) == QSP_TRUE;
+
+    free(jbuf);
+	return result;
 }
 ///* Перезапуск игры */
 jboolean Java_com_qsp_player_QspPlayerStart_QSPRestartGame(JNIEnv * env, jobject this, jboolean isRefresh)
 {
 	return QSPRestartGame((QSP_BOOL)isRefresh);
-}
-///* ------------------------------------------------------------ */
-///* Меню */
-///* Ф-я предназначена только для вызова из CallBack'а QSP_CALL_SHOWMENU */
-void Java_com_qsp_player_QspPlayerStart_QSPSelectMenuItem(JNIEnv * env, jobject this, jint index)
-{
-	QSPSelectMenuItem(index);
 }
 ///* ------------------------------------------------------------ */
 ///* Установка CALLBACK'ов */
