@@ -58,6 +58,8 @@ static void qspFunctionDesc(QSPVariant *, int, QSPVariant *);
 static void qspFunctionGetObj(QSPVariant *, int, QSPVariant *);
 static void qspFunctionIsPlay(QSPVariant *, int, QSPVariant *);
 static void qspFunctionInstr(QSPVariant *, int, QSPVariant *);
+static void qspFunctionArrPos(QSPVariant *, int, QSPVariant *);
+static void qspFunctionArrComp(QSPVariant *, int, QSPVariant *);
 static void qspFunctionReplace(QSPVariant *, int, QSPVariant *);
 static void qspFunctionFunc(QSPVariant *, int, QSPVariant *);
 static void qspFunctionDynEval(QSPVariant *, int, QSPVariant *);
@@ -176,9 +178,9 @@ void qspInitMath()
 	qspAddOperation(qspOpStrFind, 30, qspFunctionStrFind, 1, 2, 3, 1, 1, 2);
 	qspAddOperation(qspOpStrPos, 30, qspFunctionStrPos, 2, 2, 3, 1, 1, 2);
 	qspAddOperation(qspOpMid, 30, qspFunctionMid, 1, 2, 3, 1, 2, 2);
-	qspAddOperation(qspOpArrPos, 30, 0, 2, 2, 3, 0, 0, 0);
-	qspAddOperation(qspOpArrComp, 30, 0, 2, 2, 3, 0, 0, 0);
-	qspAddOperation(qspOpInstr, 30, qspFunctionInstr, 2, 2, 3, 0, 1, 1);
+	qspAddOperation(qspOpArrPos, 30, qspFunctionArrPos, 2, 2, 3, 1, 0, 2);
+	qspAddOperation(qspOpArrComp, 30, qspFunctionArrComp, 2, 2, 3, 1, 0, 2);
+	qspAddOperation(qspOpInstr, 30, qspFunctionInstr, 2, 2, 3, 1, 1, 2);
 	qspAddOperation(qspOpReplace, 30, qspFunctionReplace, 1, 2, 3, 1, 1, 1);
 	qspAddOperation(qspOpFunc, 30, qspFunctionFunc, 0, 1, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	qspAddOperation(qspOpDynEval, 30, qspFunctionDynEval, 0, 1, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -367,7 +369,7 @@ static QSP_CHAR *qspGetString(QSP_CHAR **expr)
 		if (*pos == quot && *(++pos) != quot) break;
 		if (++strLen >= bufSize)
 		{
-			bufSize <<= 1;
+			bufSize += 128;
 			buf = (QSP_CHAR *)realloc(buf, bufSize * sizeof(QSP_CHAR));
 		}
 		buf[strLen - 1] = *pos;
@@ -557,12 +559,6 @@ static QSPVariant qspValue(int itemsCount, QSPVariant *compValues, int *compOpCo
 				break;
 			case qspOpTrim:
 				QSP_STR(tos) = qspDelSpc(QSP_STR(args[0]));
-				break;
-			case qspOpArrPos:
-				QSP_NUM(tos) = qspArrayPos(args, argsCount, QSP_FALSE);
-				break;
-			case qspOpArrComp:
-				QSP_NUM(tos) = qspArrayPos(args, argsCount, QSP_TRUE);
 				break;
 			case qspOpInput:
 				QSP_STR(tos) = qspCallInputBox(QSP_STR(args[0]));
@@ -1097,32 +1093,37 @@ static void qspFunctionIsPlay(QSPVariant *args, int count, QSPVariant *tos)
 static void qspFunctionInstr(QSPVariant *args, int count, QSPVariant *tos)
 {
 	int beg;
-	QSP_CHAR *txt, *str;
-	if (qspConvertVariantTo(args, count == 2))
-	{
-		qspSetError(QSP_ERR_TYPEMISMATCH);
-		return;
-	}
+	QSP_CHAR *str;
 	if (count == 2)
-	{
-		txt = QSP_STR(args[0]);
-		str = QSP_STR(args[1]);
 		beg = 0;
-	}
 	else
 	{
-		txt = QSP_STR(args[1]);
-		str = QSP_STR(args[2]);
-		beg = QSP_NUM(args[0]) - 1;
+		beg = QSP_NUM(args[2]) - 1;
 		if (beg < 0) beg = 0;
 	}
-	if (beg < qspStrLen(txt))
+	if (beg < qspStrLen(QSP_STR(args[0])))
 	{
-		str = qspStrStr(txt + beg, str);
-		QSP_PNUM(tos) = (str ? (int)(str - txt) + 1 : 0);
+		str = qspStrStr(QSP_STR(args[0]) + beg, QSP_STR(args[1]));
+		QSP_PNUM(tos) = (str ? (int)(str - QSP_STR(args[0])) + 1 : 0);
 	}
 	else
 		QSP_PNUM(tos) = 0;
+}
+
+static void qspFunctionArrPos(QSPVariant *args, int count, QSPVariant *tos)
+{
+	if (count == 2)
+		QSP_PNUM(tos) = qspArrayPos(QSP_STR(args[0]), args + 1, 0, QSP_FALSE);
+	else
+		QSP_PNUM(tos) = qspArrayPos(QSP_STR(args[0]), args + 1, QSP_NUM(args[2]), QSP_FALSE);
+}
+
+static void qspFunctionArrComp(QSPVariant *args, int count, QSPVariant *tos)
+{
+	if (count == 2)
+		QSP_PNUM(tos) = qspArrayPos(QSP_STR(args[0]), args + 1, 0, QSP_TRUE);
+	else
+		QSP_PNUM(tos) = qspArrayPos(QSP_STR(args[0]), args + 1, QSP_NUM(args[2]), QSP_TRUE);
 }
 
 static void qspFunctionReplace(QSPVariant *args, int count, QSPVariant *tos)

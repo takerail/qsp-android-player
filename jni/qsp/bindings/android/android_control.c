@@ -313,13 +313,6 @@ QSP_BOOL QSPExecString(const QSP_CHAR *s, QSP_BOOL isRefresh)
 	if (isRefresh) qspCallRefreshInt(QSP_FALSE);
 	return QSP_TRUE;
 }
-/* Выполнение кода первой локации */
-QSP_BOOL QSPExecLocationCodeByIndex()
-{
-	qspPrepareExecution();
-	qspExecLocByIndex(0, QSP_TRUE);
-	return QSP_TRUE;
-}
 /* Выполнение кода указанной локации */
 QSP_BOOL QSPExecLocationCode(const QSP_CHAR *name, QSP_BOOL isRefresh)
 {
@@ -476,20 +469,6 @@ QSP_BOOL QSPRestartGame(QSP_BOOL isRefresh)
 	if (qspErrorNum) return QSP_FALSE;
 	if (isRefresh) qspCallRefreshInt(QSP_FALSE);
 	return QSP_TRUE;
-}
-/* ------------------------------------------------------------ */
-/* Меню */
-/* Ф-я предназначена только для вызова из CallBack'а QSP_CALL_SHOWMENU */
-void QSPSelectMenuItem(int index)
-{
-	QSPVariant arg;
-	if (index >= 0 && index < qspCurMenuItems)
-	{
-		if (qspIsDisableCodeExec) return;
-		arg.IsStr = QSP_FALSE;
-		QSP_NUM(arg) = index + 1;
-		qspExecLocByNameWithArgs(qspCurMenuLocs[index], &arg, 1);
-	}
 }
 /* ------------------------------------------------------------ */
 /* Установка CALLBACK'ов */

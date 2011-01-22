@@ -19,8 +19,6 @@
 #include "actions.h"
 #include "errors.h"
 #include "game.h"
-#include "locations.h"
-#include "menu.h"
 #include "objects.h"
 #include "playlist.h"
 #include "variables.h"
@@ -51,11 +49,11 @@ void qspPrepareExecution()
 
 void qspMemClear(QSP_BOOL isFirst)
 {
+	int i;
 	qspClearIncludes(isFirst);
 	qspClearVars(isFirst);
 	qspClearObjects(isFirst);
 	qspClearActions(isFirst);
-	qspClearMenu(isFirst);
 	qspClearPlayList(isFirst);
 	if (!isFirst)
 	{
@@ -71,6 +69,9 @@ void qspMemClear(QSP_BOOL isFirst)
 		}
 		if (qspCurInput) free(qspCurInput);
 		if (qspViewPath) free(qspViewPath);
+		for (i = qspSavedVarsGroupsCount - 1; i >= 0; --i)
+			qspClearVarsList(qspSavedVarsGroups[i].Vars, qspSavedVarsGroups[i].VarsCount);
+		if (qspSavedVarsGroups) free(qspSavedVarsGroups);
 	}
 	qspCurDesc = 0;
 	qspCurDescLen = 0;
@@ -79,6 +80,8 @@ void qspMemClear(QSP_BOOL isFirst)
 	qspCurInput = 0;
 	qspCurInputLen = 0;
 	qspViewPath = 0;
+	qspSavedVarsGroups = 0;
+	qspSavedVarsGroupsCount = 0;
 }
 
 void qspSetSeed(unsigned int seed)
