@@ -1026,7 +1026,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     {
     	// онтекст библиотеки
     	JniResult htmlResult = (JniResult) QSPGetVarValues("USEHTML", 0);
-    	final boolean html = htmlResult.success && (htmlResult.int1 == 1);
+    	final boolean html = htmlResult.success && (htmlResult.int1 != 0);
     	
     	
     	//основное описание
