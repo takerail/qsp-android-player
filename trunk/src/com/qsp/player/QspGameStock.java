@@ -14,7 +14,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -34,11 +33,13 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.TextView;
 
 public class QspGameStock extends TabActivity {
 
@@ -127,10 +128,10 @@ public class QspGameStock extends TabActivity {
         loadGameList.start();
         
         //TODO: 
-        // 1. Отображение статуса "Загружено", например цветом фона.
+        // 1v. Отображение статуса "Загружено", например цветом фона.
         // 2. Авто-обновление игр
         // 3. Кэширование списка игр
-        // 4. Доступ к играм, даже когда сервер недоступен
+        // 4v. Доступ к играм, даже когда сервер недоступен
         // 5. Вывод игр в папке "Загруженные" в порядке последнего доступа к ним
         // 6. Возможность открыть файл из любой папки(через специальное меню этой активити)
         // 7. Доступ к настройкам приложения через меню этой активити
@@ -165,15 +166,18 @@ public class QspGameStock extends TabActivity {
     		switch (getTabHost().getCurrentTab()) {
     		case 0:
     			//Загруженные
-    			value = lvDownloaded.getAdapter().getItem(position).toString();
+    			GameItem tt1 = (GameItem) lvDownloaded.getAdapter().getItem(position);
+    			value = tt1.title;
     			break;
     		case 1:
     			//Отмеченные
-    			value = lvStarred.getAdapter().getItem(position).toString();
+    			GameItem tt2 = (GameItem) lvStarred.getAdapter().getItem(position);
+    			value = tt2.title;
     			break;
     		case 2:
     			//Все
-    			value = lvAll.getAdapter().getItem(position).toString();
+    			GameItem tt3 = (GameItem) lvAll.getAdapter().getItem(position);
+    			value = tt3.title;
     			break;
     		}
     		
@@ -444,31 +448,25 @@ public class QspGameStock extends TabActivity {
     	//Выводим списки игр на экран
 
     	//Все
-        int gamesCount = gamesMap.size();
-        final String []gamesAll = new String[gamesCount];
-        int i = 0;
+        ArrayList<GameItem> gamesAll = new ArrayList<GameItem>();
         for (HashMap.Entry<String, GameItem> e : gamesMap.entrySet())
         {
-        	gamesAll[i] = e.getKey();
-        	i++;
+        	gamesAll.add(e.getValue());
         }
-        lvAll.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.game_item, gamesAll));
-
+        lvAll.setAdapter(new GameAdapter(uiContext, R.layout.game_item, gamesAll));
         //Загруженные
-		Vector<String> gamesDownloaded = new Vector<String>();
+        ArrayList<GameItem> gamesDownloaded = new ArrayList<GameItem>();
         for (HashMap.Entry<String, GameItem> e : gamesMap.entrySet())
         {
         	if (e.getValue().downloaded)
-        		gamesDownloaded.add(e.getKey());
+        		gamesDownloaded.add(e.getValue());
         }
-        String []gamesD = gamesDownloaded.toArray(new String[gamesDownloaded.size()]);
-        lvDownloaded.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.game_item, gamesD));
+        lvDownloaded.setAdapter(new GameAdapter(uiContext, R.layout.game_item, gamesDownloaded));
         
         //Отмеченные
         //!!! STUB
-        String []gamesStarred = new String[0];
-        lvStarred.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.game_item, gamesStarred));
-        
+        ArrayList<GameItem> gamesStarred = new ArrayList<GameItem>();
+        lvStarred.setAdapter(new GameAdapter(uiContext, R.layout.game_item, gamesStarred));
         //Определяем, какую вкладку открыть
         if (openDefaultTab)
         {
@@ -584,7 +582,7 @@ public class QspGameStock extends TabActivity {
     	//Загружаем список игр
         public void run() {
             try {
-                URL updateURL = new URL("http://qsp.su/gamestock/games-ru.xml");
+                URL updateURL = new URL("http://qsp.su/gamestock/gamestock.php");
                 URLConnection conn = updateURL.openConnection();
                 InputStream is = conn.getInputStream();
                 BufferedInputStream bis = new BufferedInputStream(is);
@@ -714,4 +712,34 @@ public class QspGameStock extends TabActivity {
         alert.show();
     }
     
+
+    private class GameAdapter extends ArrayAdapter<GameItem> {
+
+    	private ArrayList<GameItem> items;
+    	
+        public GameAdapter(Context context, int textViewResourceId, ArrayList<GameItem> items) {
+                super(context, textViewResourceId, items);
+                this.items = items;
+        }
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View v = convertView;
+            if (v == null) {
+                LayoutInflater vi = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                v = vi.inflate(R.layout.game_item, null);
+            }
+            GameItem o = this.items.get(position);
+            if (o != null) {
+                    TextView tt = (TextView) v.findViewById(R.id.game_title);
+                    if (tt != null) {
+                          tt.setText(o.title);
+                          if (o.downloaded)
+                        	  tt.setTextColor(0xFFE0E0E0);
+                          else
+                        	  tt.setTextColor(0xFFFFD700);
+                    }
+            }
+            return v;
+        }
+    }
 }
