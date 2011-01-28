@@ -87,7 +87,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 
 
 	public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
 		if(gesture.getLength()>SWIPE_MIN) {
 			ArrayList<GestureStroke> strokes = gesture.getStrokes();
 			float[] points = strokes.get(0).points; 
@@ -108,23 +108,23 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	}
 	
 	public QspPlayerStart() {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	Utility.WriteLog("constructor\\");
     	
 		gameIsRunning = false;
 		qspInited = false;
 		waitForImageBox = false;
 
-        //Создаем список для звуков и музыки
+        //РЎРѕР·РґР°РµРј СЃРїРёСЃРѕРє РґР»СЏ Р·РІСѓРєРѕРІ Рё РјСѓР·С‹РєРё
         mediaPlayersList = new Vector<MusicContent>();
         
-        //Создаем список для всплывающего меню
+        //РЎРѕР·РґР°РµРј СЃРїРёСЃРѕРє РґР»СЏ РІСЃРїР»С‹РІР°СЋС‰РµРіРѕ РјРµРЅСЋ
         menuList = new Vector<QspMenuItem>();
 
-        //Создаем объект для таймера
+        //РЎРѕР·РґР°РµРј РѕР±СЉРµРєС‚ РґР»СЏ С‚Р°Р№РјРµСЂР°
         timerHandler = new Handler();
 
-        //Запускаем поток библиотеки
+        //Р—Р°РїСѓСЃРєР°РµРј РїРѕС‚РѕРє Р±РёР±Р»РёРѕС‚РµРєРё
         StartLibThread();
 	}
 
@@ -132,23 +132,23 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     @Override
     public void onCreate(Bundle savedInstanceState) {    	
     	Utility.WriteLog("onCreate\\");
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
         super.onCreate(savedInstanceState);
-        //будем использовать свой вид заголовка
+        //Р±СѓРґРµРј РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЃРІРѕР№ РІРёРґ Р·Р°РіРѕР»РѕРІРєР°
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
         res = getResources();
 
 
-        //подключаем жесты
+        //РїРѕРґРєР»СЋС‡Р°РµРј Р¶РµСЃС‚С‹
         GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
         gestures.addOnGesturePerformedListener(this);
         
-        //Создаем объект для обработки ссылок
+        //РЎРѕР·РґР°РµРј РѕР±СЉРµРєС‚ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё СЃСЃС‹Р»РѕРє
         qspLinkMovementMethod = QspLinkMovementMethod.getQspInstance();
         qspLinkMovementMethod.setCatcher(this);
         
-        //Создаем диалог ввода текста
+        //РЎРѕР·РґР°РµРј РґРёР°Р»РѕРі РІРІРѕРґР° С‚РµРєСЃС‚Р°
         LayoutInflater factory = LayoutInflater.from(uiContext);
         View textEntryView = factory.inflate(R.layout.inputbox, null);
         inputboxDialog = new AlertDialog.Builder(uiContext)
@@ -167,9 +167,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         
         if (!gameIsRunning)
         {
-       		//текущий вид - основное описание
-        	invBack = 0; //нет фона
-        	varBack = 0; //нет фона
+       		//С‚РµРєСѓС‰РёР№ РІРёРґ - РѕСЃРЅРѕРІРЅРѕРµ РѕРїРёСЃР°РЅРёРµ
+        	invBack = 0; //РЅРµС‚ С„РѕРЅР°
+        	varBack = 0; //РЅРµС‚ С„РѕРЅР°
         	setCurrentWin(currentWin=WIN_MAIN);
         	Intent myIntent = new Intent();
         	myIntent.setClassName("com.qsp.player", "com.qsp.player.QspGameStock");
@@ -183,15 +183,15 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     public void onResume()
     {
     	Utility.WriteLog("onResume\\");
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	super.onResume();
     	
     	if (gameIsRunning && !waitForImageBox)
     	{
-    		//Запускаем таймер
+    		//Р—Р°РїСѓСЃРєР°РµРј С‚Р°Р№РјРµСЂ
             timerHandler.postDelayed(timerUpdateTask, timerInterval);
 
-            //Запускаем музыку
+            //Р—Р°РїСѓСЃРєР°РµРј РјСѓР·С‹РєСѓ
     	    PauseMusic(false);
     	}
     	waitForImageBox = false;
@@ -201,16 +201,16 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     @Override
     public void onPause() {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	Utility.WriteLog("onPause\\");
     	
     	if (gameIsRunning && !waitForImageBox)
     	{
         	Utility.WriteLog("onPause: pausing game");    	
-    	    //Останавливаем таймер
+    	    //РћСЃС‚Р°РЅР°РІР»РёРІР°РµРј С‚Р°Р№РјРµСЂ
     	    timerHandler.removeCallbacks(timerUpdateTask);
     	    
-    	    //Приостанавливаем музыку
+    	    //РџСЂРёРѕСЃС‚Р°РЅР°РІР»РёРІР°РµРј РјСѓР·С‹РєСѓ
     	    PauseMusic(true);
     	}
     	
@@ -220,7 +220,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     @Override
     public void onDestroy() {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	Utility.WriteLog("onDestroy\\");
     	FreeResources();
     	Utility.WriteLog("onDestroy/");  
@@ -229,9 +229,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event)  {
-    	//Контекст UI
-    	//Ловим кнопку "Back", и не закрываем активити, а только
-    	//отправляем в бэкграунд (как будто нажали "Home")
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
+    	//Р›РѕРІРёРј РєРЅРѕРїРєСѓ "Back", Рё РЅРµ Р·Р°РєСЂС‹РІР°РµРј Р°РєС‚РёРІРёС‚Рё, Р° С‚РѕР»СЊРєРѕ
+    	//РѕС‚РїСЂР°РІР»СЏРµРј РІ Р±СЌРєРіСЂР°СѓРЅРґ (РєР°Рє Р±СѓРґС‚Рѕ РЅР°Р¶Р°Р»Рё "Home")
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
         	Utility.WriteLog("Back pressed! Going to background");
         	moveTaskToBack(true);
@@ -243,11 +243,11 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-    	//Контекст UI
-        // Сохраняем ссылку
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
+        // РЎРѕС…СЂР°РЅСЏРµРј СЃСЃС‹Р»РєСѓ
         menuMain = menu;
         
-        // Загружаем меню из XML-файла
+        // Р—Р°РіСЂСѓР¶Р°РµРј РјРµРЅСЋ РёР· XML-С„Р°Р№Р»Р°
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_menu, menu);
         
@@ -256,23 +256,23 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     @Override
     public boolean onPrepareOptionsMenu (Menu menu) {
-    	//Контекст UI
-    	//Прячем или показываем группу пунктов меню "Начать заново", "Загрузить", "Сохранить"
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
+    	//РџСЂСЏС‡РµРј РёР»Рё РїРѕРєР°Р·С‹РІР°РµРј РіСЂСѓРїРїСѓ РїСѓРЅРєС‚РѕРІ РјРµРЅСЋ "РќР°С‡Р°С‚СЊ Р·Р°РЅРѕРІРѕ", "Р—Р°РіСЂСѓР·РёС‚СЊ", "РЎРѕС…СЂР°РЅРёС‚СЊ"
     	menu.setGroupVisible(R.id.menugroup_running, gameIsRunning);
     	if (gameIsRunning)
     	{
-    		//Заполняем слоты
+    		//Р—Р°РїРѕР»РЅСЏРµРј СЃР»РѕС‚С‹
     		MenuItem loadItem = menu.findItem(R.id.menu_loadgame);
-    		LoadSlots(loadItem, "Загрузить");
+    		LoadSlots(loadItem, "Р—Р°РіСЂСѓР·РёС‚СЊ");
     		MenuItem saveItem = menu.findItem(R.id.menu_savegame);
-    		LoadSlots(saveItem, "Сохранить");
+    		LoadSlots(saveItem, "РЎРѕС…СЂР°РЅРёС‚СЊ");
     	}
     	return true;
     }
     
     private void LoadSlots(MenuItem rootItem, String name)
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
 		if (rootItem == null)
 			return;
 		
@@ -288,7 +288,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			int id = rootItem.getItemId();
 			menuMain.removeItem(id);
 			slotsMenu = menuMain.addSubMenu(Menu.NONE, id, Menu.NONE, name);
-			slotsMenu.setHeaderTitle("Выберите слот");
+			slotsMenu.setHeaderTitle("Р’С‹Р±РµСЂРёС‚Рµ СЃР»РѕС‚");
 		}
 		
 		for (int i=0; i<SLOTS_MAX; i++)
@@ -302,17 +302,17 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 				title = title.concat(datetime);
 			}
 			else
-				title = title.concat("[пусто]");
+				title = title.concat("[РїСѓСЃС‚Рѕ]");
 			slotsMenu.add(title);
 		}
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
         switch (item.getItemId()) {
             case R.id.menu_gamestock:
-                //Выбираем игру
+                //Р’С‹Р±РёСЂР°РµРј РёРіСЂСѓ
             	Intent myIntent = new Intent();
             	myIntent.setClassName("com.qsp.player", "com.qsp.player.QspGameStock");
             	startActivityForResult(myIntent, ACTIVITY_SELECT_GAME);
@@ -376,7 +376,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void LoadSlot(int index)
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	String path = curGameDir.concat(String.valueOf(index)).concat(".sav");
     	File f = new File(path);
     	if (!f.exists())
@@ -410,9 +410,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		}
 		final int bufferSize = size;
 
-	    //Останавливаем таймер
+	    //РћСЃС‚Р°РЅР°РІР»РёРІР°РµРј С‚Р°Р№РјРµСЂ
 	    timerHandler.removeCallbacks(timerUpdateTask);
-	    //Выключаем музыку
+	    //Р’С‹РєР»СЋС‡Р°РµРј РјСѓР·С‹РєСѓ
 	    CloseFileUI(null);
 	    
 		libThreadHandler.post(new Runnable() {
@@ -436,7 +436,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 
 	    		runOnUiThread(new Runnable() {
 	    			public void run() {
-	    	    		//Запускаем таймер
+	    	    		//Р—Р°РїСѓСЃРєР°РµРј С‚Р°Р№РјРµСЂ
 	    	            timerHandler.postDelayed(timerUpdateTask, timerInterval);
 	    			}
     	    	});
@@ -446,7 +446,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void SaveSlot(int index)
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	final String path = curGameDir.concat(String.valueOf(index)).concat(".sav");
 
 		libThreadHandler.post(new Runnable() {
@@ -499,7 +499,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             Intent data) {
         if (requestCode == ACTIVITY_SELECT_GAME) {
             if (resultCode == RESULT_OK) {
-                //Игра выбрана, запускаем ее
+                //РРіСЂР° РІС‹Р±СЂР°РЅР°, Р·Р°РїСѓСЃРєР°РµРј РµРµ
             	if (data == null)
             		return;
             	String file_name = data.getStringExtra("file_name");
@@ -515,10 +515,10 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     //****** / THREADS \ ***********************************************************
     //******************************************************************************
     //******************************************************************************
-    /** паркует-останавливает указанный тред, и сохраняет на него указатель в parkThread */
+    /** РїР°СЂРєСѓРµС‚-РѕСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ СѓРєР°Р·Р°РЅРЅС‹Р№ С‚СЂРµРґ, Рё СЃРѕС…СЂР°РЅСЏРµС‚ РЅР° РЅРµРіРѕ СѓРєР°Р·Р°С‚РµР»СЊ РІ parkThread */
     protected void setThreadPark()    {
     	Utility.WriteLog("setThreadPark: enter ");    	
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
     	if (libThread == null)
     	{
     		Utility.WriteLog("setThreadPark: failed, libthread is null");
@@ -529,10 +529,10 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	Utility.WriteLog("setThreadPark: success ");    	
     }
     
-    /** возобновляет работу треда сохраненного в указателе parkThread */
+    /** РІРѕР·РѕР±РЅРѕРІР»СЏРµС‚ СЂР°Р±РѕС‚Сѓ С‚СЂРµРґР° СЃРѕС…СЂР°РЅРµРЅРЅРѕРіРѕ РІ СѓРєР°Р·Р°С‚РµР»Рµ parkThread */
     protected boolean setThreadUnpark()    {
     	Utility.WriteLog("setThreadUnPark: enter ");
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
         if (parkThread!=null && parkThread.isAlive()) {
             LockSupport.unpark(parkThread);
         	Utility.WriteLog("setThreadUnPark: success ");    	
@@ -549,13 +549,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     protected void StartLibThread()
     {
     	Utility.WriteLog("StartLibThread: enter ");    	
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	if (libThread!=null)
     	{
         	Utility.WriteLog("StartLibThread: failed, libThread is null");    	
     		return;
     	}
-    	//Запускаем поток библиотеки
+    	//Р—Р°РїСѓСЃРєР°РµРј РїРѕС‚РѕРє Р±РёР±Р»РёРѕС‚РµРєРё
     	Thread t = new Thread() {
             public void run() {
     			Looper.prepare();
@@ -573,8 +573,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     protected void StopLibThread()
     {
     	Utility.WriteLog("StopLibThread: enter ");    	
-    	//Контекст UI
-    	//Останавливаем поток библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
+    	//РћСЃС‚Р°РЅР°РІР»РёРІР°РµРј РїРѕС‚РѕРє Р±РёР±Р»РёРѕС‚РµРєРё
        	libThreadHandler.getLooper().quit();
 		libThread = null;
     	Utility.WriteLog("StopLibThread: success ");    	
@@ -585,14 +585,14 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     //******************************************************************************
     //******************************************************************************
 
-    //устанавливаем текст заголовка окна
+    //СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј С‚РµРєСЃС‚ Р·Р°РіРѕР»РѕРІРєР° РѕРєРЅР°
     private void setTitle(String second) {
    		TextView winTitle = (TextView) findViewById(R.id.title_text);
    		winTitle.setText(second);
 		updateTitle();
     }	
     
-    //анимация иконок при смене содержимого скрытых окон
+    //Р°РЅРёРјР°С†РёСЏ РёРєРѕРЅРѕРє РїСЂРё СЃРјРµРЅРµ СЃРѕРґРµСЂР¶РёРјРѕРіРѕ СЃРєСЂС‹С‚С‹С… РѕРєРѕРЅ
     private void updateTitle() {
 		ImageButton image = (ImageButton) findViewById(R.id.title_button_1);
 		image.clearAnimation();
@@ -612,22 +612,22 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	}	
     }	
     
-    //обработчик "Описание" в заголовке
+    //РѕР±СЂР°Р±РѕС‚С‡РёРє "РћРїРёСЃР°РЅРёРµ" РІ Р·Р°РіРѕР»РѕРІРєРµ
     public void onHomeClick(View v) {
     	setCurrentWin(WIN_MAIN);
     }
     
-    //обработчик "Инвентарь" в заголовке
+    //РѕР±СЂР°Р±РѕС‚С‡РёРє "РРЅРІРµРЅС‚Р°СЂСЊ" РІ Р·Р°РіРѕР»РѕРІРєРµ
     public void onInvClick(View v) {
     	setCurrentWin(WIN_INV);
     }
     
-    //обработчик "Доп" в заголовке
+    //РѕР±СЂР°Р±РѕС‚С‡РёРє "Р”РѕРї" РІ Р·Р°РіРѕР»РѕРІРєРµ
     public void onExtClick(View v) {
     	setCurrentWin(WIN_EXT);
     }
     
-    //смена активного экрана
+    //СЃРјРµРЅР° Р°РєС‚РёРІРЅРѕРіРѕ СЌРєСЂР°РЅР°
     private void setCurrentWin(int win) {
     	switch(win){
     	case WIN_INV: 
@@ -636,13 +636,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
        		toggleExt(false);
        		invUnread = false;
        		invBack = 0;
-       		setTitle("Инвентарь");
+       		setTitle("РРЅРІРµРЅС‚Р°СЂСЊ");
        		break;
     	case WIN_MAIN: 
        		toggleInv(false);
        		toggleMain(true);
        		toggleExt(false);
-       		setTitle("Описание");
+       		setTitle("РћРїРёСЃР°РЅРёРµ");
        		break;
     	case WIN_EXT: 
        		toggleInv(false);
@@ -650,7 +650,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
        		toggleExt(true);
        		varUnread = false;
        		varBack = 0;
-       		setTitle("Доп. описание");
+       		setTitle("Р”РѕРї. РѕРїРёСЃР°РЅРёРµ");
        		break;
     	}
     }
@@ -672,7 +672,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
    }
     
     private Runnable timerUpdateTask = new Runnable() {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
 		public void run() {
 			libThreadHandler.post(new Runnable() {
 				public void run() {
@@ -691,7 +691,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     //LINKS HACKS
     static class InternalURLSpan extends ClickableSpan {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	OnClickListener mListener;
 
     	public InternalURLSpan(OnClickListener listener) {
@@ -706,28 +706,28 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void FreeResources()
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	
-    	//Процедура "честного" высвобождения всех ресурсов - в т.ч. остановка потока библиотеки
-    	//Сейчас не вызывается вообще, т.к. у нас нет соотв. пункта меню.
+    	//РџСЂРѕС†РµРґСѓСЂР° "С‡РµСЃС‚РЅРѕРіРѕ" РІС‹СЃРІРѕР±РѕР¶РґРµРЅРёСЏ РІСЃРµС… СЂРµСЃСѓСЂСЃРѕРІ - РІ С‚.С‡. РѕСЃС‚Р°РЅРѕРІРєР° РїРѕС‚РѕРєР° Р±РёР±Р»РёРѕС‚РµРєРё
+    	//РЎРµР№С‡Р°СЃ РЅРµ РІС‹Р·С‹РІР°РµС‚СЃСЏ РІРѕРѕР±С‰Рµ, С‚.Рє. Сѓ РЅР°СЃ РЅРµС‚ СЃРѕРѕС‚РІ. РїСѓРЅРєС‚Р° РјРµРЅСЋ.
 
-    	//Вызовется только при закрытии активити в обработчике onDestroy(завершение активити),
-    	//но этого не произойдет при нормальной работе, т.к. кнопка Back не закрывает, а только
-    	//останавливает активити.
+    	//Р’С‹Р·РѕРІРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїСЂРё Р·Р°РєСЂС‹С‚РёРё Р°РєС‚РёРІРёС‚Рё РІ РѕР±СЂР°Р±РѕС‚С‡РёРєРµ onDestroy(Р·Р°РІРµСЂС€РµРЅРёРµ Р°РєС‚РёРІРёС‚Рё),
+    	//РЅРѕ СЌС‚РѕРіРѕ РЅРµ РїСЂРѕРёР·РѕР№РґРµС‚ РїСЂРё РЅРѕСЂРјР°Р»СЊРЅРѕР№ СЂР°Р±РѕС‚Рµ, С‚.Рє. РєРЅРѕРїРєР° Back РЅРµ Р·Р°РєСЂС‹РІР°РµС‚, Р° С‚РѕР»СЊРєРѕ
+    	//РѕСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р°РєС‚РёРІРёС‚Рё.
     	
-    	//Очищаем ВСЕ на выходе
+    	//РћС‡РёС‰Р°РµРј Р’РЎР• РЅР° РІС‹С…РѕРґРµ
     	if (qspInited)
     	{
         	Utility.WriteLog("onDestroy: stopping game");
     		StopGame(false);
     	}
-    	//Останавливаем поток библиотеки
+    	//РћСЃС‚Р°РЅР°РІР»РёРІР°РµРј РїРѕС‚РѕРє Р±РёР±Р»РёРѕС‚РµРєРё
    		StopLibThread();
     }
     
     private void runGame(String fileName)
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	if (libThreadHandler==null)
     	{
     		Utility.WriteLog("runGame: failed, libThreadHandler is null");
@@ -801,16 +801,16 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	    	            lvInv.setOnItemClickListener(objListClickListener);
     	    	            lvInv.setOnItemSelectedListener(objListSelectedListener);        
 
-    	    	            //Запускаем таймер
+    	    	            //Р—Р°РїСѓСЃРєР°РµРј С‚Р°Р№РјРµСЂ
     	    	            timerInterval = 500;
     	    	            timerStartTime = System.currentTimeMillis();
     	    	            timerHandler.removeCallbacks(timerUpdateTask);
     	    	            timerHandler.postDelayed(timerUpdateTask, timerInterval);
     	    	            
-    	    	            //Запускаем счетчик миллисекунд
+    	    	            //Р—Р°РїСѓСЃРєР°РµРј СЃС‡РµС‚С‡РёРє РјРёР»Р»РёСЃРµРєСѓРЅРґ
     	    	            gameStartTime = System.currentTimeMillis();
 
-    	    	            //Все готово, запускаем игру
+    	    	            //Р’СЃРµ РіРѕС‚РѕРІРѕ, Р·Р°РїСѓСЃРєР°РµРј РёРіСЂСѓ
     	    	            libThreadHandler.post(new Runnable() {
     	    	        		public void run() {
     	    	                	libraryThreadIsRunning = true;
@@ -834,21 +834,21 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void StopGame(boolean restart)
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
 		if (gameIsRunning)
 		{
-            //останавливаем таймер
+            //РѕСЃС‚Р°РЅР°РІР»РёРІР°РµРј С‚Р°Р№РјРµСЂ
     	    timerHandler.removeCallbacks(timerUpdateTask);
 
-    	    //останавливаем музыку
+    	    //РѕСЃС‚Р°РЅР°РІР»РёРІР°РµРј РјСѓР·С‹РєСѓ
             CloseFileUI(null);
             
-            //отключаем колбэки действий
+            //РѕС‚РєР»СЋС‡Р°РµРј РєРѕР»Р±СЌРєРё РґРµР№СЃС‚РІРёР№
             ListView lvAct = (ListView)findViewById(R.id.acts);
             lvAct.setOnItemClickListener(null);
             lvAct.setOnItemSelectedListener(null);        
 
-            //отключаем колбэки инвентаря
+            //РѕС‚РєР»СЋС‡Р°РµРј РєРѕР»Р±СЌРєРё РёРЅРІРµРЅС‚Р°СЂСЏ
             ListView lvInv = (ListView)findViewById(R.id.inv);
             lvInv.setOnItemClickListener(null);
             lvInv.setOnItemSelectedListener(null);
@@ -858,7 +858,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		curGameDir = "";
 		curGameFile = "";
 
-		//Очищаем библиотеку
+		//РћС‡РёС‰Р°РµРј Р±РёР±Р»РёРѕС‚РµРєСѓ
 		if (restart || libraryThreadIsRunning)
 			return;
 
@@ -874,17 +874,17 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void PlayFileUI(String file, int volume)
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	if (file == null || file.length() == 0)
     		return;
     	
-    	//Проверяем, проигрывается ли уже этот файл.
-    	//Если проигрывается, ничего не делаем.
+    	//РџСЂРѕРІРµСЂСЏРµРј, РїСЂРѕРёРіСЂС‹РІР°РµС‚СЃСЏ Р»Рё СѓР¶Рµ СЌС‚РѕС‚ С„Р°Р№Р».
+    	//Р•СЃР»Рё РїСЂРѕРёРіСЂС‹РІР°РµС‚СЃСЏ, РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµРј.
     	if (IsPlayingFileUI(file))
     		return;
 
-		//Проверяем, существует ли файл.
-		//Если нет, ничего не делаем.
+		//РџСЂРѕРІРµСЂСЏРµРј, СЃСѓС‰РµСЃС‚РІСѓРµС‚ Р»Рё С„Р°Р№Р».
+		//Р•СЃР»Рё РЅРµС‚, РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµРј.
 		File mediaFile = new File(curGameDir, file);
         if (!mediaFile.exists())
         	return;
@@ -945,7 +945,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 
     private boolean IsPlayingFileUI(String file)
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	if (file == null || file.length() == 0)
     		return false;
     	boolean foundPlaying = false; 
@@ -968,8 +968,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void CloseFileUI(String file)
     {
-    	//Контекст UI
-    	//Если вместо имени файла пришел null, значит закрываем все файлы(CLOSE ALL)
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
+    	//Р•СЃР»Рё РІРјРµСЃС‚Рѕ РёРјРµРЅРё С„Р°Р№Р»Р° РїСЂРёС€РµР» null, Р·РЅР°С‡РёС‚ Р·Р°РєСЂС‹РІР°РµРј РІСЃРµ С„Р°Р№Р»С‹(CLOSE ALL)
     	boolean bCloseAll = false;
     	if (file == null)
     		bCloseAll = true;
@@ -996,9 +996,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void PauseMusic(boolean pause)
     {
-    	//Контекст UI
-    	//pause == true : приостанавливаем
-    	//pause == false : запускаем
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
+    	//pause == true : РїСЂРёРѕСЃС‚Р°РЅР°РІР»РёРІР°РµРј
+    	//pause == false : Р·Р°РїСѓСЃРєР°РµРј
         musicLock.lock();
         try {
 	    	for (int i=0; i<mediaPlayersList.size(); i++)
@@ -1024,12 +1024,12 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     //******************************************************************************
     private void RefreshInt() 
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
     	JniResult htmlResult = (JniResult) QSPGetVarValues("USEHTML", 0);
     	final boolean html = htmlResult.success && (htmlResult.int1 != 0);
     	
     	
-    	//основное описание
+    	//РѕСЃРЅРѕРІРЅРѕРµ РѕРїРёСЃР°РЅРёРµ
     	if (QSPIsMainDescChanged())
     	{
 			final String txtMainDesc = QSPGetMainDesc();
@@ -1047,7 +1047,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			});
     	}
     
-    	//список действий
+    	//СЃРїРёСЃРѕРє РґРµР№СЃС‚РІРёР№
     	if (QSPIsActionsChanged())
     	{
 	        int nActsCount = QSPGetActionsCount();
@@ -1063,7 +1063,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 					public void run() {
 				        ListView lvAct = (ListView)findViewById(R.id.acts);
 				        lvAct.setAdapter(new ArrayAdapter<Spanned>(uiContext, R.layout.act_item, acts));
-				        //Разворачиваем список действий
+				        //Р Р°Р·РІРѕСЂР°С‡РёРІР°РµРј СЃРїРёСЃРѕРє РґРµР№СЃС‚РІРёР№
 				        Utility.setListViewHeightBasedOnChildren(lvAct);
 					}
 				});
@@ -1080,14 +1080,14 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 					public void run() {
 				        ListView lvAct = (ListView)findViewById(R.id.acts);
 				        lvAct.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.act_item, acts));
-				        //Разворачиваем список действий
+				        //Р Р°Р·РІРѕСЂР°С‡РёРІР°РµРј СЃРїРёСЃРѕРє РґРµР№СЃС‚РІРёР№
 				        Utility.setListViewHeightBasedOnChildren(lvAct);
 					}
 				});
 			}
     	}
         
-        //инвентарь
+        //РёРЅРІРµРЅС‚Р°СЂСЊ
     	if (QSPIsObjectsChanged())
     	{
 			runOnUiThread(new Runnable() {
@@ -1131,7 +1131,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			}
     	}
         
-        //доп. описание
+        //РґРѕРї. РѕРїРёСЃР°РЅРёРµ
     	if (QSPIsVarsDescChanged())
     	{
 			final String txtVarsDesc = QSPGetVarsDesc();			
@@ -1156,7 +1156,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void SetTimer(int msecs)
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
     	final int timeMsecs = msecs;
 		runOnUiThread(new Runnable() {
 			public void run() {
@@ -1167,7 +1167,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 
     private void ShowMessage(String message)
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
 		if (libThread==null)
 		{
 			Utility.WriteLog("ShowMessage: failed, libThread is null");
@@ -1208,7 +1208,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void PlayFile(String file, int volume)
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
     	final String musicFile = file;
     	final int musicVolume = volume;
     	runOnUiThread(new Runnable() {
@@ -1220,13 +1220,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private boolean IsPlayingFile(String file)
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
     	return IsPlayingFileUI(file);
     }
 
     private void CloseFile(String file)
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
     	final String musicFile = file;
     	runOnUiThread(new Runnable() {
     		public void run() {
@@ -1237,7 +1237,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void ShowPicture(String file)
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
     	if (file == null || file.length() == 0)
     		return;
     	
@@ -1249,8 +1249,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		    	if (curGameDir != null)
 		    		prefix = curGameDir;
 		    	
-		    	//Проверяем, существует ли файл.
-		    	//Если нет - выходим
+		    	//РџСЂРѕРІРµСЂСЏРµРј, СЃСѓС‰РµСЃС‚РІСѓРµС‚ Р»Рё С„Р°Р№Р».
+		    	//Р•СЃР»Рё РЅРµС‚ - РІС‹С…РѕРґРёРј
 		    	File gfxFile = new File(prefix.concat(fileName));
 		        if (!gfxFile.exists())
 		        	return;
@@ -1269,7 +1269,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private String InputBox(String prompt)
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
 		if (libThread==null)
 		{
 			Utility.WriteLog("InputBox: failed, libThread is null");
@@ -1304,13 +1304,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private int GetMSCount()
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
     	return (int) (System.currentTimeMillis() - gameStartTime);
     }
     
     private void AddMenuItem(String name, String imgPath)
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
     	QspMenuItem item = new QspMenuItem();
     	item.imgPath = imgPath;
     	item.name = name;
@@ -1319,7 +1319,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private int ShowMenu()
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
 		if (libThread==null)
 		{
 			Utility.WriteLog("ShowMenu: failed, libThread is null");
@@ -1375,7 +1375,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     private void DeleteMenu()
     {
-    	//Контекст библиотеки
+    	//РљРѕРЅС‚РµРєСЃС‚ Р±РёР±Р»РёРѕС‚РµРєРё
     	menuList.clear();
     }
     //******************************************************************************
@@ -1387,7 +1387,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     
     public void OnUrlClicked (String href)
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	String tag = href.substring(0, 5).toLowerCase();
     	if (tag.equals("exec:"))
     	{
@@ -1426,7 +1426,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	//Callback for click on selected act
     private OnItemClickListener actListClickListener = new OnItemClickListener() 
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	@Override
     	public void onItemClick(AdapterView<?> parent, View arg1, int position, long arg3) 
     	{
@@ -1449,7 +1449,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     //Callback for select act
     private OnItemSelectedListener actListSelectedListener = new OnItemSelectedListener() 
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
 		@Override
 		public void onItemSelected(AdapterView<?> arg0, View arg1,
 				int arg2, long arg3) {
@@ -1476,7 +1476,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     //Callback for click on selected object
     private OnItemClickListener objListClickListener = new OnItemClickListener() 
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	@Override
     	public void onItemClick(AdapterView<?> parent, View arg1, int position, long arg3) 
     	{
@@ -1498,7 +1498,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     //Callback for select object
     private OnItemSelectedListener objListSelectedListener = new OnItemSelectedListener() 
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
 		@Override
 		public void onItemSelected(AdapterView<?> arg0, View arg1,
 				int arg2, long arg3) {
@@ -1522,23 +1522,23 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		}
     };
     
-    //Для отображения картинок в HTML
+    //Р”Р»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ РєР°СЂС‚РёРЅРѕРє РІ HTML
     static QspImageGetter imgGetter = new QspImageGetter();
     
-    //Хэндлер для UI-потока
+    //РҐСЌРЅРґР»РµСЂ РґР»СЏ UI-РїРѕС‚РѕРєР°
     final Handler uiThreadHandler = new Handler();
 
-    //Хэндлер для потока библиотеки
+    //РҐСЌРЅРґР»РµСЂ РґР»СЏ РїРѕС‚РѕРєР° Р±РёР±Р»РёРѕС‚РµРєРё
     private Handler libThreadHandler;
     
-    //Поток библиотеки
+    //РџРѕС‚РѕРє Р±РёР±Р»РёРѕС‚РµРєРё
     private Thread libThread;
     private Thread parkThread;
     
-    //Запущен ли поток библиотеки
+    //Р—Р°РїСѓС‰РµРЅ Р»Рё РїРѕС‚РѕРє Р±РёР±Р»РёРѕС‚РµРєРё
     boolean					libraryThreadIsRunning = false;
  
-    //Есть ответ от MessageBox, InputBox либо Menu
+    //Р•СЃС‚СЊ РѕС‚РІРµС‚ РѕС‚ MessageBox, InputBox Р»РёР±Рѕ Menu
     private boolean 		dialogHasResult;
     String					inputboxResult;
     int						menuResult;

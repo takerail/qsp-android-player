@@ -108,13 +108,13 @@ public class QspGameStock extends TabActivity {
         TabHost tabHost = getTabHost();
         LayoutInflater.from(getApplicationContext()).inflate(R.layout.gamestock, tabHost.getTabContentView(), true);
         tabHost.addTab(tabHost.newTabSpec("downloaded")
-                .setIndicator("Загруженные")
+                .setIndicator("Р—Р°РіСЂСѓР¶РµРЅРЅС‹Рµ")
                 .setContent(R.id.downloaded_tab));
         tabHost.addTab(tabHost.newTabSpec("starred")
-                .setIndicator("Отмеченные")
+                .setIndicator("РћС‚РјРµС‡РµРЅРЅС‹Рµ")
                 .setContent(R.id.starred_tab));
         tabHost.addTab(tabHost.newTabSpec("all")
-                .setIndicator("Все")
+                .setIndicator("Р’СЃРµ")
                 .setContent(R.id.all_tab));
         
     	gamesMap = new HashMap<String, GameItem>();
@@ -128,13 +128,13 @@ public class QspGameStock extends TabActivity {
         loadGameList.start();
         
         //TODO: 
-        // 1v. Отображение статуса "Загружено", например цветом фона.
-        // 2. Авто-обновление игр
-        // 3. Кэширование списка игр
-        // 4v. Доступ к играм, даже когда сервер недоступен
-        // 5. Вывод игр в папке "Загруженные" в порядке последнего доступа к ним
-        // 6. Возможность открыть файл из любой папки(через специальное меню этой активити)
-        // 7. Доступ к настройкам приложения через меню этой активити
+        // 1v. РћС‚РѕР±СЂР°Р¶РµРЅРёРµ СЃС‚Р°С‚СѓСЃР° "Р—Р°РіСЂСѓР¶РµРЅРѕ", РЅР°РїСЂРёРјРµСЂ С†РІРµС‚РѕРј С„РѕРЅР°.
+        // 2. РђРІС‚Рѕ-РѕР±РЅРѕРІР»РµРЅРёРµ РёРіСЂ
+        // 3. РљСЌС€РёСЂРѕРІР°РЅРёРµ СЃРїРёСЃРєР° РёРіСЂ
+        // 4v. Р”РѕСЃС‚СѓРї Рє РёРіСЂР°Рј, РґР°Р¶Рµ РєРѕРіРґР° СЃРµСЂРІРµСЂ РЅРµРґРѕСЃС‚СѓРїРµРЅ
+        // 5. Р’С‹РІРѕРґ РёРіСЂ РІ РїР°РїРєРµ "Р—Р°РіСЂСѓР¶РµРЅРЅС‹Рµ" РІ РїРѕСЂСЏРґРєРµ РїРѕСЃР»РµРґРЅРµРіРѕ РґРѕСЃС‚СѓРїР° Рє РЅРёРј
+        // 6. Р’РѕР·РјРѕР¶РЅРѕСЃС‚СЊ РѕС‚РєСЂС‹С‚СЊ С„Р°Р№Р» РёР· Р»СЋР±РѕР№ РїР°РїРєРё(С‡РµСЂРµР· СЃРїРµС†РёР°Р»СЊРЅРѕРµ РјРµРЅСЋ СЌС‚РѕР№ Р°РєС‚РёРІРёС‚Рё)
+        // 7. Р”РѕСЃС‚СѓРї Рє РЅР°СЃС‚СЂРѕР№РєР°Рј РїСЂРёР»РѕР¶РµРЅРёСЏ С‡РµСЂРµР· РјРµРЅСЋ СЌС‚РѕР№ Р°РєС‚РёРІРёС‚Рё
     }
     
     private void InitListViews()
@@ -156,7 +156,7 @@ public class QspGameStock extends TabActivity {
         lvAll.setOnItemClickListener(gameListClickListener);
     }
 
-    //Выбрана игра в списке
+    //Р’С‹Р±СЂР°РЅР° РёРіСЂР° РІ СЃРїРёСЃРєРµ
     private OnItemClickListener gameListClickListener = new OnItemClickListener() 
     {
     	@Override
@@ -165,17 +165,17 @@ public class QspGameStock extends TabActivity {
     		String value = null;
     		switch (getTabHost().getCurrentTab()) {
     		case 0:
-    			//Загруженные
+    			//Р—Р°РіСЂСѓР¶РµРЅРЅС‹Рµ
     			GameItem tt1 = (GameItem) lvDownloaded.getAdapter().getItem(position);
     			value = tt1.title;
     			break;
     		case 1:
-    			//Отмеченные
+    			//РћС‚РјРµС‡РµРЅРЅС‹Рµ
     			GameItem tt2 = (GameItem) lvStarred.getAdapter().getItem(position);
     			value = tt2.title;
     			break;
     		case 2:
-    			//Все
+    			//Р’СЃРµ
     			GameItem tt3 = (GameItem) lvAll.getAdapter().getItem(position);
     			value = tt3.title;
     			break;
@@ -187,7 +187,7 @@ public class QspGameStock extends TabActivity {
     		
     		if (selectedGame.downloaded)
     		{
-    			//Если игра загружена, стартуем
+    			//Р•СЃР»Рё РёРіСЂР° Р·Р°РіСЂСѓР¶РµРЅР°, СЃС‚Р°СЂС‚СѓРµРј
     			Intent data = new Intent();
     			data.putExtra("file_name", selectedGame.game_file);
     			setResult(RESULT_OK, data);
@@ -195,7 +195,7 @@ public class QspGameStock extends TabActivity {
     		}
     		else
     		{
-    			//Игра не загружена, пытаемся загрузить с сервера
+    			//РРіСЂР° РЅРµ Р·Р°РіСЂСѓР¶РµРЅР°, РїС‹С‚Р°РµРјСЃСЏ Р·Р°РіСЂСѓР·РёС‚СЊ СЃ СЃРµСЂРІРµСЂР°
     			DownloadGame(selectedGame.file_url, selectedGame.title);
     		}
     	}
@@ -262,7 +262,7 @@ public class QspGameStock extends TabActivity {
             			//add the data in the buffer to the file in the file output stream (the file on the sd card
             			fileOutput.write(buffer, 0, bufferLength);
             			//this is where you would do something to report the prgress, like this maybe
-            			updateSpinnerProgress(true, gameName, "Скачивается...", bufferLength);
+            			updateSpinnerProgress(true, gameName, "РЎРєР°С‡РёРІР°РµС‚СЃСЏ...", bufferLength);
             		}
             		//close the output stream when done
             		fileOutput.close();
@@ -297,7 +297,7 @@ public class QspGameStock extends TabActivity {
     	_zipFile = zipFile;
     	_location = location;
 
-    	updateSpinnerProgress(true, gameName, "Распаковывается...", -1);
+    	updateSpinnerProgress(true, gameName, "Р Р°СЃРїР°РєРѕРІС‹РІР°РµС‚СЃСЏ...", -1);
 
     	_dirChecker("");
 
@@ -319,7 +319,7 @@ public class QspGameStock extends TabActivity {
     				int n;
     				while ((n = in.read(b,0,1024)) >= 0) {
     					out.write(b,0,n);
-    					updateSpinnerProgress(true, gameName, "Распаковывается...", n);
+    					updateSpinnerProgress(true, gameName, "Р Р°СЃРїР°РєРѕРІС‹РІР°РµС‚СЃСЏ...", n);
     				}
 
     				zin.closeEntry();
@@ -387,7 +387,7 @@ public class QspGameStock extends TabActivity {
     
     private boolean ScanDownloadedGames()
     {
-    	//Заполняем список скачанных игр
+    	//Р—Р°РїРѕР»РЅСЏРµРј СЃРїРёСЃРѕРє СЃРєР°С‡Р°РЅРЅС‹С… РёРіСЂ
     	
     	String path = Utility.GetDefaultPath();
     	if (path == null)
@@ -397,12 +397,12 @@ public class QspGameStock extends TabActivity {
         File[] sdcardFiles = gameStartDir.listFiles();        
         ArrayList<File> qspGameDirs = new ArrayList<File>();
         ArrayList<File> qspGameFiles = new ArrayList<File>();
-        //Сначала добавляем все папки
+        //РЎРЅР°С‡Р°Р»Р° РґРѕР±Р°РІР»СЏРµРј РІСЃРµ РїР°РїРєРё
         for (File currentFile : sdcardFiles)
         {
         	if (currentFile.isDirectory() && !currentFile.isHidden() && !currentFile.getName().startsWith("."))
         	{
-        		//Из папок добавляем только те, в которых есть игра
+        		//РР· РїР°РїРѕРє РґРѕР±Р°РІР»СЏРµРј С‚РѕР»СЊРєРѕ С‚Рµ, РІ РєРѕС‚РѕСЂС‹С… РµСЃС‚СЊ РёРіСЂР°
                 File[] curDirFiles = currentFile.listFiles();        
                 for (File innerFile : curDirFiles)
                 {
@@ -416,7 +416,7 @@ public class QspGameStock extends TabActivity {
         	}
         }
 
-        //Ищем загруженные игры в карте
+        //РС‰РµРј Р·Р°РіСЂСѓР¶РµРЅРЅС‹Рµ РёРіСЂС‹ РІ РєР°СЂС‚Рµ
         for (int i=0; i<qspGameDirs.size(); i++)
         {
         	File d = qspGameDirs.get(i);
@@ -439,22 +439,22 @@ public class QspGameStock extends TabActivity {
     private void GetCheckedGames()
     {
     	//!!! STUB
-    	//Заполняем список отмеченных игр
+    	//Р—Р°РїРѕР»РЅСЏРµРј СЃРїРёСЃРѕРє РѕС‚РјРµС‡РµРЅРЅС‹С… РёРіСЂ
     	
     }
    
     private void RefreshAllTabs()
     {
-    	//Выводим списки игр на экран
+    	//Р’С‹РІРѕРґРёРј СЃРїРёСЃРєРё РёРіСЂ РЅР° СЌРєСЂР°РЅ
 
-    	//Все
+    	//Р’СЃРµ
         ArrayList<GameItem> gamesAll = new ArrayList<GameItem>();
         for (HashMap.Entry<String, GameItem> e : gamesMap.entrySet())
         {
         	gamesAll.add(e.getValue());
         }
         lvAll.setAdapter(new GameAdapter(uiContext, R.layout.game_item, gamesAll));
-        //Загруженные
+        //Р—Р°РіСЂСѓР¶РµРЅРЅС‹Рµ
         ArrayList<GameItem> gamesDownloaded = new ArrayList<GameItem>();
         for (HashMap.Entry<String, GameItem> e : gamesMap.entrySet())
         {
@@ -463,22 +463,22 @@ public class QspGameStock extends TabActivity {
         }
         lvDownloaded.setAdapter(new GameAdapter(uiContext, R.layout.game_item, gamesDownloaded));
         
-        //Отмеченные
+        //РћС‚РјРµС‡РµРЅРЅС‹Рµ
         //!!! STUB
         ArrayList<GameItem> gamesStarred = new ArrayList<GameItem>();
         lvStarred.setAdapter(new GameAdapter(uiContext, R.layout.game_item, gamesStarred));
-        //Определяем, какую вкладку открыть
+        //РћРїСЂРµРґРµР»СЏРµРј, РєР°РєСѓСЋ РІРєР»Р°РґРєСѓ РѕС‚РєСЂС‹С‚СЊ
         if (openDefaultTab)
         {
         	openDefaultTab = false;
         	
-        	int tabIndex = 0;//Загруженные
+        	int tabIndex = 0;//Р—Р°РіСЂСѓР¶РµРЅРЅС‹Рµ
         	if (lvDownloaded.getAdapter().isEmpty())
         	{
         		if (lvStarred.getAdapter().isEmpty())
-        			tabIndex = 2;//Все
+        			tabIndex = 2;//Р’СЃРµ
         		else
-        			tabIndex = 1;//Отмеченные
+        			tabIndex = 1;//РћС‚РјРµС‡РµРЅРЅС‹Рµ
         	}
         	
         	getTabHost().setCurrentTab(tabIndex);
@@ -567,9 +567,9 @@ public class QspGameStock extends TabActivity {
     	}
     	if (!parsed)
     	{
-    		//Показываем сообщение об ошибке
+    		//РџРѕРєР°Р·С‹РІР°РµРј СЃРѕРѕР±С‰РµРЅРёРµ РѕР± РѕС€РёР±РєРµ
     		new AlertDialog.Builder(uiContext)
-    		.setMessage("Ошибка: Не удалось загрузить список игр. Проверьте интернет-подключение.")
+    		.setMessage("РћС€РёР±РєР°: РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ СЃРїРёСЃРѕРє РёРіСЂ. РџСЂРѕРІРµСЂСЊС‚Рµ РёРЅС‚РµСЂРЅРµС‚-РїРѕРґРєР»СЋС‡РµРЅРёРµ.")
     		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
     			public void onClick(DialogInterface dialog, int whichButton) { }
     		})
@@ -579,7 +579,7 @@ public class QspGameStock extends TabActivity {
     }
 
     private Thread loadGameList = new Thread() {
-    	//Загружаем список игр
+    	//Р—Р°РіСЂСѓР¶Р°РµРј СЃРїРёСЃРѕРє РёРіСЂ
         public void run() {
             try {
                 URL updateURL = new URL("http://qsp.su/gamestock/gamestock.php");
@@ -614,11 +614,11 @@ public class QspGameStock extends TabActivity {
     
     
     //***********************************************************************
-    //			выбор файла "напрямую", через пролистывание папок
+    //			РІС‹Р±РѕСЂ С„Р°Р№Р»Р° "РЅР°РїСЂСЏРјСѓСЋ", С‡РµСЂРµР· РїСЂРѕР»РёСЃС‚С‹РІР°РЅРёРµ РїР°РїРѕРє
     //***********************************************************************
     android.content.DialogInterface.OnClickListener browseFileClick = new DialogInterface.OnClickListener()
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
 		@Override
 		public void onClick(DialogInterface dialog, int which) 
 		{
@@ -638,7 +638,7 @@ public class QspGameStock extends TabActivity {
 					BrowseGame(f.getPath(), false);
 				else
 				{
-					//Сделать правильный возврат из активити
+					//РЎРґРµР»Р°С‚СЊ РїСЂР°РІРёР»СЊРЅС‹Р№ РІРѕР·РІСЂР°С‚ РёР· Р°РєС‚РёРІРёС‚Рё
 					//!!! STUB
 					//runGame(f.getPath());
 				}
@@ -648,11 +648,11 @@ public class QspGameStock extends TabActivity {
     
     private void BrowseGame(String startpath, boolean start)
     {
-    	//Контекст UI
+    	//РљРѕРЅС‚РµРєСЃС‚ UI
     	if (startpath == null)
     		return;
     	
-    	//Устанавливаем путь "выше"    	
+    	//РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РїСѓС‚СЊ "РІС‹С€Рµ"    	
     	if (!start)
     		if (startRootPath.equals(startpath))
     			start = true;
@@ -670,24 +670,24 @@ public class QspGameStock extends TabActivity {
     		backPath = "";
     	}
     	
-        //Ищем все файлы .qsp и .gam в корне флэшки
+        //РС‰РµРј РІСЃРµ С„Р°Р№Р»С‹ .qsp Рё .gam РІ РєРѕСЂРЅРµ С„Р»СЌС€РєРё
         File sdcardRoot = new File (startpath);
         File[] sdcardFiles = sdcardRoot.listFiles();        
         qspGamesBrowseList = new ArrayList<File>();
-        //Сначала добавляем все папки
+        //РЎРЅР°С‡Р°Р»Р° РґРѕР±Р°РІР»СЏРµРј РІСЃРµ РїР°РїРєРё
         for (File currentFile : sdcardFiles)
         {
         	if (currentFile.isDirectory() && !currentFile.isHidden() && !currentFile.getName().startsWith("."))
         		qspGamesBrowseList.add(currentFile);
         }
-        //Потом добавляем все QSP-игры
+        //РџРѕС‚РѕРј РґРѕР±Р°РІР»СЏРµРј РІСЃРµ QSP-РёРіСЂС‹
         for (File currentFile : sdcardFiles)
         {
         	if (!currentFile.isHidden() && (currentFile.getName().endsWith(".qsp") || currentFile.getName().endsWith(".gam")))
         		qspGamesBrowseList.add(currentFile);
         }
         
-        //Если мы не на самом верхнем уровне, то добавляем ссылку 
+        //Р•СЃР»Рё РјС‹ РЅРµ РЅР° СЃР°РјРѕРј РІРµСЂС…РЅРµРј СѓСЂРѕРІРЅРµ, С‚Рѕ РґРѕР±Р°РІР»СЏРµРј СЃСЃС‹Р»РєСѓ 
         int shift = 0;
         if (!start)
         	shift = 1;
@@ -704,9 +704,9 @@ public class QspGameStock extends TabActivity {
         	items[i] = displayName;
         }
         
-        //Показываем диалог выбора файла
+        //РџРѕРєР°Р·С‹РІР°РµРј РґРёР°Р»РѕРі РІС‹Р±РѕСЂР° С„Р°Р№Р»Р°
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Выберите файл с игрой");
+        builder.setTitle("Р’С‹Р±РµСЂРёС‚Рµ С„Р°Р№Р» СЃ РёРіСЂРѕР№");
         builder.setItems(items, browseFileClick);
         AlertDialog alert = builder.create();
         alert.show();
