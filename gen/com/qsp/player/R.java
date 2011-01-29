@@ -9,7 +9,8 @@ package com.qsp.player;
 
 public final class R {
     public static final class anim {
-        public static final int update=0x7f040000;
+        public static final int cycleanim=0x7f040000;
+        public static final int update=0x7f040001;
     }
     public static final class attr {
     }
@@ -44,35 +45,34 @@ public final class R {
         public static final int translucent_background=0x7f02000e;
     }
     public static final class id {
-        public static final int act_icon=0x7f0a0000;
-        public static final int act_text=0x7f0a0001;
-        public static final int acts=0x7f0a000b;
-        public static final int all_tab=0x7f0a0004;
-        public static final int downloaded_tab=0x7f0a0002;
-        public static final int gestures=0x7f0a0008;
-        public static final int imagebox=0x7f0a0005;
-        public static final int inputbox_edit=0x7f0a0006;
-        public static final int inv=0x7f0a000c;
-        public static final int main_desc=0x7f0a000a;
-        public static final int main_tab=0x7f0a0009;
-        public static final int menu_about=0x7f0a0018;
-        public static final int menu_gamestock=0x7f0a0016;
-        public static final int menu_loadgame=0x7f0a001b;
-        public static final int menu_newgame=0x7f0a001a;
-        public static final int menu_options=0x7f0a0017;
-        public static final int menu_savegame=0x7f0a001c;
-        public static final int menugroup_running=0x7f0a0019;
-        public static final int starred_tab=0x7f0a0003;
-        public static final int title_button_1=0x7f0a0013;
-        public static final int title_button_2=0x7f0a0015;
-        public static final int title_home_button=0x7f0a000f;
-        public static final int title_home_button_sep=0x7f0a0010;
-        public static final int title_layout=0x7f0a000e;
-        public static final int title_sep_1=0x7f0a0012;
-        public static final int title_sep_2=0x7f0a0014;
-        public static final int title_text=0x7f0a0011;
-        public static final int titlebar=0x7f0a0007;
-        public static final int vars_desc=0x7f0a000d;
+        public static final int acts=0x7f0a000a;
+        public static final int all_tab=0x7f0a0003;
+        public static final int downloaded_tab=0x7f0a0001;
+        public static final int game_title=0x7f0a0000;
+        public static final int gestures=0x7f0a0007;
+        public static final int imagebox=0x7f0a0004;
+        public static final int inputbox_edit=0x7f0a0005;
+        public static final int inv=0x7f0a000b;
+        public static final int main_desc=0x7f0a0009;
+        public static final int main_tab=0x7f0a0008;
+        public static final int menu_about=0x7f0a0017;
+        public static final int menu_gamestock=0x7f0a0015;
+        public static final int menu_loadgame=0x7f0a001a;
+        public static final int menu_newgame=0x7f0a0019;
+        public static final int menu_options=0x7f0a0016;
+        public static final int menu_savegame=0x7f0a001b;
+        public static final int menugroup_running=0x7f0a0018;
+        public static final int starred_tab=0x7f0a0002;
+        public static final int title_button_1=0x7f0a0012;
+        public static final int title_button_2=0x7f0a0014;
+        public static final int title_home_button=0x7f0a000e;
+        public static final int title_home_button_sep=0x7f0a000f;
+        public static final int title_layout=0x7f0a000d;
+        public static final int title_sep_1=0x7f0a0011;
+        public static final int title_sep_2=0x7f0a0013;
+        public static final int title_text=0x7f0a0010;
+        public static final int titlebar=0x7f0a0006;
+        public static final int vars_desc=0x7f0a000c;
     }
     public static final class layout {
         public static final int act_item=0x7f030000;
