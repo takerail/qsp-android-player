@@ -55,7 +55,7 @@ public class Utility {
 
     public static String GetDefaultPath()
     {
-    	//Возвращаем путь к папке с играми.
+    	//Р’РѕР·РІСЂР°С‰Р°РµРј РїСѓС‚СЊ Рє РїР°РїРєРµ СЃ РёРіСЂР°РјРё.
     	if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED))
     		return null;
     	File sdDir = Environment.getExternalStorageDirectory();
