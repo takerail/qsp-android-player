@@ -204,7 +204,7 @@ public class QspGameStock extends TabActivity {
     private void DownloadGame(String file_url, String name)
     {
     	final String urlToDownload = file_url;
-    	final String unzipLocation = Utility.GetDefaultPath().concat("/").concat(name).concat("/");
+    	final String unzipLocation = new StringBuilder(Utility.GetDefaultPath()).append("/").append(name).append("/").toString();
     	final String gameName = name;
     	downloadProgressDialog = new ProgressDialog(uiContext);
     	downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
@@ -226,20 +226,7 @@ public class QspGameStock extends TabActivity {
             		//and connect!
             		urlConnection.connect();
 
-            		//set the path where we want to save the file
-            		//in this case, going to save it on the root directory of the
-            		//sd card.
-            		File SDCardRoot = Environment.getExternalStorageDirectory();
-            		
-            		File cacheDir = new File (SDCardRoot.getPath().concat("/Android/data/com.qsp.player/cache/"));
-            		if (!cacheDir.exists())
-            		{
-            			if (!cacheDir.mkdirs())
-            			{
-            				Utility.WriteLog("Cannot create cache folder");
-            				return;
-            			}
-            		}
+            		File cacheDir = new File (Utility.GetDefaultPathCache());
 
             		//create a new file, specifying the path, and the filename
             		//which we want to save the file as.
@@ -271,6 +258,8 @@ public class QspGameStock extends TabActivity {
 
             		//Unzip
             		Unzip(file.getPath(), unzipLocation, gameName);
+            		
+            		file.delete();
             	 
             		updateSpinnerProgress(false, "", "", 0);
 
@@ -390,8 +379,8 @@ public class QspGameStock extends TabActivity {
     	//Заполняем список скачанных игр
     	
     	String path = Utility.GetDefaultPath();
-    	if (path == null)
-    		return false;
+    	//if (path == null)
+    	//	return false;
     	
         File gameStartDir = new File (path);
         File[] sdcardFiles = gameStartDir.listFiles();        
