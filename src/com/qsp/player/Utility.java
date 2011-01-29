@@ -53,6 +53,16 @@ public class Utility {
     	return result;
     }
 
+    public static String QspPathTranslate(String str)
+    {
+    	if (str==null)
+    		return null;
+    	//В QSP папки разделяются знаком \ , как в DOS и Windows, для Android переводим это в / . 
+    	//Т.к. первый аргумент - регэксп, то эскейпим дважды.
+    	String result = str.replaceAll("\\\\", "/");
+    	return result;
+    }
+
     public static String GetDefaultPath()
     {
     	//Возвращаем путь к папке с играми.

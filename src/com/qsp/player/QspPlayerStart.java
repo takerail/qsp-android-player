@@ -1209,7 +1209,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     private void PlayFile(String file, int volume)
     {
     	//Контекст библиотеки
-    	final String musicFile = file;
+    	final String musicFile = Utility.QspPathTranslate(file);
     	final int musicVolume = volume;
     	runOnUiThread(new Runnable() {
     		public void run() {
@@ -1221,13 +1221,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     private boolean IsPlayingFile(String file)
     {
     	//Контекст библиотеки
-    	return IsPlayingFileUI(file);
+    	return IsPlayingFileUI(Utility.QspPathTranslate(file));
     }
 
     private void CloseFile(String file)
     {
     	//Контекст библиотеки
-    	final String musicFile = file;
+    	final String musicFile = Utility.QspPathTranslate(file);
     	runOnUiThread(new Runnable() {
     		public void run() {
     			CloseFileUI(musicFile);
@@ -1241,7 +1241,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	if (file == null || file.length() == 0)
     		return;
     	
-    	final String fileName = file;
+    	final String fileName = Utility.QspPathTranslate(file);
     	
 		runOnUiThread(new Runnable() {
 			public void run() {
@@ -1312,7 +1312,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     {
     	//Контекст библиотеки
     	QspMenuItem item = new QspMenuItem();
-    	item.imgPath = imgPath;
+    	item.imgPath = Utility.QspPathTranslate(imgPath);
     	item.name = name;
     	menuList.add(item);
     }
