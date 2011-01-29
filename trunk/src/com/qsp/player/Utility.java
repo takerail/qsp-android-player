@@ -55,29 +55,28 @@ public class Utility {
 
     public static String GetDefaultPath()
     {
-    	if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
-    		throw new UnsupportedOperationException("SD card isn`t mounted");
-    	String qspPath = "/qsp/games/";   	
-    	File sdDir = new File(Environment.getExternalStorageDirectory().getPath());
-    	if (sdDir.exists() && sdDir.canWrite()) {
-			File fullDir = new File(sdDir.getAbsolutePath().concat(qspPath));
-			if (!fullDir.exists()){
-				if (!fullDir.mkdirs())
-					throw new UnsupportedOperationException("Can`t create dirs on sd card");
-			}
-			return fullDir.getPath();
-		}else throw new UnsupportedOperationException("SD card isn`t writeable");		
+    	//Возвращаем путь к папке с играми.
+    	if (!android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED))
+    		return null;
+    	File sdDir = Environment.getExternalStorageDirectory();
+    	if (sdDir.exists() && sdDir.canWrite())
+    	{
+        	String flashCard = sdDir.getPath();
+        	String tryFull = flashCard + "/qsp/games/";
+        	File f = new File(tryFull);
+	    	if (f.exists())
+	    	{
+	    		return tryFull;
+	    	}
+	    	else
+	    	{
+				if (f.mkdirs())
+					return tryFull;
+	    	}
+    	}
+    	return null;
     }
     
-    public static String GetDefaultPathCache(){
-    	File cacheDir = new File(Utility.GetDefaultPath().concat("/cache/"));
-    	if (!cacheDir.exists()) {
-    		if (!cacheDir.mkdirs())
-				throw new UnsupportedOperationException("Can`t create dirs on sd card");
-    	}
-    	return cacheDir.getPath();
-    }
-
     public static void WriteLog(String msg)
     {
     	Log.i("QSP", msg);

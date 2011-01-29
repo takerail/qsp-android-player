@@ -1,6 +1,6 @@
-#Sat Jan 29 13:01:31 MSK 2011
+#Sat Jan 29 17:26:01 MSK 2011
 eclipse.preferences.version=1
-org.eclipse.jdt.core.builder.cleanOutputFolder=clean
+org.eclipse.jdt.core.builder.cleanOutputFolder=ignore
 org.eclipse.jdt.core.builder.duplicateResourceTask=warning
 org.eclipse.jdt.core.builder.invalidClasspath=abort
 org.eclipse.jdt.core.builder.recreateModifiedClassFileInOutputFolder=ignore
