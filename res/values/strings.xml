@@ -2,4 +2,7 @@
 <resources>
     <string name="hello">Hello World, QspPlayerStart!</string>
     <string name="app_name">Quest Player</string>
+    <string name="sd_no_mounted">SD card isn`t mounted</string>
+    <string name="sd_no_writeable">SD card isn`t writeable</string>
+    <string name="sd_cant_mkdir">Can`t create dirs on sd card</string>
 </resources>
