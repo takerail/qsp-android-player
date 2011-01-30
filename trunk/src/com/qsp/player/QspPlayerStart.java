@@ -10,6 +10,7 @@ import android.gesture.Gesture;
 import android.gesture.GestureOverlayView;
 import android.gesture.GestureStroke;
 import android.gesture.GestureOverlayView.OnGesturePerformedListener;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +24,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
@@ -33,6 +35,7 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -85,6 +88,57 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	
 	private boolean gui_debug_mode = true; 
 
+
+	private class QSPItem {
+		private Drawable icon;
+		private CharSequence text;
+		
+		public QSPItem(Drawable i, CharSequence t) {
+			icon = i;
+			text = t;
+		}
+
+		public Drawable getIcon() {
+			return icon;
+		}
+
+		public CharSequence getText() {
+			return text;
+		}
+	}
+
+	private class QSPListAdapter extends ArrayAdapter<QSPItem> {
+
+		private QSPItem [] items;
+		private int id;
+
+		public QSPListAdapter(Context context, int resource, QSPItem[] acts) {
+            super(context, resource, acts);
+            this.items = acts;
+            this.id = resource;
+		}
+
+		public View getView(int position, View convertView, ViewGroup parent) {
+                View v = convertView;
+                if (v == null) {
+                	Utility.WriteLog("null view");
+                    LayoutInflater vi = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                    v = vi.inflate(id, null);
+                }
+                QSPItem o = items[position];
+                if (o != null) {
+                        ImageView iv = (ImageView) v.findViewById(R.id.item_icon);
+                        TextView tv = (TextView) v.findViewById(R.id.item_text);
+                        if (iv != null) {
+                              iv.setImageDrawable(o.getIcon());
+                        }
+                        if(tv != null){
+                              tv.setText(o.getText());
+                        }
+                }
+                return v;
+        }
+	}
 
 	public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
     	//Контекст UI
@@ -1048,43 +1102,25 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	}
     
     	//список действий
-    	if (QSPIsActionsChanged())
-    	{
+    	if (QSPIsActionsChanged()){
 	        int nActsCount = QSPGetActionsCount();
-			if (html)
-			{
-		        final Spanned []acts = new Spanned[nActsCount];
-		        for (int i=0;i<nActsCount;i++)
-		        {
-		        	JniResult actsResult = (JniResult) QSPGetActionData(i);
-		        	acts[i] = Utility.QspStrToHtml(actsResult.str1, imgGetter);
-		        }
-				runOnUiThread(new Runnable() {
-					public void run() {
-				        ListView lvAct = (ListView)findViewById(R.id.acts);
-				        lvAct.setAdapter(new ArrayAdapter<Spanned>(uiContext, R.layout.act_item, acts));
-				        //Разворачиваем список действий
-				        Utility.setListViewHeightBasedOnChildren(lvAct);
-					}
-				});
-			}
-			else
-			{
-				final String []acts = new String[nActsCount];
-		        for (int i=0;i<nActsCount;i++)
-		        {
-		        	JniResult actsResult = (JniResult) QSPGetActionData(i);
-		        	acts[i] = actsResult.str1;
-		        }
-				runOnUiThread(new Runnable() {
-					public void run() {
-				        ListView lvAct = (ListView)findViewById(R.id.acts);
-				        lvAct.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.act_item, acts));
-				        //Разворачиваем список действий
-				        Utility.setListViewHeightBasedOnChildren(lvAct);
-					}
-				});
-			}
+		    final  QSPItem []acts = new QSPItem[nActsCount];
+		    for (int i=0;i<nActsCount;i++){
+		      	JniResult actsResult = (JniResult) QSPGetActionData(i);
+				if (html)
+					acts[i] = new QSPItem(imgGetter.getDrawable(actsResult.str2), 
+		       				Utility.QspStrToHtml(actsResult.str1, imgGetter));
+				else
+			       	acts[i] = new QSPItem(imgGetter.getDrawable(actsResult.str2), actsResult.str1);
+		    }
+			runOnUiThread(new Runnable() {
+				public void run() {
+			        ListView lvAct = (ListView)findViewById(R.id.acts);
+			        lvAct.setAdapter(new QSPListAdapter(uiContext, R.layout.act_item, acts));
+			        //Разворачиваем список действий
+			        Utility.setListViewHeightBasedOnChildren(lvAct);
+				}
+			});
     	}
         
         //инвентарь
@@ -1099,36 +1135,21 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 				}
 			});
 	        int nObjsCount = QSPGetObjectsCount();
-			if (html)
-			{
-		        final Spanned []objs = new Spanned[nObjsCount];
-		        for (int i=0;i<nObjsCount;i++)
-		        {
-		        	JniResult objsResult = (JniResult) QSPGetObjectData(i);
-		        	objs[i] = Utility.QspStrToHtml(objsResult.str1, imgGetter);
-		        }
-				runOnUiThread(new Runnable() {
-					public void run() {
-				        ListView lvInv = (ListView)findViewById(R.id.inv);
-				        lvInv.setAdapter(new ArrayAdapter<Spanned>(uiContext, R.layout.obj_item, objs));
-					}
-				});
-			}
-			else
-			{
-				final String []objs = new String[nObjsCount];
-		        for (int i=0;i<nObjsCount;i++)
-		        {
-		        	JniResult objsResult = (JniResult) QSPGetObjectData(i);
-		        	objs[i] = objsResult.str1;
-		        }
-				runOnUiThread(new Runnable() {
-					public void run() {
-				        ListView lvInv = (ListView)findViewById(R.id.inv);
-				        lvInv.setAdapter(new ArrayAdapter<String>(uiContext, R.layout.obj_item, objs));
-					}
-				});
-			}
+	        final QSPItem []objs = new QSPItem[nObjsCount];
+	        for (int i=0;i<nObjsCount;i++) {
+	        	JniResult objsResult = (JniResult) QSPGetObjectData(i);
+					if (html)
+						objs[i] = new QSPItem(imgGetter.getDrawable(objsResult.str2), 
+			       				Utility.QspStrToHtml(objsResult.str1, imgGetter));
+					else
+				       	objs[i] = new QSPItem(imgGetter.getDrawable(objsResult.str2), objsResult.str1);
+		    }
+			runOnUiThread(new Runnable() {
+				public void run() {
+			        ListView lvInv = (ListView)findViewById(R.id.inv);
+			        lvInv.setAdapter(new QSPListAdapter(uiContext, R.layout.obj_item, objs));
+				}
+			});
     	}
         
         //доп. описание
