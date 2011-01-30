@@ -72,16 +72,17 @@ public class Utility {
     	if (sdDir.exists() && sdDir.canWrite())
     	{
         	String flashCard = sdDir.getPath();
-        	String tryFull = flashCard + "/qsp/games/";
-        	File f = new File(tryFull);
+        	String tryFull1 = flashCard + "/qsp/games";
+        	String tryFull2 = tryFull1 + "/";
+        	File f = new File(tryFull1);
 	    	if (f.exists())
 	    	{
-	    		return tryFull;
+	    		return tryFull2;
 	    	}
 	    	else
 	    	{
 				if (f.mkdirs())
-					return tryFull;
+					return tryFull2;
 	    	}
     	}
     	return null;
