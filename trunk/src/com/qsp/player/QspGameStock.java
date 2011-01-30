@@ -52,6 +52,7 @@ public class QspGameStock extends TabActivity {
 		String lang;
 		String player;
 		String file_url;
+		String file_size;
 		String desc_url;
 		String pub_date;
 		String mod_date;
@@ -69,6 +70,7 @@ public class QspGameStock extends TabActivity {
 			lang = "";
 			player = "";
 			file_url = "";
+			file_size = "";
 			desc_url = "";
 			pub_date = "";
 			mod_date = "";
@@ -196,19 +198,19 @@ public class QspGameStock extends TabActivity {
     		else
     		{
     			//Игра не загружена, пытаемся загрузить с сервера
-    			DownloadGame(selectedGame.file_url, selectedGame.title);
+    			DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.title);
     		}
     	}
     };
     
-    private void DownloadGame(String file_url, String name)
+    private void DownloadGame(String file_url, String file_size, String name)
     {
     	final String urlToDownload = file_url;
     	final String unzipLocation = Utility.GetDefaultPath().concat("/").concat(name).concat("/");
     	final String gameName = name;
     	downloadProgressDialog = new ProgressDialog(uiContext);
-    	downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-    	downloadProgressDialog.setMax(MAX_SPINNER);
+    	downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+    	downloadProgressDialog.setMax(Integer.parseInt(file_size));
     	Thread t = new Thread() {
             public void run() {
             	try {
@@ -312,6 +314,12 @@ public class QspGameStock extends TabActivity {
     	_zipFile = zipFile;
     	_location = location;
 
+		runOnUiThread(new Runnable() {
+			public void run() {
+				downloadProgressDialog = new ProgressDialog(uiContext);
+				downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			}
+		});
     	updateSpinnerProgress(true, gameName, "Распаковывается...", -1);
 
     	_dirChecker("");
@@ -373,13 +381,12 @@ public class QspGameStock extends TabActivity {
 				}
 				if (nCount>=0)
 					downloadProgressDialog.incrementProgressBy(nCount);
-				else
-					downloadProgressDialog.setProgress(0);
 				if (show && !downloadProgressDialog.isShowing())
 				{
 					downloadProgressDialog.setTitle(dialogTitle);
 					downloadProgressDialog.setMessage(dialogMessage);
 					downloadProgressDialog.show();
+					downloadProgressDialog.setProgress(0);
 				}
 			}
 		});
@@ -562,6 +569,8 @@ public class QspGameStock extends TabActivity {
     						curItem.player = val;
     					else if (lastTagName.equals("file_url"))
     						curItem.file_url = val;
+    					else if (lastTagName.equals("file_size"))
+    						curItem.file_size = val;
     					else if (lastTagName.equals("desc_url"))
     						curItem.desc_url = val;
     					else if (lastTagName.equals("pub_date"))
@@ -596,8 +605,15 @@ public class QspGameStock extends TabActivity {
     private Thread loadGameList = new Thread() {
     	//Загружаем список игр
         public void run() {
+    		runOnUiThread(new Runnable() {
+    			public void run() {
+    				downloadProgressDialog = new ProgressDialog(uiContext);
+    				downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+    			}
+    		});
             try {
-                URL updateURL = new URL("http://qsp.su/gamestock/gamestock.php");
+            	updateSpinnerProgress(true, "", "Загрузка списка игр", -1);
+            	URL updateURL = new URL("http://qsp.su/gamestock/gamestock.php");
                 URLConnection conn = updateURL.openConnection();
                 InputStream is = conn.getInputStream();
                 BufferedInputStream bis = new BufferedInputStream(is);
@@ -613,7 +629,7 @@ public class QspGameStock extends TabActivity {
     			runOnUiThread(new Runnable() {
     				public void run() {
     					xmlGameListCached = xml;
-   						RefreshLists();
+    					RefreshLists();
     				}
     			});
             } catch (Exception e) {
@@ -624,6 +640,7 @@ public class QspGameStock extends TabActivity {
     				}
     			});
             }
+			updateSpinnerProgress(false, "", "", 0);
         }
     };
     
@@ -753,6 +770,11 @@ public class QspGameStock extends TabActivity {
                           else
                         	  tt.setTextColor(0xFFFFD700);
                     }
+                	tt = (TextView) v.findViewById(R.id.game_author);
+                    if(o.author.length()>0)
+                    	tt.setText(new StringBuilder().append("Автор: ").append(o.author));//.append("  (").append(o.file_size).append(" байт)"));
+                    else
+                    	tt.setText("Нет информации");
             }
             return v;
         }
