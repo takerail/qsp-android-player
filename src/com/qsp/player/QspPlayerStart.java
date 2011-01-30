@@ -120,7 +120,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		public View getView(int position, View convertView, ViewGroup parent) {
                 View v = convertView;
                 if (v == null) {
-                	Utility.WriteLog("null view");
                     LayoutInflater vi = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                     v = vi.inflate(id, null);
                 }
@@ -144,7 +143,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		if(gesture.getLength()>SWIPE_MIN) {
 			ArrayList<GestureStroke> strokes = gesture.getStrokes();
 			float[] points = strokes.get(0).points; 
-			if(points[0]<points[points.length-1]){
+			if(points[0]>points[points.length-1]){
                 //swipe left
             	if(currentWin>0)
             		currentWin--;
