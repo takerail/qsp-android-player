@@ -275,10 +275,23 @@ public class QspGameStock extends TabActivity {
             		file.delete();
             	 
             		updateSpinnerProgress(false, "", "", 0);
+            		
+            		final String checkGame = gameName; 
 
             		runOnUiThread(new Runnable() {
             			public void run() {
             				RefreshLists();
+            				GameItem selectedGame = gamesMap.get(checkGame);
+            	    		if (selectedGame == null || !selectedGame.downloaded)
+            	    		{
+            	        		//Показываем сообщение об ошибке
+            	        		new AlertDialog.Builder(uiContext)
+            	        		.setMessage("Ошибка: Не удалось распаковать игру \"" + checkGame + "\".")
+            	        		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            	        			public void onClick(DialogInterface dialog, int whichButton) { }
+            	        		})
+            	        		.show();
+            	    		}
             			}
             		});
 
