@@ -5,8 +5,7 @@
         android:title="Полка игр" />
         
     <item android:id="@+id/menu_options"
-    	android:enabled="false"
-        android:title="Настройки" />
+    	android:title="Настройки" android:enabled="true"/>
         
     <item android:id="@+id/menu_about"
     	android:enabled="false"
