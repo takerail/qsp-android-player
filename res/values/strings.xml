@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="gestures_sum">смена экрана при помощи жестов</string>
+    <string name="using_gestures">Использовать жесты</string>
+    <string name="interface_scr_sum">настройка внешнего вида и управления</string>
+    <string name="interface_screen">Интерфейс</string>
     <string name="hello">Hello World, QspPlayerStart!</string>
     <string name="app_name">Quest Player</string>
 </resources>

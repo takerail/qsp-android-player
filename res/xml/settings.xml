@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+        android:key="main_screen">
+    <PreferenceScreen
+            android:key="interface_screen" android:title="@string/interface_screen" android:summary="@string/interface_scr_sum">
+        <CheckBoxPreference
+                android:key="gestures" android:title="@string/using_gestures" android:summary="@string/gestures_sum" android:enabled="true"/>
+    </PreferenceScreen>
+</PreferenceScreen> 

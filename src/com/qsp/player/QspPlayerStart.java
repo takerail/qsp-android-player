@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.gesture.Gesture;
 import android.gesture.GestureOverlayView;
@@ -15,6 +16,7 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.text.style.ClickableSpan;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -186,7 +188,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	Utility.WriteLog("onCreate\\");
     	//Контекст UI
         super.onCreate(savedInstanceState);
-        //будем использовать свой вид заголовка
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this); 
+       //будем использовать свой вид заголовка
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
         res = getResources();
@@ -194,7 +197,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 
         //подключаем жесты
         GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
-        gestures.addOnGesturePerformedListener(this);
+        if(settings.getBoolean("gestures", false))
+        	gestures.addOnGesturePerformedListener(this);
         
         //Создаем объект для обработки ссылок
         qspLinkMovementMethod = QspLinkMovementMethod.getQspInstance();
@@ -371,7 +375,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
                 return true;
 
             case R.id.menu_options:
-                //!!! STUB
+                Intent intent = new Intent();
+                intent.setClass(this, Settings.class);
+                startActivity(intent);
                 return true;
 
             case R.id.menu_about:
