@@ -5,5 +5,6 @@
             android:key="interface_screen" android:title="@string/interface_screen" android:summary="@string/interface_scr_sum">
         <CheckBoxPreference
                 android:key="gestures" android:title="@string/using_gestures" android:summary="@string/gestures_sum" android:enabled="true"/>
-    </PreferenceScreen>
+    <CheckBoxPreference android:title="@string/fullscreenTitle" android:key="fullscreen" android:summary="@string/fullscreenSum"></CheckBoxPreference>
+</PreferenceScreen>
 </PreferenceScreen> 

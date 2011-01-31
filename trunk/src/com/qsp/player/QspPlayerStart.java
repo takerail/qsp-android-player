@@ -27,6 +27,7 @@ import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -77,6 +78,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     public static final int SLOTS_MAX = 5;
     public static final int ACTIVITY_SELECT_GAME = 0;
 	Resources res;
+	SharedPreferences settings;
 	
 	private Menu menuMain;
 	
@@ -87,8 +89,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	final private Context uiContext = this;
 	final private ReentrantLock musicLock = new ReentrantLock();
 	
-	private boolean gui_debug_mode = true; 
-
+	private boolean gui_debug_mode = true;
 
 	private class QSPItem {
 		private Drawable icon;
@@ -188,18 +189,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	Utility.WriteLog("onCreate\\");
     	//Контекст UI
         super.onCreate(savedInstanceState);
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this); 
-       //будем использовать свой вид заголовка
+        settings = PreferenceManager.getDefaultSharedPreferences(this); 
+
+       	//будем использовать свой вид заголовка
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
         res = getResources();
 
-
-        //подключаем жесты
-        GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
-        if(settings.getBoolean("gestures", false))
-        	gestures.addOnGesturePerformedListener(this);
-        
         //Создаем объект для обработки ссылок
         qspLinkMovementMethod = QspLinkMovementMethod.getQspInstance();
         qspLinkMovementMethod.setCatcher(this);
@@ -236,13 +232,28 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     }
     
     @Override
+    public void onStart() {
+    	super.onStart();
+
+    }
+    
+    @Override
     public void onResume()
     {
     	Utility.WriteLog("onResume\\");
     	//Контекст UI
     	super.onResume();
     	
-    	if (gameIsRunning && !waitForImageBox)
+    	//полноэкранный режим если надо
+        updateFullscreenStatus(settings.getBoolean("fullscreen", false)); 
+
+        //подключаем жесты
+        GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
+    	gestures.removeAllOnGesturePerformedListeners();
+        if(settings.getBoolean("gestures", false))
+        	gestures.addOnGesturePerformedListener(this);
+
+        if (gameIsRunning && !waitForImageBox)
     	{
     		//Запускаем таймер
             timerHandler.postDelayed(timerUpdateTask, timerInterval);
@@ -326,7 +337,22 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	return true;
     }
     
-    private void LoadSlots(MenuItem rootItem, String name)
+    private void updateFullscreenStatus(boolean bUseFullscreen)
+    {   
+       if(bUseFullscreen)
+       {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+        }
+        else
+        {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        }
+        findViewById(R.id.main).requestLayout();
+    }
+
+   private void LoadSlots(MenuItem rootItem, String name)
     {
     	//Контекст UI
 		if (rootItem == null)
