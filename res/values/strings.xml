@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="fullscreenSum">скрывать строку состояния</string>
+    <string name="fullscreenTitle">Полноэкранный режим</string>
     <string name="gestures_sum">смена экрана при помощи жестов</string>
     <string name="using_gestures">Использовать жесты</string>
     <string name="interface_scr_sum">настройка внешнего вида и управления</string>
