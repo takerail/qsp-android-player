@@ -82,7 +82,8 @@ public class QspGameStock extends TabActivity {
 	
 	final private Context uiContext = this;
 	private String xmlGameListCached;
-	private boolean openDefaultTab;	
+	private boolean openDefaultTab;
+	private GameItem selectedGame;
 
     public static final int MAX_SPINNER = 1024;
 	
@@ -183,7 +184,7 @@ public class QspGameStock extends TabActivity {
     			break;
     		}
     		
-    		GameItem selectedGame = gamesMap.get(value);
+    		selectedGame = gamesMap.get(value);
     		if (selectedGame == null)
     			return;
     		
@@ -197,8 +198,25 @@ public class QspGameStock extends TabActivity {
     		}
     		else
     		{
-    			//Игра не загружена, пытаемся загрузить с сервера
-    			DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.title);
+    			StringBuilder txt = new StringBuilder().append("Автор: ").append(selectedGame.author)
+    			.append("\nВерсия: ").append(selectedGame.version)
+    			.append("\nРазмер: ").append(Integer.parseInt(selectedGame.file_size)/1024).append(" килобайт");
+    			AlertDialog.Builder bld = new AlertDialog.Builder(uiContext).setMessage(txt)
+    			.setTitle(selectedGame.title)
+    			.setIcon(R.drawable.icon)
+    			.setPositiveButton("Загрузить", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+	    				DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.title);						
+					}
+				})
+    			.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+	    				dialog.cancel();						
+					}
+				});
+    			bld.create().show();
     		}
     	}
     };
