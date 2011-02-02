@@ -6,5 +6,8 @@
         <CheckBoxPreference
                 android:key="gestures" android:title="@string/using_gestures" android:summary="@string/gestures_sum" android:enabled="true"/>
     <CheckBoxPreference android:title="@string/fullscreenTitle" android:key="fullscreen" android:summary="@string/fullscreenSum"></CheckBoxPreference>
+<ListPreference android:key="typeface" android:title="@string/typeface" android:entries="@array/fontName" android:entryValues="@array/fontValue" android:defaultValue="0"></ListPreference>
+<ListPreference android:key="fontsize" android:title="@string/fontSize" android:entries="@array/fontSize" android:entryValues="@array/fontSize" android:defaultValue="16"></ListPreference>
+<ListPreference android:defaultValue="0" android:key="theme" android:title="@string/appTheme" android:entries="@array/themeName" android:entryValues="@array/fontValue"></ListPreference>
 </PreferenceScreen>
 </PreferenceScreen> 

@@ -11,6 +11,7 @@ import android.gesture.Gesture;
 import android.gesture.GestureOverlayView;
 import android.gesture.GestureStroke;
 import android.gesture.GestureOverlayView.OnGesturePerformedListener;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.text.style.ClickableSpan;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -253,6 +255,16 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         if(settings.getBoolean("gestures", false))
         	gestures.addOnGesturePerformedListener(this);
 
+        TextView tv = (TextView)findViewById(R.id.main_desc);
+        Typeface tf = Typeface.DEFAULT;
+        switch(Integer.parseInt(settings.getString("typeface", "0"))) {
+        	case 1: tf = Typeface.SANS_SERIF; break;
+        	case 2: tf = Typeface.SERIF; break;
+        	case 3: tf = Typeface.MONOSPACE; break;
+        }
+        tv.setTypeface(tf);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, Float.parseFloat(settings.getString("fontsize", "16")));
+        
         if (gameIsRunning && !waitForImageBox)
     	{
     		//Запускаем таймер

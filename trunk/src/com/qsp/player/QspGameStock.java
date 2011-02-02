@@ -101,7 +101,6 @@ public class QspGameStock extends TabActivity {
 	ListView lvStarred;
     ProgressDialog downloadProgressDialog;
 	
-	
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -166,7 +165,8 @@ public class QspGameStock extends TabActivity {
     	public void onItemClick(AdapterView<?> parent, View arg1, int position, long arg3) 
     	{
     		String value = null;
-    		switch (getTabHost().getCurrentTab()) {
+    		int tab = getTabHost().getCurrentTab();
+    		switch (tab) {
     		case 0:
     			//Загруженные
     			GameItem tt1 = (GameItem) lvDownloaded.getAdapter().getItem(position);
@@ -188,38 +188,40 @@ public class QspGameStock extends TabActivity {
     		if (selectedGame == null)
     			return;
     		
-    		if (selectedGame.downloaded)
-    		{
-    			//Если игра загружена, стартуем
-    			Intent data = new Intent();
-    			data.putExtra("file_name", selectedGame.game_file);
-    			setResult(RESULT_OK, data);
-    			finish();
-    		}
-    		else
-    		{
-    			StringBuilder txt = new StringBuilder().append("Автор: ").append(selectedGame.author)
-    			.append("\nВерсия: ").append(selectedGame.version)
-    			.append("\nРазмер: ").append(Integer.parseInt(selectedGame.file_size)/1024).append(" килобайт");
-    			AlertDialog.Builder bld = new AlertDialog.Builder(uiContext).setMessage(txt)
-    			.setTitle(selectedGame.title)
-    			.setIcon(R.drawable.icon)
-    			.setPositiveButton("Загрузить", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-	    				DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.title);						
-					}
-				})
-    			.setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-	    				dialog.cancel();						
-					}
-				});
-    			bld.create().show();
-    		}
+   			StringBuilder txt = new StringBuilder().append("Автор: ").append(_defValue(selectedGame.author))
+   			.append("\nВерсия: ").append(_defValue(selectedGame.version));
+   			if(selectedGame.file_size.length()>0)
+   				txt.append("\nРазмер: ").append(Integer.parseInt(selectedGame.file_size)/1024).append(" килобайт");
+   			AlertDialog.Builder bld = new AlertDialog.Builder(uiContext).setMessage(txt)
+   			.setTitle(selectedGame.title)
+   			.setIcon(R.drawable.icon)
+   			.setPositiveButton((selectedGame.downloaded ? "Играть" : "Загрузить"), new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+		    		if (selectedGame.downloaded){
+		    			//Если игра загружена, стартуем
+		    			Intent data = new Intent();
+		    			data.putExtra("file_name", selectedGame.game_file);
+		    			setResult(RESULT_OK, data);
+		    			finish();
+		    		}else
+		    			//иначе загружаем
+		    			DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.title);						
+				}
+			})
+   			.setNegativeButton("Закрыть", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+    				dialog.cancel();						
+				}
+			});
+   			bld.create().show();
     	}
     };
+    
+    private String _defValue(String value) {
+    	return (value.length()>0 ? value : "Нет информации");
+    }
     
     private void DownloadGame(String file_url, String file_size, String name)
     {

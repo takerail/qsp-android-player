@@ -10,6 +10,7 @@ public class Settings extends PreferenceActivity implements Preference.OnPrefere
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.settings);
+        
     }
 
     public boolean onPreferenceChange(Preference preference, Object newValue) { 

@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="appTheme">Тема оформления</string>
+    <string name="fontSize">Размер шрифта</string>
+    <string name="typeface">Стиль шрифта</string>
     <string name="fullscreenSum">скрывать строку состояния</string>
     <string name="fullscreenTitle">Полноэкранный режим</string>
     <string name="gestures_sum">смена экрана при помощи жестов</string>
