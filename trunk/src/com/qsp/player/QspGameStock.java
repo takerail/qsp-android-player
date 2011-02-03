@@ -86,6 +86,8 @@ public class QspGameStock extends TabActivity {
 	private GameItem selectedGame;
 
     public static final int MAX_SPINNER = 1024;
+    
+    public static boolean isActive;
 	
 	private String _zipFile; 
 	private String _location; 
@@ -106,6 +108,8 @@ public class QspGameStock extends TabActivity {
 	protected void onCreate(Bundle savedInstanceState) {
         // Be sure to call the super class.
         super.onCreate(savedInstanceState);
+        
+        isActive = false;
         
         TabHost tabHost = getTabHost();
         LayoutInflater.from(getApplicationContext()).inflate(R.layout.gamestock, tabHost.getTabContentView(), true);
@@ -139,6 +143,19 @@ public class QspGameStock extends TabActivity {
         // 7. Доступ к настройкам приложения через меню этой активити
     }
     
+    @Override
+    public void onResume()
+    {
+    	super.onResume();
+    	isActive = true;
+    }
+    
+    @Override
+    public void onPause() {
+    	isActive = false;
+    	super.onPause();
+    }
+
     private void InitListViews()
     {
 		lvAll = (ListView)findViewById(R.id.all_tab);
@@ -188,8 +205,11 @@ public class QspGameStock extends TabActivity {
     		if (selectedGame == null)
     			return;
     		
-   			StringBuilder txt = new StringBuilder().append("Автор: ").append(_defValue(selectedGame.author))
-   			.append("\nВерсия: ").append(_defValue(selectedGame.version));
+   			StringBuilder txt = new StringBuilder();
+   			if(selectedGame.author.length()>0)
+   				txt.append("Автор: ").append(selectedGame.author);
+   			if(selectedGame.version.length()>0)
+   				txt.append("\nВерсия: ").append(selectedGame.version);
    			if(selectedGame.file_size.length()>0)
    				txt.append("\nРазмер: ").append(Integer.parseInt(selectedGame.file_size)/1024).append(" килобайт");
    			AlertDialog.Builder bld = new AlertDialog.Builder(uiContext).setMessage(txt)
@@ -219,10 +239,6 @@ public class QspGameStock extends TabActivity {
     	}
     };
     
-    private String _defValue(String value) {
-    	return (value.length()>0 ? value : "Нет информации");
-    }
-    
     private void DownloadGame(String file_url, String file_size, String name)
     {
     	final String urlToDownload = file_url;
@@ -231,6 +247,7 @@ public class QspGameStock extends TabActivity {
     	downloadProgressDialog = new ProgressDialog(uiContext);
     	downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
     	downloadProgressDialog.setMax(Integer.parseInt(file_size));
+    	downloadProgressDialog.setCancelable(false);
     	Thread t = new Thread() {
             public void run() {
             	try {
@@ -304,7 +321,7 @@ public class QspGameStock extends TabActivity {
             			public void run() {
             				RefreshLists();
             				GameItem selectedGame = gamesMap.get(checkGame);
-            	    		if (selectedGame == null || !selectedGame.downloaded)
+            	    		if ( ( selectedGame == null || !selectedGame.downloaded ) && isActive )
             	    		{
             	        		//Показываем сообщение об ошибке
             	        		new AlertDialog.Builder(uiContext)
@@ -338,6 +355,7 @@ public class QspGameStock extends TabActivity {
 			public void run() {
 				downloadProgressDialog = new ProgressDialog(uiContext);
 				downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+				downloadProgressDialog.setCancelable(false);
 			}
 		});
     	updateSpinnerProgress(true, gameName, "Распаковывается...", -1);
@@ -394,7 +412,9 @@ public class QspGameStock extends TabActivity {
     	final int nCount = nProgress;
 		runOnUiThread(new Runnable() {
 			public void run() {
-				if (!show)
+				if (!isActive)
+					return;
+				if (!show && downloadProgressDialog.isShowing())
 				{
 					downloadProgressDialog.dismiss();
 					return;
@@ -609,7 +629,7 @@ public class QspGameStock extends TabActivity {
     	} catch (Exception e) {
     		Utility.WriteLog("Exception occured while trying to parse game list, unknown error");
     	}
-    	if (!parsed)
+    	if ( !parsed && isActive )
     	{
     		//Показываем сообщение об ошибке
     		new AlertDialog.Builder(uiContext)
@@ -629,6 +649,7 @@ public class QspGameStock extends TabActivity {
     			public void run() {
     				downloadProgressDialog = new ProgressDialog(uiContext);
     				downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+    				downloadProgressDialog.setCancelable(false);
     			}
     		});
             try {
@@ -794,7 +815,7 @@ public class QspGameStock extends TabActivity {
                     if(o.author.length()>0)
                     	tt.setText(new StringBuilder().append("Автор: ").append(o.author));//.append("  (").append(o.file_size).append(" байт)"));
                     else
-                    	tt.setText("Нет информации");
+                    	tt.setText("");
             }
             return v;
         }
