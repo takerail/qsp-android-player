@@ -128,7 +128,6 @@ extends ScrollingMovementMethod
             if (link.length != 1)
                 return false;
 
-            //link[0].onClick(widget);
             urlCatcher.OnUrlClicked(link[0].getURL());
             break;
 
@@ -204,14 +203,27 @@ extends ScrollingMovementMethod
             y += widget.getScrollY();
 
             Layout layout = widget.getLayout();
-            int line = layout.getLineForVertical(y);
-            int off = layout.getOffsetForHorizontal(line, x);
+            
+            //Если не попали точно в символ, относящийся к ссылке, проверяем 8 соседних 
+            int[] dy = {0, -1, 1, 0, 0, -1, 1, 1, -1};            
+            int[] dx = {0, 0, 0, -1, 1, -1, 1, -1, 1};
+            int line;
+            int off;
 
-            URLSpan[] link = buffer.getSpans(off, off, URLSpan.class);
-
+            URLSpan[] link = null;
+            for (int i=0; i<9; i++)
+            {
+            	line = layout.getLineForVertical(y) + dy[i];
+            	if ((line < 0) || (line > layout.getLineCount() - 1))
+            		continue;
+            	off = layout.getOffsetForHorizontal(line, x) + dx[i];
+            	link = buffer.getSpans(off, off, URLSpan.class);
+            	if (link.length != 0)
+            		break;
+            }
+            
             if (link.length != 0) {
                 if (action == MotionEvent.ACTION_UP) {
-                    //link[0].onClick(widget);
                     urlCatcher.OnUrlClicked(link[0].getURL());
                 } else if (action == MotionEvent.ACTION_DOWN) {
                     Selection.setSelection(buffer,
