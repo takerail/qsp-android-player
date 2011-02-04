@@ -14,6 +14,7 @@ import android.gesture.GestureOverlayView.OnGesturePerformedListener;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -419,7 +420,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
                 return true;
 
             case R.id.menu_about:
-            	//!!! STUB
+            	Intent updateIntent = null;
+        		updateIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.qsp.player"));
+        		startActivity(updateIntent); 
                 return true;
 
             case R.id.menu_newgame:

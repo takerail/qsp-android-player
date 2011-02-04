@@ -5,10 +5,9 @@
         android:title="Полка игр" />
         
     <item android:id="@+id/menu_options"
-    	android:title="Настройки" android:enabled="true"/>
+    	android:title="Настройки" />
         
     <item android:id="@+id/menu_about"
-    	android:enabled="false"
         android:title="О программе" />
 
     <group android:id="@+id/menugroup_running">
