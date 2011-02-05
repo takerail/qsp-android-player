@@ -39,6 +39,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
 
 public class QspGameStock extends TabActivity {
@@ -83,9 +84,13 @@ public class QspGameStock extends TabActivity {
 	final private Context uiContext = this;
 	private String xmlGameListCached;
 	private boolean openDefaultTab;
+	private boolean gameListIsLoading;
 	private GameItem selectedGame;
 
     public static final int MAX_SPINNER = 1024;
+    public static final int DOWNLOADED_TABNUM = 0;
+    public static final int STARRED_TABNUM = 1;
+    public static final int ALL_TABNUM = 2;
     
     public static boolean isActive;
 	
@@ -103,6 +108,10 @@ public class QspGameStock extends TabActivity {
 	ListView lvStarred;
     ProgressDialog downloadProgressDialog;
 	
+    public QspGameStock() {
+    	gamesMap = new HashMap<String, GameItem>();
+    }
+    
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -123,15 +132,14 @@ public class QspGameStock extends TabActivity {
                 .setIndicator("Все")
                 .setContent(R.id.all_tab));
         
-    	gamesMap = new HashMap<String, GameItem>();
-    	
     	openDefaultTab = true;
+    	gameListIsLoading = false;
     	
+    	xmlGameListCached = null;
+
     	InitListViews();
     	
     	setResult(RESULT_CANCELED);
-        
-        loadGameList.start();
         
         //TODO: 
         // 1v. Отображение статуса "Загружено", например цветом фона.
@@ -155,6 +163,12 @@ public class QspGameStock extends TabActivity {
     	isActive = false;
     	super.onPause();
     }
+    
+    @Override
+    public Object onRetainNonConfigurationInstance() {
+        final String gameListToRecreatedActivity = xmlGameListCached;
+        return gameListToRecreatedActivity;
+    }
 
     private void InitListViews()
     {
@@ -173,6 +187,29 @@ public class QspGameStock extends TabActivity {
         lvAll.setTextFilterEnabled(true);
         lvAll.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         lvAll.setOnItemClickListener(gameListClickListener);
+
+        //Забираем список игр из предыдущего состояния активити, если оно было пересоздано (при повороте экрана)
+        final Object data = getLastNonConfigurationInstance();        
+        if (data != null) {
+        	xmlGameListCached = (String)data;
+        }
+
+        getTabHost().setOnTabChangedListener(new OnTabChangeListener(){
+        	@Override
+        	public void onTabChanged(String tabId) {
+        		int tabNum = getTabHost().getCurrentTab();
+        	    if(((tabNum == STARRED_TABNUM) || (tabNum == ALL_TABNUM)) && (xmlGameListCached == null)) {
+        	    	if (!gameListIsLoading)
+        	    	{
+        	    		gameListIsLoading = true;
+        	    		LoadGameListThread tLoadGameList = new LoadGameListThread();
+        	    		tLoadGameList.start();
+        	    	}
+        	    }
+        	}
+        });
+        
+        RefreshLists();
     }
 
     //Выбрана игра в списке
@@ -184,17 +221,17 @@ public class QspGameStock extends TabActivity {
     		String value = null;
     		int tab = getTabHost().getCurrentTab();
     		switch (tab) {
-    		case 0:
+    		case DOWNLOADED_TABNUM:
     			//Загруженные
     			GameItem tt1 = (GameItem) lvDownloaded.getAdapter().getItem(position);
     			value = tt1.title;
     			break;
-    		case 1:
+    		case STARRED_TABNUM:
     			//Отмеченные
     			GameItem tt2 = (GameItem) lvStarred.getAdapter().getItem(position);
     			value = tt2.title;
     			break;
-    		case 2:
+    		case ALL_TABNUM:
     			//Все
     			GameItem tt3 = (GameItem) lvAll.getAdapter().getItem(position);
     			value = tt3.title;
@@ -642,7 +679,7 @@ public class QspGameStock extends TabActivity {
     	return parsed;
     }
 
-    private Thread loadGameList = new Thread() {
+    private class LoadGameListThread extends Thread {
     	//Загружаем список игр
         public void run() {
     		runOnUiThread(new Runnable() {
@@ -658,7 +695,7 @@ public class QspGameStock extends TabActivity {
                 URLConnection conn = updateURL.openConnection();
                 InputStream is = conn.getInputStream();
                 BufferedInputStream bis = new BufferedInputStream(is);
-                ByteArrayBuffer baf = new ByteArrayBuffer(50);
+                ByteArrayBuffer baf = new ByteArrayBuffer(1024);
 
                 int current = 0;
                 while((current = bis.read()) != -1){
@@ -671,6 +708,8 @@ public class QspGameStock extends TabActivity {
     				public void run() {
     					xmlGameListCached = xml;
     					RefreshLists();
+    	    			updateSpinnerProgress(false, "", "", 0);
+    					gameListIsLoading = false;
     				}
     			});
             } catch (Exception e) {
@@ -678,10 +717,11 @@ public class QspGameStock extends TabActivity {
     			runOnUiThread(new Runnable() {
     				public void run() {
     					RefreshLists();
+    	    			updateSpinnerProgress(false, "", "", 0);
+    					gameListIsLoading = false;
     				}
     			});
             }
-			updateSpinnerProgress(false, "", "", 0);
         }
     };
     
