@@ -1,6 +1,7 @@
 package com.qsp.player;
 
 import java.io.File;
+import java.io.IOException;
 
 import android.os.Environment;
 import android.text.Html;
@@ -63,6 +64,19 @@ public class Utility {
     	return result;
     }
 
+    private static void CheckNoMedia(String path)
+    {
+    	//Создаем в папке QSP пустой файл .nomedia
+    	File f = new File(path);
+    	if (f.exists())
+    		return;
+    	try {
+			f.createNewFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
+    
     public static String GetDefaultPath()
     {
     	//Возвращаем путь к папке с играми.
@@ -74,15 +88,20 @@ public class Utility {
         	String flashCard = sdDir.getPath();
         	String tryFull1 = flashCard + "/qsp/games";
         	String tryFull2 = tryFull1 + "/";
+        	String noMedia = flashCard + "/qsp/.nomedia";
         	File f = new File(tryFull1);
 	    	if (f.exists())
 	    	{
+	    		CheckNoMedia(noMedia);
 	    		return tryFull2;
 	    	}
 	    	else
 	    	{
 				if (f.mkdirs())
+				{
+					CheckNoMedia(noMedia);
 					return tryFull2;
+				}
 	    	}
     	}
     	return null;
