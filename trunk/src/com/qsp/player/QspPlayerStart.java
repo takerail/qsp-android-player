@@ -13,6 +13,7 @@ import android.gesture.GestureStroke;
 import android.gesture.GestureOverlayView.OnGesturePerformedListener;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -85,6 +86,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	
 	private Menu menuMain;
 	
+	private QSPListAdapter mActListAdapter = null;
+	private QSPListAdapter mItemListAdapter = null;
+		
 	boolean invUnread, varUnread;
 	int invBack, varBack;
 	int currentWin;
@@ -124,23 +128,24 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		}
 
 		public View getView(int position, View convertView, ViewGroup parent) {
-                View v = convertView;
-                if (v == null) {
-                    LayoutInflater vi = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                    v = vi.inflate(id, null);
+            View v = convertView;
+            if (v == null) {
+                LayoutInflater vi = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                v = vi.inflate(id, null);
+            }
+            QSPItem o = items[position];
+            if (o != null) {
+                ImageView iv = (ImageView) v.findViewById(R.id.item_icon);
+                TextView tv = (TextView) v.findViewById(R.id.item_text);
+                if (iv != null) {
+                    iv.setImageDrawable(o.getIcon());
                 }
-                QSPItem o = items[position];
-                if (o != null) {
-                        ImageView iv = (ImageView) v.findViewById(R.id.item_icon);
-                        TextView tv = (TextView) v.findViewById(R.id.item_text);
-                        if (iv != null) {
-                              iv.setImageDrawable(o.getIcon());
-                        }
-                        if(tv != null){
-                              tv.setText(o.getText());
-                        }
+                if(tv != null){
+                	ApplyFontSettingsToTextView(tv);
+                    tv.setText(o.getText());
                 }
-                return v;
+            }
+            return v;
         }
 	}
 
@@ -192,7 +197,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	Utility.WriteLog("onCreate\\");
     	//Контекст UI
         super.onCreate(savedInstanceState);
-        settings = PreferenceManager.getDefaultSharedPreferences(this); 
+        settings = PreferenceManager.getDefaultSharedPreferences(this);
+        
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
        	//будем использовать свой вид заголовка
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -256,15 +263,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         if(settings.getBoolean("gestures", false))
         	gestures.addOnGesturePerformedListener(this);
 
-        TextView tv = (TextView)findViewById(R.id.main_desc);
-        Typeface tf = Typeface.DEFAULT;
-        switch(Integer.parseInt(settings.getString("typeface", "0"))) {
-        	case 1: tf = Typeface.SANS_SERIF; break;
-        	case 2: tf = Typeface.SERIF; break;
-        	case 3: tf = Typeface.MONOSPACE; break;
-        }
-        tv.setTypeface(tf);
-        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, Float.parseFloat(settings.getString("fontsize", "16")));
+        ApplyFontSettings();
         
         if (gameIsRunning && !waitForImageBox)
     	{
@@ -356,6 +355,30 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     		LoadSlots(saveItem, "Сохранить");
     	}
     	return true;
+    }
+
+    private void ApplyFontSettingsToTextView(TextView tv)
+    {
+        Typeface tf = Typeface.DEFAULT;
+        switch(Integer.parseInt(settings.getString("typeface", "0"))) {
+        	case 1: tf = Typeface.SANS_SERIF; break;
+        	case 2: tf = Typeface.SERIF; break;
+        	case 3: tf = Typeface.MONOSPACE; break;
+        }
+        tv.setTypeface(tf);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, Float.parseFloat(settings.getString("fontsize", "16")));
+    }
+    
+    private void ApplyFontSettings()
+    {
+        TextView tv = (TextView)findViewById(R.id.main_desc);
+        ApplyFontSettingsToTextView(tv);
+        tv = (TextView)findViewById(R.id.vars_desc);
+        ApplyFontSettingsToTextView(tv);
+        if (mActListAdapter != null)
+        	mActListAdapter.notifyDataSetChanged();
+        if (mItemListAdapter != null)
+        	mItemListAdapter.notifyDataSetChanged();
     }
     
     private void updateFullscreenStatus(boolean bUseFullscreen)
@@ -1108,6 +1131,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         try {
 	    	for (int i=0; i<mediaPlayersList.size(); i++)
 	    	{
+	    		
 	    		MusicContent it = mediaPlayersList.elementAt(i);    		
     			if (pause)
     			{
@@ -1115,7 +1139,11 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     					it.player.pause();
     			}
     			else
+    			{
+    				float volume = (float) (settings.getBoolean("sound", true) ? 1 : 0); 
+    				it.player.setVolume(volume, volume);
     				it.player.start();
+    			}
 	    	}
 	    } finally {
 	    	musicLock.unlock();
@@ -1167,7 +1195,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			runOnUiThread(new Runnable() {
 				public void run() {
 			        ListView lvAct = (ListView)findViewById(R.id.acts);
-			        lvAct.setAdapter(new QSPListAdapter(uiContext, R.layout.act_item, acts));
+			        mActListAdapter = new QSPListAdapter(uiContext, R.layout.act_item, acts);
+			        lvAct.setAdapter(mActListAdapter);
 			        //Разворачиваем список действий
 			        Utility.setListViewHeightBasedOnChildren(lvAct);
 				}
@@ -1198,7 +1227,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			runOnUiThread(new Runnable() {
 				public void run() {
 			        ListView lvInv = (ListView)findViewById(R.id.inv);
-			        lvInv.setAdapter(new QSPListAdapter(uiContext, R.layout.obj_item, objs));
+			        mItemListAdapter = new QSPListAdapter(uiContext, R.layout.obj_item, objs);
+			        lvInv.setAdapter(mItemListAdapter);
 				}
 			});
     	}

@@ -99,14 +99,15 @@ public final class R {
     }
     public static final class string {
         public static final int appTheme=0x7f090000;
-        public static final int app_name=0x7f09000a;
+        public static final int app_name=0x7f09000b;
         public static final int fontSize=0x7f090001;
         public static final int fullscreenSum=0x7f090003;
         public static final int fullscreenTitle=0x7f090004;
         public static final int gestures_sum=0x7f090005;
-        public static final int hello=0x7f090009;
         public static final int interface_scr_sum=0x7f090007;
         public static final int interface_screen=0x7f090008;
+        public static final int soundSum=0x7f090009;
+        public static final int soundTitle=0x7f09000a;
         public static final int typeface=0x7f090002;
         public static final int using_gestures=0x7f090006;
     }
