@@ -306,6 +306,14 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	Utility.WriteLog("onDestroy/");  
     	super.onDestroy();
     }
+
+    @Override
+    public void onNewIntent(Intent intent)
+    {
+    	Utility.WriteLog("onNewIntent\\");
+    	super.onNewIntent(intent);
+    	Utility.WriteLog("onNewIntent/");
+    }
     
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event)  {
@@ -432,11 +440,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
                 return true;
 
             case R.id.menu_loadgame:
-            	//!!! STUB
                 return true;
 
             case R.id.menu_savegame:
-            	//!!! STUB
                 return true;
                 
             default:
