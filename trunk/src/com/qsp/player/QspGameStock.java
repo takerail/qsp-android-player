@@ -38,6 +38,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TabHost;
@@ -228,14 +229,17 @@ public class QspGameStock extends TabActivity {
         lvDownloaded.setTextFilterEnabled(true);
         lvDownloaded.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         lvDownloaded.setOnItemClickListener(gameListClickListener);
+        lvDownloaded.setOnItemLongClickListener(gameListLongClickListener);
 		
         lvStarred.setTextFilterEnabled(true);
         lvStarred.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         lvStarred.setOnItemClickListener(gameListClickListener);
+        lvStarred.setOnItemLongClickListener(gameListLongClickListener);
 
         lvAll.setTextFilterEnabled(true);
         lvAll.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         lvAll.setOnItemClickListener(gameListClickListener);
+        lvAll.setOnItemLongClickListener(gameListLongClickListener);
 
         //Забираем список игр из предыдущего состояния активити, если оно было пересоздано (при повороте экрана)
         final Object data = getLastNonConfigurationInstance();        
@@ -285,32 +289,59 @@ public class QspGameStock extends TabActivity {
                        note);
     }
     
+    private String getGameNameByPosition(int position)
+    {
+		String value = null;
+		int tab = getTabHost().getCurrentTab();
+		switch (tab) {
+		case DOWNLOADED_TABNUM:
+			//Загруженные
+			GameItem tt1 = (GameItem) lvDownloaded.getAdapter().getItem(position);
+			value = tt1.title;
+			break;
+		case STARRED_TABNUM:
+			//Отмеченные
+			GameItem tt2 = (GameItem) lvStarred.getAdapter().getItem(position);
+			value = tt2.title;
+			break;
+		case ALL_TABNUM:
+			//Все
+			GameItem tt3 = (GameItem) lvAll.getAdapter().getItem(position);
+			value = tt3.title;
+			break;
+		}
+		return value;
+    }
+    
     //Выбрана игра в списке
     private OnItemClickListener gameListClickListener = new OnItemClickListener() 
     {
     	@Override
     	public void onItemClick(AdapterView<?> parent, View arg1, int position, long arg3) 
     	{
-    		String value = null;
-    		int tab = getTabHost().getCurrentTab();
-    		switch (tab) {
-    		case DOWNLOADED_TABNUM:
-    			//Загруженные
-    			GameItem tt1 = (GameItem) lvDownloaded.getAdapter().getItem(position);
-    			value = tt1.title;
-    			break;
-    		case STARRED_TABNUM:
-    			//Отмеченные
-    			GameItem tt2 = (GameItem) lvStarred.getAdapter().getItem(position);
-    			value = tt2.title;
-    			break;
-    		case ALL_TABNUM:
-    			//Все
-    			GameItem tt3 = (GameItem) lvAll.getAdapter().getItem(position);
-    			value = tt3.title;
-    			break;
-    		}
+    		String value = getGameNameByPosition(position);
     		ShowGameInfo(value);
+    	}
+    };
+    
+    //Выбрана игра в списке(LongClick)
+    private OnItemLongClickListener gameListLongClickListener = new OnItemLongClickListener() 
+    {
+    	@Override
+    	public boolean onItemLongClick(AdapterView<?> parent, View arg1, int position, long arg3) 
+    	{
+    		String value = getGameNameByPosition(position);
+    		selectedGame = gamesMap.get(value);
+    		if (selectedGame.downloaded){
+    			//Если игра загружена, стартуем
+    			Intent data = new Intent();
+    			data.putExtra("file_name", selectedGame.game_file);
+    			setResult(RESULT_OK, data);
+    			finish();
+    		}else
+    			//иначе загружаем
+    			DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.title);						
+    		return true;
     	}
     };
     
