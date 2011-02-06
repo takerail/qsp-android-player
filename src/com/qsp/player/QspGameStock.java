@@ -23,6 +23,9 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.app.TabActivity;
 import android.content.Context;
@@ -93,6 +96,7 @@ public class QspGameStock extends TabActivity {
     public static final int ALL_TABNUM = 2;
     
     public static boolean isActive;
+    public static boolean showProgressDialog;
 	
 	private String _zipFile; 
 	private String _location; 
@@ -106,19 +110,27 @@ public class QspGameStock extends TabActivity {
 	ListView lvAll;
 	ListView lvDownloaded;
 	ListView lvStarred;
-    ProgressDialog downloadProgressDialog;
-	
+    ProgressDialog downloadProgressDialog = null;
+
+	private NotificationManager mNotificationManager;
+	private int QSP_NOTIFICATION_ID;
+    
     public QspGameStock() {
+    	Utility.WriteLog("[G]constructor\\");
     	gamesMap = new HashMap<String, GameItem>();
     }
     
 
     @Override
 	protected void onCreate(Bundle savedInstanceState) {
+    	Utility.WriteLog("[G]onCreate\\");
         // Be sure to call the super class.
         super.onCreate(savedInstanceState);
         
         isActive = false;
+        showProgressDialog = false;
+        
+        mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         
         TabHost tabHost = getTabHost();
         LayoutInflater.from(getApplicationContext()).inflate(R.layout.gamestock, tabHost.getTabContentView(), true);
@@ -149,25 +161,62 @@ public class QspGameStock extends TabActivity {
         // 5. Вывод игр в папке "Загруженные" в порядке последнего доступа к ним
         // 6. Возможность открыть файл из любой папки(через специальное меню этой активити)
         // 7. Доступ к настройкам приложения через меню этой активити
+    	Utility.WriteLog("[G]onCreate/");
     }
     
     @Override
     public void onResume()
     {
+    	Utility.WriteLog("[G]onResume\\");
     	super.onResume();
     	isActive = true;
+    	Utility.WriteLog("[G]onResume/");
+    }
+    
+    @Override
+    public void onPostResume()
+    {
+    	Utility.WriteLog("[G]onPostResume\\");
+    	super.onPostResume();
+		if (showProgressDialog && (downloadProgressDialog != null))
+		{
+			downloadProgressDialog.show();
+		}
+    	Utility.WriteLog("[G]onPostResume/");
     }
     
     @Override
     public void onPause() {
+    	Utility.WriteLog("[G]onPause\\");
     	isActive = false;
+		if (showProgressDialog && (downloadProgressDialog != null))
+		{
+			downloadProgressDialog.dismiss();
+		}
     	super.onPause();
+    	Utility.WriteLog("[G]onPause/");
+    }
+
+    @Override
+    public void onDestroy()
+    {
+    	Utility.WriteLog("[G]onDestroy\\");
+    	Utility.WriteLog("[G]onDestroy/");
+    	super.onDestroy();
     }
     
     @Override
     public Object onRetainNonConfigurationInstance() {
         final String gameListToRecreatedActivity = xmlGameListCached;
         return gameListToRecreatedActivity;
+    }
+
+    @Override
+    public void onNewIntent(Intent intent)
+    {
+    	Utility.WriteLog("[G]onNewIntent\\");
+    	super.onNewIntent(intent);
+    	Utility.WriteLog("[G]onNewIntent/");
     }
 
     private void InitListViews()
@@ -212,6 +261,30 @@ public class QspGameStock extends TabActivity {
         RefreshLists();
     }
 
+    private void Notify(String text, String details)
+    {
+            Intent notificationIntent = new Intent(uiContext, QspPlayerStart.class);
+            notificationIntent.setAction(Intent.ACTION_MAIN);
+            notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+            PendingIntent contentIntent = PendingIntent.getActivity(uiContext, 0, notificationIntent, 0); 
+
+            Notification note = new Notification(
+                    android.R.drawable.stat_notify_sdcard, //!!! STUB              // the icon for the status bar
+                    text,                  		// the text to display in the ticker
+                    System.currentTimeMillis() // the timestamp for the notification
+                    ); 
+
+            note.setLatestEventInfo(uiContext, text, details, contentIntent);
+            note.flags = Notification.FLAG_AUTO_CANCEL;
+            
+            mNotificationManager.notify(
+                       QSP_NOTIFICATION_ID, // we use a string id because it is a unique
+                                            // number.  we use it later to cancel the
+                                            // notification
+                       note);
+    }
+    
     //Выбрана игра в списке
     private OnItemClickListener gameListClickListener = new OnItemClickListener() 
     {
@@ -237,44 +310,48 @@ public class QspGameStock extends TabActivity {
     			value = tt3.title;
     			break;
     		}
-    		
-    		selectedGame = gamesMap.get(value);
-    		if (selectedGame == null)
-    			return;
-    		
-   			StringBuilder txt = new StringBuilder();
-   			if(selectedGame.author.length()>0)
-   				txt.append("Автор: ").append(selectedGame.author);
-   			if(selectedGame.version.length()>0)
-   				txt.append("\nВерсия: ").append(selectedGame.version);
-   			if(selectedGame.file_size.length()>0)
-   				txt.append("\nРазмер: ").append(Integer.parseInt(selectedGame.file_size)/1024).append(" килобайт");
-   			AlertDialog.Builder bld = new AlertDialog.Builder(uiContext).setMessage(txt)
-   			.setTitle(selectedGame.title)
-   			.setIcon(R.drawable.icon)
-   			.setPositiveButton((selectedGame.downloaded ? "Играть" : "Загрузить"), new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-		    		if (selectedGame.downloaded){
-		    			//Если игра загружена, стартуем
-		    			Intent data = new Intent();
-		    			data.putExtra("file_name", selectedGame.game_file);
-		    			setResult(RESULT_OK, data);
-		    			finish();
-		    		}else
-		    			//иначе загружаем
-		    			DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.title);						
-				}
-			})
-   			.setNegativeButton("Закрыть", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-    				dialog.cancel();						
-				}
-			});
-   			bld.create().show();
+    		ShowGameInfo(value);
     	}
     };
+    
+    private void ShowGameInfo(String name)
+    {
+		selectedGame = gamesMap.get(name);
+		if (selectedGame == null)
+			return;
+		
+			StringBuilder txt = new StringBuilder();
+			if(selectedGame.author.length()>0)
+				txt.append("Автор: ").append(selectedGame.author);
+			if(selectedGame.version.length()>0)
+				txt.append("\nВерсия: ").append(selectedGame.version);
+			if(selectedGame.file_size.length()>0)
+				txt.append("\nРазмер: ").append(Integer.parseInt(selectedGame.file_size)/1024).append(" килобайт");
+			AlertDialog.Builder bld = new AlertDialog.Builder(uiContext).setMessage(txt)
+			.setTitle(selectedGame.title)
+			.setIcon(R.drawable.icon)
+			.setPositiveButton((selectedGame.downloaded ? "Играть" : "Загрузить"), new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+	    		if (selectedGame.downloaded){
+	    			//Если игра загружена, стартуем
+	    			Intent data = new Intent();
+	    			data.putExtra("file_name", selectedGame.game_file);
+	    			setResult(RESULT_OK, data);
+	    			finish();
+	    		}else
+	    			//иначе загружаем
+	    			DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.title);						
+			}
+		})
+			.setNegativeButton("Закрыть", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.cancel();						
+			}
+		});
+			bld.create().show();
+    }
     
     private void DownloadGame(String file_url, String file_size, String name)
     {
@@ -332,13 +409,15 @@ public class QspGameStock extends TabActivity {
             		//create a buffer...
             		byte[] buffer = new byte[1024];
             		int bufferLength = 0; //used to store a temporary size of the buffer
+            		int downloadedCount = 0;
 
             		//now, read through the input buffer and write the contents to the file
             		while ( (bufferLength = inputStream.read(buffer)) > 0 ) {
             			//add the data in the buffer to the file in the file output stream (the file on the sd card
             			fileOutput.write(buffer, 0, bufferLength);
             			//this is where you would do something to report the prgress, like this maybe
-            			updateSpinnerProgress(true, gameName, "Скачивается...", bufferLength);
+            			downloadedCount += bufferLength;
+            			updateSpinnerProgress(true, gameName, "Скачивается...", -downloadedCount);
             		}
             		//close the output stream when done
             		fileOutput.close();
@@ -358,16 +437,40 @@ public class QspGameStock extends TabActivity {
             			public void run() {
             				RefreshLists();
             				GameItem selectedGame = gamesMap.get(checkGame);
-            	    		if ( ( selectedGame == null || !selectedGame.downloaded ) && isActive )
-            	    		{
-            	        		//Показываем сообщение об ошибке
-            	        		new AlertDialog.Builder(uiContext)
-            	        		.setMessage("Ошибка: Не удалось распаковать игру \"" + checkGame + "\".")
-            	        		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            	        			public void onClick(DialogInterface dialog, int whichButton) { }
-            	        		})
-            	        		.show();
-            	    		}
+            				
+            				if (isActive)
+            				{
+	            	    		if ( selectedGame == null || !selectedGame.downloaded )
+	            	    		{
+	            	        		//Показываем сообщение об ошибке
+	            	        		new AlertDialog.Builder(uiContext)
+	            	        		.setMessage("Ошибка: Не удалось распаковать игру \"" + checkGame + "\".")
+	            	        		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	            	        			public void onClick(DialogInterface dialog, int whichButton) { }
+	            	        		})
+	            	        		.show();
+	            	    		}
+	            	    		else
+	            	    		{
+	            	    			ShowGameInfo(checkGame);
+	            	    		}
+            				}
+            				else
+            				{
+            					String msg = null;
+            					String desc = null;
+            					if ( selectedGame == null || !selectedGame.downloaded )
+            					{
+            						msg = "Ошибка при загрузке игры";
+            						desc = "Не удалось распаковать игру \"" + checkGame + "\"";
+            					}
+            					else
+            					{
+            						msg = "Игра загружена";
+            						desc = "Игра \"" + checkGame + "\" успешно загружена";
+            					}
+               					Notify(msg, desc);
+            				}
             			}
             		});
 
@@ -395,7 +498,7 @@ public class QspGameStock extends TabActivity {
 				downloadProgressDialog.setCancelable(false);
 			}
 		});
-    	updateSpinnerProgress(true, gameName, "Распаковывается...", -1);
+    	updateSpinnerProgress(true, gameName, "Распаковывается...", 0);
 
     	_dirChecker("");
 
@@ -449,15 +552,19 @@ public class QspGameStock extends TabActivity {
     	final int nCount = nProgress;
 		runOnUiThread(new Runnable() {
 			public void run() {
-				if (!isActive)
+				showProgressDialog = show;
+				if (!isActive || (downloadProgressDialog == null))
 					return;
 				if (!show && downloadProgressDialog.isShowing())
 				{
 					downloadProgressDialog.dismiss();
+					downloadProgressDialog = null;
 					return;
 				}
 				if (nCount>=0)
 					downloadProgressDialog.incrementProgressBy(nCount);
+				else
+					downloadProgressDialog.setProgress(-nCount);
 				if (show && !downloadProgressDialog.isShowing())
 				{
 					downloadProgressDialog.setTitle(dialogTitle);
@@ -690,7 +797,7 @@ public class QspGameStock extends TabActivity {
     			}
     		});
             try {
-            	updateSpinnerProgress(true, "", "Загрузка списка игр", -1);
+            	updateSpinnerProgress(true, "", "Загрузка списка игр", 0);
             	URL updateURL = new URL("http://qsp.su/gamestock/gamestock.php");
                 URLConnection conn = updateURL.openConnection();
                 InputStream is = conn.getInputStream();
