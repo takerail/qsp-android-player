@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.gesture.Gesture;
 import android.gesture.GestureOverlayView;
@@ -305,7 +306,21 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	Utility.WriteLog("onDestroy/");  
     	super.onDestroy();
     }
+    
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+    	Utility.WriteLog("onConfigurationChanged\\");
+        super.onConfigurationChanged(newConfig);
 
+        // Экран повернут, либо выдвинута клавиатура
+        if ((newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE)||(newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO)) {
+            //!!! STUB
+        } else if ((newConfig.orientation == Configuration.ORIENTATION_PORTRAIT)||(newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES)){
+            //!!! STUB
+        }
+    	Utility.WriteLog("onConfigurationChanged/");
+    }
+    
     @Override
     public void onNewIntent(Intent intent)
     {
