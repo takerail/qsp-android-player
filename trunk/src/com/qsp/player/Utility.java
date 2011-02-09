@@ -3,6 +3,9 @@ package com.qsp.player;
 import java.io.File;
 import java.io.IOException;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Environment;
 import android.text.Html;
 import android.text.Html.ImageGetter;
@@ -110,5 +113,15 @@ public class Utility {
     public static void WriteLog(String msg)
     {
     	Log.i("QSP", msg);
+    }
+    
+    public static void ShowError(Context context, String message)
+    {
+		new AlertDialog.Builder(context)
+		.setMessage(message)
+		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) { }
+		})
+		.show();
     }
 }
