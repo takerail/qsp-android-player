@@ -474,12 +474,7 @@ public class QspGameStock extends TabActivity {
 	            	    		if ( selectedGame == null || !selectedGame.downloaded )
 	            	    		{
 	            	        		//Показываем сообщение об ошибке
-	            	        		new AlertDialog.Builder(uiContext)
-	            	        		.setMessage("Ошибка: Не удалось распаковать игру \"" + checkGame + "\".")
-	            	        		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-	            	        			public void onClick(DialogInterface dialog, int whichButton) { }
-	            	        		})
-	            	        		.show();
+	            	    			Utility.ShowError(uiContext, "Ошибка: Не удалось распаковать игру \"" + checkGame + "\".");
 	            	    		}
 	            	    		else
 	            	    		{
@@ -807,12 +802,7 @@ public class QspGameStock extends TabActivity {
     	if ( !parsed && isActive )
     	{
     		//Показываем сообщение об ошибке
-    		new AlertDialog.Builder(uiContext)
-    		.setMessage("Ошибка: Не удалось загрузить список игр. Проверьте интернет-подключение.")
-    		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-    			public void onClick(DialogInterface dialog, int whichButton) { }
-    		})
-    		.show();
+    		Utility.ShowError(uiContext, "Ошибка: Не удалось загрузить список игр. Проверьте интернет-подключение.");
     	}
     	return parsed;
     }

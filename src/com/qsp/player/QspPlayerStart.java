@@ -966,7 +966,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	    	        }
     	    	        else
     	    	        {
-    	    	        	String s = "Not able to parse file: "+Integer.toString(QSPGetLastErrorData());
+    	    	        	String s = "Файл игры поврежден, ошибка: "+Integer.toString(QSPGetLastErrorData());
     	    	        	tv.setText(s);
     	    	        }
     				}
@@ -1521,15 +1521,10 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         	    	if (!bExec)
         	    	{
         	    		int nError = QSPGetLastErrorData();
-        	    		final String txtError = "Error: "+String.valueOf(nError);  
+        	    		final String txtError = "Ошибка: "+String.valueOf(nError);  
         	    		runOnUiThread(new Runnable() {
         	    			public void run() {
-		        	    		new AlertDialog.Builder(uiContext)
-		        	            .setMessage(txtError)
-		        	            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-		        	                public void onClick(DialogInterface dialog, int whichButton) { }
-		        	            })
-		        	            .show();
+        	    				Utility.ShowError(uiContext, txtError);
         	    			}
         	    		});
         	    	}
