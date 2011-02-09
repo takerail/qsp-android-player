@@ -1074,9 +1074,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		        }
 			}
 		});
+		
+		float realVolume = GetRealVolume(volume);
+		mediaPlayer.setVolume(realVolume, realVolume);
 	    mediaPlayer.start();
 	    MusicContent musicContent = new MusicContent();
 	    musicContent.path = file;
+	    musicContent.volume = volume;
 	    musicContent.player = mediaPlayer;
         musicLock.lock();
         try {
@@ -1084,6 +1088,16 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         } finally {
         	musicLock.unlock();
         }
+    }
+    
+    private float GetRealVolume(int volume)
+    {
+    	float result = 0;
+    	if (settings.getBoolean("sound", true))
+    		result = ((float) volume) / 100;
+    	else 
+    		result = 0;
+    	return result;
     }
 
     private boolean IsPlayingFileUI(String file)
@@ -1155,8 +1169,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     			}
     			else
     			{
-    				float volume = (float) (settings.getBoolean("sound", true) ? 1 : 0); 
-    				it.player.setVolume(volume, volume);
+    				float realVolume = GetRealVolume(it.volume);
+    				it.player.setVolume(realVolume, realVolume);
     				it.player.start();
     			}
 	    	}
