@@ -609,7 +609,10 @@ public class QspGameStock extends TabActivity {
 		ParseGameList(xmlGameListCached);
 
 		if (!ScanDownloadedGames())
+		{
+			Utility.ShowError(uiContext, "Ошибка: нет доступа к флэш-карте.");
 			return;
+		}
 		
 		GetCheckedGames();
 		
@@ -772,7 +775,12 @@ public class QspGameStock extends TabActivity {
     					else if (lastTagName.equals("version"))
     						curItem.version = val;
     					else if (lastTagName.equals("title"))
-    						curItem.title = val;
+    					{
+    						//!!! STUB
+    						// Обрезаем многоточие, пока у нас есть привязка к имени папки.
+    						String valTruncated = val.endsWith("...") ? val.substring(0, val.length()-3) : val; 
+    						curItem.title = valTruncated;
+    					}
     					else if (lastTagName.equals("lang"))
     						curItem.lang = val;
     					else if (lastTagName.equals("player"))
