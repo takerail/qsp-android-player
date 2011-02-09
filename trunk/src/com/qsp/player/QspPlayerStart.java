@@ -799,18 +799,17 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     }
     
     private void toggleInv(boolean vis) {
-   		findViewById(R.id.inv).setVisibility(vis ? View.VISIBLE : View.GONE);
+    	findViewById(R.id.inv).setVisibility(vis ? View.VISIBLE : View.GONE);
 		findViewById(R.id.title_button_1).setBackgroundResource(vis ? R.drawable.btn_bg_active : invBack);
     }
     
     private void toggleMain(boolean vis) {
-   		findViewById(R.id.main_desc).setVisibility(vis ? View.VISIBLE : View.GONE);
-   		findViewById(R.id.acts).setVisibility(vis ? View.VISIBLE : View.GONE);
+    	findViewById(R.id.main_tab).setVisibility(vis ? View.VISIBLE : View.GONE);
 		findViewById(R.id.title_home_button).setBackgroundResource(vis ? R.drawable.btn_bg_active : 0);
     }
     
     private void toggleExt(boolean vis) {
-   		findViewById(R.id.vars_desc).setVisibility(vis ? View.VISIBLE : View.GONE);
+    	findViewById(R.id.vars_tab).setVisibility(vis ? View.VISIBLE : View.GONE);
 		findViewById(R.id.title_button_2).setBackgroundResource(vis ? R.drawable.btn_bg_active : varBack);
    }
     
