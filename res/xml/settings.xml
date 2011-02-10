@@ -4,10 +4,12 @@
     <PreferenceScreen
             android:key="interface_screen" android:title="@string/interface_screen" android:summary="@string/interface_scr_sum">
     	<CheckBoxPreference android:title="@string/fullscreenTitle" android:key="fullscreen" android:summary="@string/fullscreenSum"></CheckBoxPreference>
-		<ListPreference android:key="typeface" android:title="@string/typeface" android:entries="@array/fontName" android:entryValues="@array/fontValue" android:defaultValue="0"></ListPreference>
-		<ListPreference android:key="fontsize" android:title="@string/fontSize" android:entries="@array/fontSize" android:entryValues="@array/fontSize" android:defaultValue="16"></ListPreference>
 		<!-- <ListPreference android:defaultValue="0" android:key="theme" android:title="@string/appTheme" android:entries="@array/themeName" android:entryValues="@array/fontValue"></ListPreference> -->
-	</PreferenceScreen>
+	<ListPreference android:key="typeface" android:title="@string/typeface" android:entries="@array/fontName" android:entryValues="@array/fontValue" android:defaultValue="0"></ListPreference><ListPreference android:key="fontsize" android:title="@string/fontSize" android:entries="@array/fontSize" android:entryValues="@array/fontSize" android:defaultValue="16"></ListPreference>
+  <com.att.preference.colorpicker.ColorPickerPreference android:title="@string/textColor" android:key="textColor" android:defaultValue="#ffffffff"/> 
+  <com.att.preference.colorpicker.ColorPickerPreference android:title="@string/linkColor" android:key="linkColor" android:defaultValue="#ff0000ff"/> 
+  <com.att.preference.colorpicker.ColorPickerPreference android:title="@string/backColor" android:defaultValue="#ff000000" android:key="backColor"/> 
+</PreferenceScreen>
 	<CheckBoxPreference android:key="sound" android:title="@string/soundTitle" android:summary="@string/soundSum" android:defaultValue="true"/>
     <CheckBoxPreference android:key="gestures" android:title="@string/using_gestures" android:summary="@string/gestures_sum" android:enabled="true"/>
 </PreferenceScreen> 

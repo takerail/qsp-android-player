@@ -12,7 +12,11 @@
     <string name="interface_screen">Настройки отображения</string>
     <string name="soundSum">использование звуков и музыки</string>
     <string name="soundTitle">Звук</string>
-    
+	<string name="dialog_color_picker">Выбор цвета</string> 
+  	<string name="textColor">Цвет текста</string> 
+  	<string name="backColor">Цвет фона</string> 
+  	<string name="linkColor">Цвет ссылок</string> 
+      
     <!-- Меню -->
     <string name="menu_gamestock">Полка игр</string>
     <string name="menu_options">Настройки</string>
