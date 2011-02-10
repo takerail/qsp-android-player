@@ -30,6 +30,7 @@
 <TextView android:id="@+id/main_desc"
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
+    android:text=""
     android:textSize="16sp"
     android:paddingLeft="2dp"
     android:paddingRight="2dp"
@@ -46,14 +47,20 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     />
+<ScrollView
+	android:id="@+id/vars_tab"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+>
 <TextView 
 	android:id="@+id/vars_desc"
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
+    android:text=""
     android:textSize="16sp"
     android:paddingLeft="2dp"
     android:paddingRight="2dp"
     />
-
+</ScrollView>
 </android.gesture.GestureOverlayView>
 </LinearLayout>
