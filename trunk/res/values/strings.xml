@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<!-- Настройки  -->
     <string name="appTheme">Тема оформления</string>
     <string name="fontSize">Размер шрифта</string>
     <string name="typeface">Стиль шрифта</string>
@@ -11,5 +12,19 @@
     <string name="interface_screen">Настройки отображения</string>
     <string name="soundSum">использование звуков и музыки</string>
     <string name="soundTitle">Звук</string>
+    
+    <!-- Меню -->
+    <string name="menu_gamestock">Полка игр</string>
+    <string name="menu_options">Настройки</string>
+    <string name="menu_about">О программе</string>
+    <string name="menu_newgame">Начать заново</string>
+    <string name="menu_resumegame">Продолжить игру</string>
+    <string name="menu_load">Загрузить</string>
+    <string name="menu_save">Сохранить</string>
+    <string name="menu_deletegames">Удаление игр</string>
+    <string name="menu_openfile">Открыть файл</string>
+    
+    <!-- Прочее -->
     <string name="app_name">Quest Player</string>
+    <string name="market_details_url">market://details?id=com.qsp.player</string>
 </resources>

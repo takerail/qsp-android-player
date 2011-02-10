@@ -122,9 +122,23 @@ public class Utility {
     {
 		new AlertDialog.Builder(context)
 		.setMessage(message)
-		.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+		.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) { }
 		})
 		.show();
+    }
+    
+    public static void DeleteRecursive(File f)
+    {
+    	if ((f == null) || !f.exists())
+    		return;
+    	if (f.isFile())
+    		f.delete();
+    	else
+    	{
+            File[] files = f.listFiles();
+            for (File currentFile : files)
+            	DeleteRecursive(currentFile);
+    	}
     }
 }

@@ -31,10 +31,14 @@ import android.app.TabActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -89,7 +93,10 @@ public class QspGameStock extends TabActivity {
 	private String xmlGameListCached;
 	private boolean openDefaultTab;
 	private boolean gameListIsLoading;
+	private boolean triedToLoadGameList;
 	private GameItem selectedGame;
+	
+	private boolean gameIsRunning;
 
     public static final int MAX_SPINNER = 1024;
     public static final int DOWNLOADED_TABNUM = 0;
@@ -105,6 +112,7 @@ public class QspGameStock extends TabActivity {
     String					startRootPath;
     String					backPath;
     ArrayList<File> 		qspGamesBrowseList;
+    ArrayList<File> 		qspGamesToDeleteList;
 	
 	HashMap<String, GameItem> gamesMap;
 	
@@ -128,6 +136,9 @@ public class QspGameStock extends TabActivity {
         // Be sure to call the super class.
         super.onCreate(savedInstanceState);
         
+        Intent gameStockIntent = getIntent();
+        gameIsRunning = gameStockIntent.getBooleanExtra("game_is_running", false);
+        
         isActive = false;
         showProgressDialog = false;
         
@@ -147,6 +158,7 @@ public class QspGameStock extends TabActivity {
         
     	openDefaultTab = true;
     	gameListIsLoading = false;
+    	triedToLoadGameList = false;
     	
     	xmlGameListCached = null;
 
@@ -219,6 +231,56 @@ public class QspGameStock extends TabActivity {
     	super.onNewIntent(intent);
     	Utility.WriteLog("[G]onNewIntent/");
     }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Загружаем меню из XML-файла
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.gamestock_menu, menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onPrepareOptionsMenu (Menu menu) {
+    	//Прячем или показываем пункт меню "Продолжить игру"
+		MenuItem resumeGameItem = menu.findItem(R.id.menu_resumegame);
+		resumeGameItem.setVisible(gameIsRunning);
+    	return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	//Контекст UI
+        switch (item.getItemId()) {
+            case R.id.menu_resumegame:
+                //Продолжить игру
+    			setResult(RESULT_CANCELED, null);
+    			finish();
+                return true;
+
+            case R.id.menu_options:
+                Intent intent = new Intent();
+                intent.setClass(this, Settings.class);
+                startActivity(intent);
+                return true;
+
+            case R.id.menu_about:
+            	Intent updateIntent = null;
+        		updateIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.market_details_url)));
+        		startActivity(updateIntent); 
+                return true;
+
+            case R.id.menu_openfile:
+            	BrowseGame(Environment.getExternalStorageDirectory().getPath(), true);
+                return true;
+
+            case R.id.menu_deletegames:
+            	DeleteGames();
+                return true;
+
+        }        
+        return false;
+    }
 
     private void InitListViews()
     {
@@ -255,6 +317,7 @@ public class QspGameStock extends TabActivity {
         	    	if (!gameListIsLoading)
         	    	{
         	    		gameListIsLoading = true;
+        	    		triedToLoadGameList = true;
         	    		LoadGameListThread tLoadGameList = new LoadGameListThread();
         	    		tLoadGameList.start();
         	    	}
@@ -469,9 +532,19 @@ public class QspGameStock extends TabActivity {
             				RefreshLists();
             				GameItem selectedGame = gamesMap.get(checkGame);
             				
+            				//Если игра не появилась в списке, значит она не соответствует формату "Полки игр"
+            				boolean success = (selectedGame != null) && selectedGame.downloaded;
+            				
+            				if (!success)
+            				{
+            					//Удаляем неудачно распакованную игру
+            					File gameFolder = new File(Utility.GetDefaultPath().concat("/").concat(checkGame));
+            					Utility.DeleteRecursive(gameFolder);
+            				}
+            				
             				if (isActive)
             				{
-	            	    		if ( selectedGame == null || !selectedGame.downloaded )
+	            	    		if ( !success )
 	            	    		{
 	            	        		//Показываем сообщение об ошибке
 	            	    			Utility.ShowError(uiContext, "Ошибка: Не удалось распаковать игру \"" + checkGame + "\".");
@@ -485,7 +558,7 @@ public class QspGameStock extends TabActivity {
             				{
             					String msg = null;
             					String desc = null;
-            					if ( selectedGame == null || !selectedGame.downloaded )
+            					if ( !success )
             					{
             						msg = "Ошибка при загрузке игры";
             						desc = "Не удалось распаковать игру \"" + checkGame + "\"";
@@ -807,7 +880,7 @@ public class QspGameStock extends TabActivity {
     	} catch (Exception e) {
     		Utility.WriteLog("Exception occured while trying to parse game list, unknown error");
     	}
-    	if ( !parsed && isActive )
+    	if ( !parsed && isActive && triedToLoadGameList )
     	{
     		//Показываем сообщение об ошибке
     		Utility.ShowError(uiContext, "Ошибка: Не удалось загрузить список игр. Проверьте интернет-подключение.");
@@ -867,7 +940,6 @@ public class QspGameStock extends TabActivity {
     //***********************************************************************
     android.content.DialogInterface.OnClickListener browseFileClick = new DialogInterface.OnClickListener()
     {
-    	//Контекст UI
 		@Override
 		public void onClick(DialogInterface dialog, int which) 
 		{
@@ -887,9 +959,11 @@ public class QspGameStock extends TabActivity {
 					BrowseGame(f.getPath(), false);
 				else
 				{
-					//Сделать правильный возврат из активити
-					//!!! STUB
-					//runGame(f.getPath());
+					//Запускаем файл
+	    			Intent data = new Intent();
+	    			data.putExtra("file_name", f.getPath());
+	    			setResult(RESULT_OK, data);
+	    			finish();
 				}
 			}
 		}    	
@@ -897,9 +971,11 @@ public class QspGameStock extends TabActivity {
     
     private void BrowseGame(String startpath, boolean start)
     {
-    	//Контекст UI
     	if (startpath == null)
     		return;
+    	
+    	if (!startpath.endsWith("/"))
+    		startpath.concat("/");
     	
     	//Устанавливаем путь "выше"    	
     	if (!start)
@@ -961,6 +1037,66 @@ public class QspGameStock extends TabActivity {
         alert.show();
     }
     
+    //***********************************************************************
+    //			удаление игр (выбор папки с игрой)
+    //***********************************************************************
+    private void DeleteGames()
+    {
+        //Ищем папки в /qsp/games
+        File sdcardRoot = new File (Utility.GetDefaultPath());
+        File[] sdcardFiles = sdcardRoot.listFiles();
+        qspGamesToDeleteList = new ArrayList<File>();
+        for (File currentFile : sdcardFiles)
+        {
+        	if (currentFile.isDirectory() && !currentFile.isHidden() && !currentFile.getName().startsWith("."))
+        		qspGamesToDeleteList.add(currentFile);
+        }
+        
+        int total = qspGamesToDeleteList.size();
+        final CharSequence[] items = new String[total];
+        for (int i=0; i<total; i++)
+        {
+        	File f = qspGamesToDeleteList.get(i);
+        	items[i] = f.getName();
+        }
+        
+        //Показываем диалог выбора файла
+        AlertDialog.Builder builder = new AlertDialog.Builder(uiContext);
+        builder.setTitle("Удалить игру");
+        builder.setItems(items, new DialogInterface.OnClickListener()
+	        {
+	    		@Override
+	    		public void onClick(DialogInterface dialog, int which) 
+	    		{
+	    	        AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(uiContext);
+	    			final File f = qspGamesToDeleteList.get(which);
+    				if ((f == null) || !f.isDirectory())
+    					return;
+	    	        confirmBuilder.setMessage("Удалить игру \""+f.getName()+"\"?");
+	    	        confirmBuilder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+    					public void onClick(DialogInterface dialog, int whichButton) {
+    						if (whichButton==DialogInterface.BUTTON_POSITIVE)
+    						{
+    		    				Utility.DeleteRecursive(f);
+    		    				RefreshLists();
+    						}
+    					}
+    				});
+    		        confirmBuilder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+    					public void onClick(DialogInterface dialog, int whichButton) { }
+    				});
+    				
+    		        AlertDialog confirm = confirmBuilder.create();
+    		        confirm.show();
+	    		}    	
+	        }
+        );
+        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) { }
+		});
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
 
     private class GameAdapter extends ArrayAdapter<GameItem> {
 
