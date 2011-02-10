@@ -2,18 +2,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:id="@+id/menu_gamestock"
-        android:title="Полка игр" />
+        android:title="@string/menu_gamestock" />
         
     <item android:id="@+id/menu_options"
-    	android:title="Настройки" />
+    	android:title="@string/menu_options" />
         
     <item android:id="@+id/menu_about"
-        android:title="О программе" />
+        android:title="@string/menu_about" />
 
     <group android:id="@+id/menugroup_running">
     
 	    <item android:id="@+id/menu_newgame"
-	        android:title="Начать заново" />
+	        android:title="@string/menu_newgame" />
 	        
 	    <item android:id="@+id/menu_loadgame" />
 

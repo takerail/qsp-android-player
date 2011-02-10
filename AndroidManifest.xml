@@ -19,9 +19,11 @@
                  android:screenOrientation="portrait"
                  android:configChanges="orientation|keyboardHidden"></activity> 
 
-    <activity android:name="Settings"></activity> 
+    <activity android:name="Settings"
+    			 android:label="@string/menu_options"></activity> 
 
     <activity android:name="QspGameStock" 
+                 android:label="@string/menu_gamestock"
     			 android:screenOrientation="portrait"
     			 android:configChanges="orientation|keyboardHidden"></activity>
 </application>

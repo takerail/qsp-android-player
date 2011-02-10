@@ -66,12 +66,15 @@ public final class R {
         public static final int main_desc=0x7f0c000d;
         public static final int main_tab=0x7f0c000c;
         public static final int menu_about=0x7f0c001c;
-        public static final int menu_gamestock=0x7f0c001a;
-        public static final int menu_loadgame=0x7f0c001f;
-        public static final int menu_newgame=0x7f0c001e;
+        public static final int menu_deletegames=0x7f0c001e;
+        public static final int menu_gamestock=0x7f0c001f;
+        public static final int menu_loadgame=0x7f0c0022;
+        public static final int menu_newgame=0x7f0c0021;
+        public static final int menu_openfile=0x7f0c001d;
         public static final int menu_options=0x7f0c001b;
-        public static final int menu_savegame=0x7f0c0020;
-        public static final int menugroup_running=0x7f0c001d;
+        public static final int menu_resumegame=0x7f0c001a;
+        public static final int menu_savegame=0x7f0c0023;
+        public static final int menugroup_running=0x7f0c0020;
         public static final int starred_tab=0x7f0c0005;
         public static final int title_button_1=0x7f0c0017;
         public static final int title_button_2=0x7f0c0019;
@@ -96,17 +99,34 @@ public final class R {
         public static final int title=0x7f030007;
     }
     public static final class menu {
-        public static final int main_menu=0x7f0b0000;
+        public static final int gamestock_menu=0x7f0b0000;
+        public static final int main_menu=0x7f0b0001;
     }
     public static final class string {
+        /**  Настройки  
+         */
         public static final int appTheme=0x7f090000;
-        public static final int app_name=0x7f09000b;
+        /**  Прочее 
+         */
+        public static final int app_name=0x7f090014;
         public static final int fontSize=0x7f090001;
         public static final int fullscreenSum=0x7f090003;
         public static final int fullscreenTitle=0x7f090004;
         public static final int gestures_sum=0x7f090005;
         public static final int interface_scr_sum=0x7f090007;
         public static final int interface_screen=0x7f090008;
+        public static final int market_details_url=0x7f090015;
+        public static final int menu_about=0x7f09000d;
+        public static final int menu_deletegames=0x7f090012;
+        /**  Меню 
+         */
+        public static final int menu_gamestock=0x7f09000b;
+        public static final int menu_load=0x7f090010;
+        public static final int menu_newgame=0x7f09000e;
+        public static final int menu_openfile=0x7f090013;
+        public static final int menu_options=0x7f09000c;
+        public static final int menu_resumegame=0x7f09000f;
+        public static final int menu_save=0x7f090011;
         public static final int soundSum=0x7f090009;
         public static final int soundTitle=0x7f09000a;
         public static final int typeface=0x7f090002;

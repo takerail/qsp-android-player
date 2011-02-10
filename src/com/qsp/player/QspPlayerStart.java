@@ -216,7 +216,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         View textEntryView = factory.inflate(R.layout.inputbox, null);
         inputboxDialog = new AlertDialog.Builder(uiContext)
         .setView(textEntryView)
-        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
             	EditText edit = (EditText)inputboxDialog.findViewById(R.id.inputbox_edit);
             	inputboxResult = edit.getText().toString();
@@ -234,9 +234,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         	invBack = 0; //нет фона
         	varBack = 0; //нет фона
         	setCurrentWin(currentWin=WIN_MAIN);
-        	Intent myIntent = new Intent();
-        	myIntent.setClassName("com.qsp.player", "com.qsp.player.QspGameStock");
-        	startActivityForResult(myIntent, ACTIVITY_SELECT_GAME);
+        	ShowGameStock();
         }
 
     	Utility.WriteLog("onCreate/");
@@ -365,13 +363,21 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	{
     		//Заполняем слоты
     		MenuItem loadItem = menu.findItem(R.id.menu_loadgame);
-    		LoadSlots(loadItem, "Загрузить");
+    		LoadSlots(loadItem, getString(R.string.menu_load));
     		MenuItem saveItem = menu.findItem(R.id.menu_savegame);
-    		LoadSlots(saveItem, "Сохранить");
+    		LoadSlots(saveItem, getString(R.string.menu_save));
     	}
     	return true;
     }
 
+    private void ShowGameStock()
+    {
+    	Intent myIntent = new Intent();
+    	myIntent.setClassName("com.qsp.player", "com.qsp.player.QspGameStock");
+    	myIntent.putExtra("game_is_running", gameIsRunning);
+    	startActivityForResult(myIntent, ACTIVITY_SELECT_GAME);
+    }
+    
     private void ApplyFontSettingsToTextView(TextView tv)
     {
         Typeface tf = Typeface.DEFAULT;
@@ -454,9 +460,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         switch (item.getItemId()) {
             case R.id.menu_gamestock:
                 //Выбираем игру
-            	Intent myIntent = new Intent();
-            	myIntent.setClassName("com.qsp.player", "com.qsp.player.QspGameStock");
-            	startActivityForResult(myIntent, ACTIVITY_SELECT_GAME);
+            	ShowGameStock();
                 return true;
 
             case R.id.menu_options:
@@ -467,7 +471,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 
             case R.id.menu_about:
             	Intent updateIntent = null;
-        		updateIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.qsp.player"));
+        		updateIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.market_details_url)));
         		startActivity(updateIntent); 
                 return true;
 
@@ -646,7 +650,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             	if (data == null)
             		return;
             	String file_name = data.getStringExtra("file_name");
-            	if (file_name == null)
+            	if ((file_name == null)||file_name.equals(curGameFile))
             		return;
             	runGame(file_name);
             }
@@ -870,6 +874,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     private void runGame(String fileName)
     {
     	//Контекст UI
+    	File f = new File(fileName);
+    	if (!f.exists())
+    	{
+        	Utility.ShowError(uiContext, "Ошибка: файл не найден");
+        	return;
+    	}
+    		
     	if (libThreadHandler==null)
     	{
     		Utility.WriteLog("runGame: failed, libThreadHandler is null");
@@ -892,8 +903,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         
         libThreadHandler.post(new Runnable() {
     		public void run() {
-        		if (!inited)
-        			QSPInit();
     	        File tqsp = new File (gameFileName);
     	        FileInputStream fIn = null;
     	        int size = 0;
@@ -901,11 +910,15 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     				fIn = new FileInputStream(tqsp);
     			} catch (FileNotFoundException e) {
     	        	e.printStackTrace();
+    	        	Utility.ShowError(uiContext, "Ошибка: файл не найден");
+    	        	return;
     			}
     			try {
     				size = fIn.available();
     			} catch (IOException e) {
     				e.printStackTrace();
+    	        	Utility.ShowError(uiContext, "Ошибка: не удалось получить доступ к файлу");
+    	        	return;
     			}
     	        
     			byte[] inputBuffer = new byte[size];
@@ -915,8 +928,12 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     			fIn.close();
     			} catch (IOException e) {
     				e.printStackTrace();
+    	        	Utility.ShowError(uiContext, "Ошибка: не удалось прочесть файл");
+    	        	return;
     			}
 
+        		if (!inited)
+        			QSPInit();
     			final boolean gameLoaded = QSPLoadGameWorldFromData(inputBuffer, size, gameFileName);
     			
     			runOnUiThread(new Runnable() {
@@ -1315,7 +1332,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			public void run() {
 		    	new AlertDialog.Builder(uiContext)
 		        .setMessage(msg)
-		        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+		        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int whichButton) {
 						dialogHasResult = true;
 						Utility.WriteLog("ShowMessage(UI): OK clicked, unparking library thread");
