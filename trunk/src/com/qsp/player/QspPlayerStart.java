@@ -388,10 +388,14 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         }
         tv.setTypeface(tf);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, Float.parseFloat(settings.getString("fontsize", "16")));
+        tv.setTextColor(settings.getInt("textColor", 0xffffffff));
+        tv.setLinkTextColor(settings.getInt("linkColor", 0xff0000ff));
     }
     
     private void ApplyFontSettings()
     {
+        View v = findViewById(R.id.main);
+        v.setBackgroundColor(settings.getInt("backColor", 0xff000000));
         TextView tv = (TextView)findViewById(R.id.main_desc);
         ApplyFontSettingsToTextView(tv);
         tv = (TextView)findViewById(R.id.vars_desc);
@@ -800,6 +804,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
        		setTitle("Доп. описание");
        		break;
     	}
+    	currentWin = win;
     }
     
     private void toggleInv(boolean vis) {
