@@ -195,6 +195,7 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetActionData(JNIEnv * env, jobjec
 	// Attempt to find the major field.
 	jfieldID fid = (*env)->GetFieldID (env, clazz, "str1", "Ljava/lang/String;");
 	jfieldID fid2 = (*env)->GetFieldID (env, clazz, "str2", "Ljava/lang/String;");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, clazz );
 //	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 7");
 	// If this field does not exist then return null.
 	if (fid == 0 || fid2 == 0)
@@ -265,6 +266,7 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetObjectData(JNIEnv * env, jobjec
 	// Attempt to find the major field.
 	jfieldID fid = (*env)->GetFieldID (env, clazz, "str1", "Ljava/lang/String;");
 	jfieldID fid2 = (*env)->GetFieldID (env, clazz, "str2", "Ljava/lang/String;");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, clazz );
 	// If this field does not exist then return null.
 	if (fid == 0 || fid2 == 0)
 			return 0;
