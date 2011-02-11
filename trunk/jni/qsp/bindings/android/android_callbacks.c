@@ -63,6 +63,7 @@ void qspCallSetTimer(int msecs)
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = 
 		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "SetTimer", "(I)V");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
 	if (mid == NULL)
 		return; /* method not found */
 
@@ -82,6 +83,7 @@ void qspCallRefreshInt(QSP_BOOL isRedraw)
     jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
     jmethodID mid = 
          (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "RefreshInt", "()V");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
     if (mid == NULL)
         return; /* method not found */
 
@@ -122,6 +124,7 @@ void qspCallAddMenuItem(QSP_CHAR *name, QSP_CHAR *imgPath)
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = 
 		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "AddMenuItem", "(Ljava/lang/String;Ljava/lang/String;)V");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
 	if (mid == NULL)
 		return; /* method not found */
 
@@ -183,6 +186,7 @@ void qspCallShowMessage(QSP_CHAR *text)
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = 
 		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "ShowMessage", "(Ljava/lang/String;)V");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
 	if (mid == NULL)
 		return; /* method not found */
 
@@ -203,6 +207,7 @@ int qspCallShowMenu()
     jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
     jmethodID mid = 
          (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "ShowMenu", "()I");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
     if (mid == NULL)
         return -1; /* method not found */
 
@@ -228,6 +233,7 @@ void qspCallShowPicture(QSP_CHAR *file)
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = 
 		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "ShowPicture", "(Ljava/lang/String;)V");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
 	if (mid == NULL)
 		return; /* method not found */
 
@@ -262,6 +268,7 @@ void qspCallPlayFile(QSP_CHAR *file, int volume)
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = 
 		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "PlayFile", "(Ljava/lang/String;I)V");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
 	if (mid == NULL)
 		return; /* method not found */
 
@@ -284,6 +291,7 @@ QSP_BOOL qspCallIsPlayingFile(QSP_CHAR *file)
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = 
 		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "IsPlayingFile", "(Ljava/lang/String;)Z");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
 		 
 	QSP_BOOL result = QSP_FALSE;
 	if (mid != NULL)
@@ -323,6 +331,7 @@ int qspCallGetMSCount()
     jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
     jmethodID mid = 
          (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "GetMSCount", "()I");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
     if (mid != NULL)
 	{
 		count = (int)(*qspCallbackEnv)->CallIntMethod(qspCallbackEnv, qspCallbackObject, mid);
@@ -346,6 +355,7 @@ void qspCallCloseFile(QSP_CHAR *file)
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = 
 		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "CloseFile", "(Ljava/lang/String;)V");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
 	if (mid == NULL)
 		return; /* method not found */
 
@@ -365,6 +375,7 @@ void qspCallDeleteMenu()
     jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
     jmethodID mid = 
          (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "DeleteMenu", "()V");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
     if (mid == NULL)
         return; /* method not found */
 
@@ -389,6 +400,7 @@ QSP_CHAR *qspCallInputBox(QSP_CHAR *text)
 
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "InputBox", "(Ljava/lang/String;)Ljava/lang/String;");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
 	if (mid != NULL)
 	{
 		jstring jResult = (jstring)((*qspCallbackEnv)->CallObjectMethod(qspCallbackEnv, qspCallbackObject, mid, jText));
