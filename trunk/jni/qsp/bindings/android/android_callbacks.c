@@ -111,6 +111,13 @@ void qspCallAddMenuItem(QSP_CHAR *name, QSP_CHAR *imgPath)
 	QSPCallState state;
 	qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
 		
+	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
+	jmethodID mid = 
+		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "AddMenuItem", "(Ljava/lang/String;Ljava/lang/String;)V");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
+	if (mid == NULL)
+		return; /* method not found */
+
 	char * sz = qspW2C(name);
 	jstring menuItemName = (*qspCallbackEnv)->NewStringUTF(qspCallbackEnv, sz);
 	if (sz!=NULL)
@@ -121,14 +128,9 @@ void qspCallAddMenuItem(QSP_CHAR *name, QSP_CHAR *imgPath)
 	if (sz!=NULL)
 		free(sz);
 
-	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
-	jmethodID mid = 
-		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "AddMenuItem", "(Ljava/lang/String;Ljava/lang/String;)V");
-	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
-	if (mid == NULL)
-		return; /* method not found */
-
 	(*qspCallbackEnv)->CallVoidMethod(qspCallbackEnv, qspCallbackObject, mid, menuItemName, menuItemImg);
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, menuItemName );
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, menuItemImg );
 	
 	qspRestoreCallState(&state);
 }
@@ -177,11 +179,6 @@ void qspCallShowMessage(QSP_CHAR *text)
 	/* Здесь показываем сообщение */
 	QSPCallState state;
 	qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
-		
-	char * sz = qspW2C(text);
-	jstring message = (*qspCallbackEnv)->NewStringUTF(qspCallbackEnv, sz);
-	if (sz!=NULL)
-		free(sz);
 
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = 
@@ -189,8 +186,14 @@ void qspCallShowMessage(QSP_CHAR *text)
 	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
 	if (mid == NULL)
 		return; /* method not found */
+	
+	char * sz = qspW2C(text);
+	jstring message = (*qspCallbackEnv)->NewStringUTF(qspCallbackEnv, sz);
+	if (sz!=NULL)
+		free(sz);
 
 	(*qspCallbackEnv)->CallVoidMethod(qspCallbackEnv, qspCallbackObject, mid, message);
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, message );
 	
 	qspRestoreCallState(&state);
 }
@@ -224,11 +227,6 @@ void qspCallShowPicture(QSP_CHAR *file)
 	/* Здесь показываем изображение */
 	QSPCallState state;
 	qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
-		
-	char * sz = qspW2C(file);
-	jstring fileName = (*qspCallbackEnv)->NewStringUTF(qspCallbackEnv, sz);
-	if (sz!=NULL)
-		free(sz);
 
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = 
@@ -236,8 +234,14 @@ void qspCallShowPicture(QSP_CHAR *file)
 	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
 	if (mid == NULL)
 		return; /* method not found */
+	
+	char * sz = qspW2C(file);
+	jstring fileName = (*qspCallbackEnv)->NewStringUTF(qspCallbackEnv, sz);
+	if (sz!=NULL)
+		free(sz);
 
 	(*qspCallbackEnv)->CallVoidMethod(qspCallbackEnv, qspCallbackObject, mid, fileName);
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, fileName );
 	
 	qspRestoreCallState(&state);
 }
@@ -259,11 +263,6 @@ void qspCallPlayFile(QSP_CHAR *file, int volume)
 	/* Здесь начинаем воспроизведение файла с заданной громкостью */
 	QSPCallState state;
 	qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
-		
-	char * sz = qspW2C(file);
-	jstring fileName = (*qspCallbackEnv)->NewStringUTF(qspCallbackEnv, sz);
-	if (sz!=NULL)
-		free(sz);
 
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = 
@@ -271,8 +270,14 @@ void qspCallPlayFile(QSP_CHAR *file, int volume)
 	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
 	if (mid == NULL)
 		return; /* method not found */
+		
+	char * sz = qspW2C(file);
+	jstring fileName = (*qspCallbackEnv)->NewStringUTF(qspCallbackEnv, sz);
+	if (sz!=NULL)
+		free(sz);
 
 	(*qspCallbackEnv)->CallVoidMethod(qspCallbackEnv, qspCallbackObject, mid, fileName, volume);
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, fileName );
 	
 	qspRestoreCallState(&state);
 }
@@ -304,6 +309,7 @@ QSP_BOOL qspCallIsPlayingFile(QSP_CHAR *file)
 	{
 		result = QSP_FALSE; /* method not found */
 	}
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, fileName );
 
 	qspRestoreCallState(&state);
 	return result;
@@ -313,12 +319,18 @@ void qspCallSleep(int msecs)
 {
 	/* Здесь ожидаем заданное количество миллисекунд */
 	QSPCallState state;
-	if (qspCallBacks[QSP_CALL_SLEEP])
-	{
-		qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
-		qspCallBacks[QSP_CALL_SLEEP](msecs);
-		qspRestoreCallState(&state);
-	}
+	qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
+	
+	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
+	jmethodID mid = 
+		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "Wait", "(I)V");
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, cls );
+	if (mid == NULL)
+		return; /* method not found */
+
+	(*qspCallbackEnv)->CallVoidMethod(qspCallbackEnv, qspCallbackObject, mid, msecs);
+	
+	qspRestoreCallState(&state);
 }
 
 int qspCallGetMSCount()
@@ -347,11 +359,6 @@ void qspCallCloseFile(QSP_CHAR *file)
 	QSPCallState state;
 	qspSaveCallState(&state, QSP_TRUE, QSP_FALSE);
 		
-	char * sz = qspW2C(file);
-	jstring fileName = (*qspCallbackEnv)->NewStringUTF(qspCallbackEnv, sz);
-	if (sz!=NULL)
-		free(sz);
-
 	jclass cls = (*qspCallbackEnv)->GetObjectClass(qspCallbackEnv, qspCallbackObject);
 	jmethodID mid = 
 		 (*qspCallbackEnv)->GetMethodID(qspCallbackEnv, cls, "CloseFile", "(Ljava/lang/String;)V");
@@ -359,7 +366,13 @@ void qspCallCloseFile(QSP_CHAR *file)
 	if (mid == NULL)
 		return; /* method not found */
 
+	char * sz = qspW2C(file);
+	jstring fileName = (*qspCallbackEnv)->NewStringUTF(qspCallbackEnv, sz);
+	if (sz!=NULL)
+		free(sz);
+
 	(*qspCallbackEnv)->CallVoidMethod(qspCallbackEnv, qspCallbackObject, mid, fileName);
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, fileName );
 	
 	qspRestoreCallState(&state);
 }
@@ -413,6 +426,7 @@ QSP_CHAR *qspCallInputBox(QSP_CHAR *text)
 	}
 	else
 		buffer = qspGetNewText(QSP_FMT(""), 0);
+	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, jText );
 	qspRestoreCallState(&state);
 	return buffer;
 }
