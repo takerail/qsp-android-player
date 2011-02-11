@@ -262,7 +262,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         if(settings.getBoolean("gestures", false))
         	gestures.addOnGesturePerformedListener(this);
 
-        ApplyFontSettings();
+        ApplyViewSettings();
         
         if (gameIsRunning && !waitForImageBox)
     	{
@@ -392,10 +392,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         tv.setLinkTextColor(settings.getInt("linkColor", 0xff0000ff));
     }
     
-    private void ApplyFontSettings()
+    private void ApplyViewSettings()
     {
+    	int backColor = settings.getInt("backColor", 0xff000000);
         View v = findViewById(R.id.main);
-        v.setBackgroundColor(settings.getInt("backColor", 0xff000000));
+        v.setBackgroundColor(backColor);
+        ListView lv = (ListView)findViewById(R.id.inv);
+        lv.setCacheColorHint(backColor);
         TextView tv = (TextView)findViewById(R.id.main_desc);
         ApplyFontSettingsToTextView(tv);
         tv = (TextView)findViewById(R.id.vars_desc);
