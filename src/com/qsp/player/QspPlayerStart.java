@@ -1530,6 +1530,17 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	//Контекст библиотеки
     	menuList.clear();
     }
+    
+    private void Wait(int msecs)
+    {
+    	//Контекст библиотеки
+    	try {
+			Thread.sleep(msecs);
+		} catch (InterruptedException e) {
+			Utility.WriteLog("WAIT in library thread was interrupted");
+			e.printStackTrace();
+		}
+    }
     //******************************************************************************
     //******************************************************************************
     //****** \ QSP  LIBRARY  REQUIRED  CALLBACKS / *********************************

@@ -160,52 +160,31 @@ jint Java_com_qsp_player_QspPlayerStart_QSPGetActionsCount(JNIEnv * env, jobject
 //void QSPGetActionData(int ind, QSP_CHAR **image, QSP_CHAR **desc)
 jobject Java_com_qsp_player_QspPlayerStart_QSPGetActionData(JNIEnv * env, jobject this, jint ind)
 {
-	//!!!STUB
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 1");
-
 	char * qspImgFileName;
 	char * qspActName;
 	QSPGetActionData(ind, &qspImgFileName, &qspActName);
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 2");
 
 	char * sz = qspW2C(qspActName);
 	char * isz = qspW2C(qspImgFileName);
 	jstring actName = (*env)->NewStringUTF(env, sz);
 	jstring actImg = (*env)->NewStringUTF(env, isz);
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: qspActName[%s]", sz);
 	if (sz!=NULL)
 		free(sz);
 	if (isz!=NULL)
 		free(isz);
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 3");
 
-
-
-	// Attempt to find the JniResult class.
 	jclass clazz = (*env)->FindClass (env, "com/qsp/player/JniResult");
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 4");
-	// If this class does not exist then return null.
 	if (clazz == 0)
 			return 0;
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 5");
-	// Allocate memory for a new Version class object.  Do not bother calling
-	// the constructor (the default constructor does nothing).
 	jobject obj = (*env)->AllocObject (env, clazz);
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 6");
-	// Attempt to find the major field.
 	jfieldID fid = (*env)->GetFieldID (env, clazz, "str1", "Ljava/lang/String;");
 	jfieldID fid2 = (*env)->GetFieldID (env, clazz, "str2", "Ljava/lang/String;");
-	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, clazz );
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 7");
-	// If this field does not exist then return null.
+	(*env)->DeleteLocalRef( env, clazz );
 	if (fid == 0 || fid2 == 0)
 			return 0;
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 8");
-	// Set the major field to the operating system's major version.
 	(*env)->SetObjectField (env, obj, fid, actName);
 	(*env)->SetObjectField (env, obj, fid2, actImg);
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetActionData: 9");
-
+	
 	return obj;
 }
 ///* ¬ыполнение кода выбранного действи€ */
@@ -240,7 +219,6 @@ jint Java_com_qsp_player_QspPlayerStart_QSPGetObjectsCount(JNIEnv * env, jobject
 //void QSPGetObjectData(int ind, QSP_CHAR **image, QSP_CHAR **desc)
 jobject Java_com_qsp_player_QspPlayerStart_QSPGetObjectData(JNIEnv * env, jobject this, jint ind)
 {
-	//!!!STUB
 	char * qspImgFileName;
 	char * qspObjName;
 	QSPGetObjectData(ind, &qspImgFileName, &qspObjName);
@@ -255,19 +233,13 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetObjectData(JNIEnv * env, jobjec
 	if (isz!=NULL)
 		free(isz);
 
-	// Attempt to find the JniResult class.
 	jclass clazz = (*env)->FindClass (env, "com/qsp/player/JniResult");
-	// If this class does not exist then return null.
 	if (clazz == 0)
 			return 0;
-	// Allocate memory for a new Version class object.  Do not bother calling
-	// the constructor (the default constructor does nothing).
 	jobject obj = (*env)->AllocObject (env, clazz);
-	// Attempt to find the major field.
 	jfieldID fid = (*env)->GetFieldID (env, clazz, "str1", "Ljava/lang/String;");
 	jfieldID fid2 = (*env)->GetFieldID (env, clazz, "str2", "Ljava/lang/String;");
-	(*qspCallbackEnv)->DeleteLocalRef( qspCallbackEnv, clazz );
-	// If this field does not exist then return null.
+	(*env)->DeleteLocalRef( env, clazz );
 	if (fid == 0 || fid2 == 0)
 			return 0;
 	// Set the major field to the operating system's major version.
@@ -320,42 +292,29 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetVarValuesCount(JNIEnv * env, jo
 //QSP_BOOL QSPGetVarValues(const QSP_CHAR *name, int ind, int *numVal, QSP_CHAR **strVal)
 jobject Java_com_qsp_player_QspPlayerStart_QSPGetVarValues(JNIEnv * env, jobject this, jstring name, jint ind)
 {
-//__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 1");
 	//Convert array name to QSP string
     const char *str = (*env)->GetStringUTFChars(env, name, NULL);
     if (str == NULL)
         return NULL;
     QSP_CHAR * strConverted = qspC2W(str);
 
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 2");
     //Call QSP function
 	int numVal = 0;
 	char * strVal;
 	QSP_BOOL result = QSPGetVarValues(strConverted, (int)ind, &numVal, &strVal);
 
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "str: [%s]", str);
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "numval: [%d]", numVal);
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "strVal: [%s]", strVal);
-
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 3");
 	// Attempt to find the JniResult class.
 	jclass clazz = (*env)->FindClass (env, "com/qsp/player/JniResult");
 	// If this class does not exist then return null.
 	if (clazz == 0)
 		return NULL;
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 4");
-	// Allocate memory for a new Version class object.  Do not bother calling
-	// the constructor (the default constructor does nothing).
 	jobject obj = (*env)->AllocObject (env, clazz);
-	// Attempt to find the major field.
 
 	jfieldID fid = (*env)->GetFieldID (env, clazz, "success", "Z");
 	if (fid == 0)
 		return NULL;
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 5");
 	if (result == QSP_TRUE)
 	{
-//		__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 6");
 		(*env)->SetBooleanField (env, obj, fid, JNI_TRUE);
 
 		char * sz = qspW2C(strVal);
@@ -364,28 +323,21 @@ jobject Java_com_qsp_player_QspPlayerStart_QSPGetVarValues(JNIEnv * env, jobject
 			free(sz);
 
 		fid = (*env)->GetFieldID (env, clazz, "str1", "Ljava/lang/String;");
-		// If this field does not exist then return null.
 		if (fid == 0)
 			return NULL;
-//		__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 7");
-		// Set the major field to the operating system's major version.
 		(*env)->SetObjectField (env, obj, fid, jstringVal);
 
 		jfieldID fid = (*env)->GetFieldID (env, clazz, "int1", "I");
-		// If this field does not exist then return null.
 		if (fid == 0)
 			return NULL;
-//		__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 8");
-		// Set the major field to the operating system's major version.
 		(*env)->SetIntField (env, obj, fid, numVal);
 	}
 	else
 	{
-//		__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 9");
 		(*env)->SetBooleanField (env, obj, fid, JNI_FALSE);
 	}
 
-//	__android_log_print(ANDROID_LOG_DEBUG, "QSPDEBUG", "QSPGetVarValues: 10");
+	(*env)->DeleteLocalRef( env, clazz );
 	(*env)->ReleaseStringUTFChars(env, name, str);
 	return obj;
 }
