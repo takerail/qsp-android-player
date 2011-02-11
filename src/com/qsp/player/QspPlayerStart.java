@@ -93,6 +93,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	boolean invUnread, varUnread;
 	int invBack, varBack;
 	int currentWin;
+	private boolean holdPanelAnimationsForFirstUpdate = false;
 	
 	final private Context uiContext = this;
 	final private ReentrantLock musicLock = new ReentrantLock();
@@ -577,6 +578,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	    			return;
 	    		}
             	libraryThreadIsRunning = true;
+            	holdPanelAnimationsForFirstUpdate = true;
             	
             	boolean result = QSPOpenSavedGameFromData(inputBuffer, bufferSize, true);
             	
@@ -987,6 +989,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	    	            });
     	    	            
     	    	            gameIsRunning = true;
+    	    	            holdPanelAnimationsForFirstUpdate = true;
     	    	        }
     	    	        else
     	    	        {
@@ -1259,14 +1262,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         //инвентарь
     	if (QSPIsObjectsChanged())
     	{
-			runOnUiThread(new Runnable() {
-				public void run() {
-					if(currentWin!=WIN_INV){
-						invUnread = true;
-						updateTitle();
-					}
-				}
-			});
 	        int nObjsCount = QSPGetObjectsCount();
 	        final QSPItem []objs = new QSPItem[nObjsCount];
 	        for (int i=0;i<nObjsCount;i++) {
@@ -1279,7 +1274,11 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		    }
 			runOnUiThread(new Runnable() {
 				public void run() {
-			        ListView lvInv = (ListView)findViewById(R.id.inv);
+					if ((currentWin != WIN_INV) && !holdPanelAnimationsForFirstUpdate){
+						invUnread = true;
+						updateTitle();
+					}
+					ListView lvInv = (ListView)findViewById(R.id.inv);
 			        mItemListAdapter = new QSPListAdapter(uiContext, R.layout.obj_item, objs);
 			        lvInv.setAdapter(mItemListAdapter);
 				}
@@ -1292,7 +1291,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			final String txtVarsDesc = QSPGetVarsDesc();			
 			runOnUiThread(new Runnable() {
 				public void run() {
-					if(currentWin!=WIN_EXT) {
+					if ((currentWin != WIN_EXT) && !holdPanelAnimationsForFirstUpdate) {
 						varUnread = true;
 						updateTitle();
 					}
@@ -1307,6 +1306,12 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 				}
 			});
     	}
+    	if (holdPanelAnimationsForFirstUpdate)
+			runOnUiThread(new Runnable() {
+				public void run() {
+			    	holdPanelAnimationsForFirstUpdate = false;
+				}
+			});
     }
     
     private void SetTimer(int msecs)
@@ -1443,6 +1448,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			public void run() {
 				inputboxResult = "";
 			    inputboxDialog.setTitle(inputboxTitle);
+			    EditText edit = (EditText)inputboxDialog.findViewById(R.id.inputbox_edit);
+			    edit.setText("");
 			    inputboxDialog.show();
 				Utility.WriteLog("InputBox(UI): dialog showed");
 			}
