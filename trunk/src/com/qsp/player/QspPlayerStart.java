@@ -968,7 +968,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	    	            lvInv.setFocusable(true);
     	    	            lvInv.setItemsCanFocus(true);
     	    	            lvInv.setOnItemClickListener(objListClickListener);
-    	    	            lvInv.setOnItemSelectedListener(objListSelectedListener);        
 
     	    	            //Запускаем таймер
     	    	            timerInterval = 500;
@@ -1661,33 +1660,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     			}
     		});
     	}
-    };
-    
-    //Callback for select object
-    private OnItemSelectedListener objListSelectedListener = new OnItemSelectedListener() 
-    {
-    	//Контекст UI
-		@Override
-		public void onItemSelected(AdapterView<?> arg0, View arg1,
-				int arg2, long arg3) {
-    		if (libraryThreadIsRunning)
-    			return;
-    		final int itemIndex = arg2;
-    		libThreadHandler.post(new Runnable() {
-    			public void run() {
-    	    		if (libraryThreadIsRunning)
-    	    			return;
-                	libraryThreadIsRunning = true;
-            		QSPSetSelObjectIndex(itemIndex, true);
-            		libraryThreadIsRunning = false;
-    			}
-    		});
-		}
-
-		@Override
-		public void onNothingSelected(AdapterView<?> arg0) 
-		{
-		}
     };
     
     //Для отображения картинок в HTML
