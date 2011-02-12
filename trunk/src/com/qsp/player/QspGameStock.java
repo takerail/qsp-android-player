@@ -1078,6 +1078,7 @@ public class QspGameStock extends TabActivity {
     						if (whichButton==DialogInterface.BUTTON_POSITIVE)
     						{
     		    				Utility.DeleteRecursive(f);
+    		    				Utility.ShowInfo(uiContext, "Игра удалена.");
     		    				RefreshLists();
     						}
     					}

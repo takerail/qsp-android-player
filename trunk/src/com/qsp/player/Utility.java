@@ -16,6 +16,7 @@ import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 public class Utility {
     public static void setListViewHeightBasedOnChildren(ListView listView) {
@@ -128,17 +129,21 @@ public class Utility {
 		.show();
     }
     
+    public static void ShowInfo(Context context, String message)
+    {
+    	Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+    }
+    
     public static void DeleteRecursive(File f)
     {
     	if ((f == null) || !f.exists())
     		return;
-    	if (f.isFile())
-    		f.delete();
-    	else
+    	if (f.isDirectory())
     	{
             File[] files = f.listFiles();
             for (File currentFile : files)
             	DeleteRecursive(currentFile);
     	}
+    	f.delete();
     }
 }
