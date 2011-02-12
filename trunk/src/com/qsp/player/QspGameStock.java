@@ -547,7 +547,7 @@ public class QspGameStock extends TabActivity {
 	            	    		if ( !success )
 	            	    		{
 	            	        		//Показываем сообщение об ошибке
-	            	    			Utility.ShowError(uiContext, "Ошибка: Не удалось распаковать игру \"" + checkGame + "\".");
+	            	    			Utility.ShowError(uiContext, "Не удалось распаковать игру \"" + checkGame + "\".");
 	            	    		}
 	            	    		else
 	            	    		{
@@ -683,7 +683,7 @@ public class QspGameStock extends TabActivity {
 
 		if (!ScanDownloadedGames())
 		{
-			Utility.ShowError(uiContext, "Ошибка: нет доступа к флэш-карте.");
+			Utility.ShowError(uiContext, "Нет доступа к флэш-карте.");
 			return;
 		}
 		
@@ -883,7 +883,7 @@ public class QspGameStock extends TabActivity {
     	if ( !parsed && isActive && triedToLoadGameList )
     	{
     		//Показываем сообщение об ошибке
-    		Utility.ShowError(uiContext, "Ошибка: Не удалось загрузить список игр. Проверьте интернет-подключение.");
+    		Utility.ShowError(uiContext, "Не удалось загрузить список игр. Проверьте интернет-подключение.");
     	}
     	return parsed;
     }

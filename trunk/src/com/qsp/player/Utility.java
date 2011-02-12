@@ -122,6 +122,7 @@ public class Utility {
     public static void ShowError(Context context, String message)
     {
 		new AlertDialog.Builder(context)
+    	.setTitle("Ошибка")
 		.setMessage(message)
 		.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) { }
