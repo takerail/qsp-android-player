@@ -221,6 +221,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             public void onClick(DialogInterface dialog, int whichButton) {
             	EditText edit = (EditText)inputboxDialog.findViewById(R.id.inputbox_edit);
             	inputboxResult = edit.getText().toString();
+		    	edit.setText("");
 				dialogHasResult = true;
 				Utility.WriteLog("InputBox(UI): OK clicked, unparking library thread");
             	setThreadUnpark();
@@ -581,6 +582,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             	holdPanelAnimationsForFirstUpdate = true;
             	
             	boolean result = QSPOpenSavedGameFromData(inputBuffer, bufferSize, true);
+				CheckQspResult(result, "LoadSlot: QSPOpenSavedGameFromData");
             	
         		libraryThreadIsRunning = false;
 
@@ -619,6 +621,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	        	
 	        	if (dataToSave == null)
 	    		{
+					CheckQspResult(false, "SaveSlot: QSPSaveGameAsData");
 	        		Utility.WriteLog("SaveSlot: failed, cannot create save data");
 	    			return;
 	    		}
@@ -661,6 +664,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             	String file_name = data.getStringExtra("file_name");
             	if ((file_name == null)||file_name.equals(curGameFile))
             		return;
+            	StopGame(true);
             	runGame(file_name);
             }
         }
@@ -837,7 +841,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 					if (libraryThreadIsRunning)
 						return;
 			    	libraryThreadIsRunning = true;
-				   	QSPExecCounter(true);
+				   	boolean result = QSPExecCounter(true);
+					CheckQspResult(result, "timerUpdateTask: QSPExecCounter");
 					libraryThreadIsRunning = false;
 				}
 			});
@@ -887,7 +892,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	File f = new File(fileName);
     	if (!f.exists())
     	{
-        	Utility.ShowError(uiContext, "Ошибка: файл не найден");
+        	Utility.ShowError(uiContext, "Файл не найден");
         	return;
     	}
     		
@@ -911,6 +916,17 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         imgGetter.SetDirectory(curGameDir);
         imgGetter.SetScreenWidth(getWindow().getWindowManager().getDefaultDisplay().getWidth());
         
+        //Очищаем все поля
+	    final  QSPItem []emptyItems = new QSPItem[0];
+        ListView lv = (ListView)findViewById(R.id.acts);        
+        lv.setAdapter(new QSPListAdapter(uiContext, R.layout.act_item, emptyItems));
+        lv = (ListView)findViewById(R.id.inv);
+        lv.setAdapter(new QSPListAdapter(uiContext, R.layout.obj_item, emptyItems));        
+        TextView tv = (TextView)findViewById(R.id.main_desc);
+        tv.setText("");
+        tv = (TextView)findViewById(R.id.vars_desc);
+        tv.setText("");
+        
         libThreadHandler.post(new Runnable() {
     		public void run() {
     	        File tqsp = new File (gameFileName);
@@ -920,14 +936,14 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     				fIn = new FileInputStream(tqsp);
     			} catch (FileNotFoundException e) {
     	        	e.printStackTrace();
-    	        	Utility.ShowError(uiContext, "Ошибка: файл не найден");
+    	        	Utility.ShowError(uiContext, "Файл не найден");
     	        	return;
     			}
     			try {
     				size = fIn.available();
     			} catch (IOException e) {
     				e.printStackTrace();
-    	        	Utility.ShowError(uiContext, "Ошибка: не удалось получить доступ к файлу");
+    	        	Utility.ShowError(uiContext, "Не удалось получить доступ к файлу");
     	        	return;
     			}
     	        
@@ -938,20 +954,19 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     			fIn.close();
     			} catch (IOException e) {
     				e.printStackTrace();
-    	        	Utility.ShowError(uiContext, "Ошибка: не удалось прочесть файл");
+    	        	Utility.ShowError(uiContext, "Не удалось прочесть файл");
     	        	return;
     			}
 
         		if (!inited)
         			QSPInit();
     			final boolean gameLoaded = QSPLoadGameWorldFromData(inputBuffer, size, gameFileName);
+				CheckQspResult(gameLoaded, "runGame: QSPLoadGameWorldFromData");
     			
-    			runOnUiThread(new Runnable() {
-    				public void run() {
-    	    			TextView tv = (TextView) findViewById(R.id.main_desc); 
-    	    	        
-    	    	        if (gameLoaded)
-    	    	        {
+    	        if (gameLoaded)
+    	        {
+	    			runOnUiThread(new Runnable() {
+	    				public void run() {
         		    		//init acts callbacks
     	    	            ListView lvAct = (ListView)findViewById(R.id.acts);
     	    	            lvAct.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
@@ -982,21 +997,17 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	    	            libThreadHandler.post(new Runnable() {
     	    	        		public void run() {
     	    	                	libraryThreadIsRunning = true;
-    	    	        			QSPRestartGame(true);
+    	    	        			boolean result = QSPRestartGame(true);
+									CheckQspResult(result, "runGame: QSPRestartGame");
     	    	                	libraryThreadIsRunning = false;
     	    	        		}
     	    	            });
     	    	            
     	    	            gameIsRunning = true;
     	    	            holdPanelAnimationsForFirstUpdate = true;
-    	    	        }
-    	    	        else
-    	    	        {
-    	    	        	String s = "Файл игры поврежден, ошибка: "+Integer.toString(QSPGetLastErrorData());
-    	    	        	tv.setText(s);
-    	    	        }
-    				}
-    			});
+	    				}
+	    			});
+	    		}
     		}
     	});
     }
@@ -1214,6 +1225,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     {
     	//Контекст библиотеки
     	JniResult htmlResult = (JniResult) QSPGetVarValues("USEHTML", 0);
+		//CheckQspResult(htmlResult.success, "RefreshInt: QSPGetVarValues");
     	final boolean html = htmlResult.success && (htmlResult.int1 != 0);
     	
     	
@@ -1447,8 +1459,6 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			public void run() {
 				inputboxResult = "";
 			    inputboxDialog.setTitle(inputboxTitle);
-			    EditText edit = (EditText)inputboxDialog.findViewById(R.id.inputbox_edit);
-			    edit.setText("");
 			    inputboxDialog.show();
 				Utility.WriteLog("InputBox(UI): dialog showed");
 			}
@@ -1556,6 +1566,28 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     //******************************************************************************
     //******************************************************************************
     
+	private void CheckQspResult(boolean successfull, String failMsg)
+	{
+    	//Контекст библиотеки
+    	if (!successfull)
+    	{
+    		Utility.WriteLog(failMsg + " failed");
+			JniResult error = (JniResult) QSPGetLastErrorData();
+			error.str2 = QSPGetErrorDesc(error.int1);
+	    	String locName = (error.str1 == null) ? "" : error.str1;
+	    	String errDesc = (error.str2 == null) ? "" : error.str2;
+	    	final String message = "Локация: " + locName + "\n" +
+		    	"Действие: " + String.valueOf(error.int2) + "\n" +
+		    	"Строка: " + String.valueOf(error.int3) + "\n" +
+		    	"Номер ошибки: " + String.valueOf(error.int1) + "\n" +
+		    	"Описание: " + errDesc;
+    		runOnUiThread(new Runnable() {
+    			public void run() {
+	        		Utility.ShowError(uiContext, message);
+    			}
+    		});
+    	}
+	}
     
     public void OnUrlClicked (String href)
     {
@@ -1573,16 +1605,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
                 	libraryThreadIsRunning = true;
                 	
         	    	boolean bExec = QSPExecString(code, true);
-        	    	if (!bExec)
-        	    	{
-        	    		int nError = QSPGetLastErrorData();
-        	    		final String txtError = "Ошибка: "+String.valueOf(nError);  
-        	    		runOnUiThread(new Runnable() {
-        	    			public void run() {
-        	    				Utility.ShowError(uiContext, txtError);
-        	    			}
-        	    		});
-        	    	}
+        	    	CheckQspResult(bExec, "OnUrlClicked: QSPExecString");
                 	
             		libraryThreadIsRunning = false;
     			}
@@ -1605,8 +1628,10 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	    		if (libraryThreadIsRunning)
     	    			return;
                 	libraryThreadIsRunning = true;
-            		QSPSetSelActionIndex(actionIndex, false);
-            		QSPExecuteSelActionCode(true);
+            		boolean result = QSPSetSelActionIndex(actionIndex, false);
+					CheckQspResult(result, "actListClickListener: QSPSetSelActionIndex");
+            		result = QSPExecuteSelActionCode(true);
+					CheckQspResult(result, "actListClickListener: QSPExecuteSelActionCode");
             		libraryThreadIsRunning = false;
     			}
     		});
@@ -1628,7 +1653,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	    		if (libraryThreadIsRunning)
     	    			return;
                 	libraryThreadIsRunning = true;
-    				QSPSetSelActionIndex(actionIndex, true);
+    				boolean result = QSPSetSelActionIndex(actionIndex, true);
+    				CheckQspResult(result, "actListSelectedListener: QSPSetSelActionIndex");
             		libraryThreadIsRunning = false;
     			}
     		});
@@ -1655,7 +1681,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	    		if (libraryThreadIsRunning)
     	    			return;
                 	libraryThreadIsRunning = true;
-            		QSPSetSelObjectIndex(itemIndex, true);
+            		boolean result = QSPSetSelObjectIndex(itemIndex, true);
+            		CheckQspResult(result, "objListClickListener: QSPSetSelObjectIndex");
             		libraryThreadIsRunning = false;
     			}
     		});
@@ -1736,7 +1763,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     public native boolean 	QSPExecLocationCode(String name, boolean isRefresh);
     public native boolean 	QSPExecCounter(boolean isRefresh);
     public native boolean 	QSPExecUserInput(boolean isRefresh);
-    public native int 		QSPGetLastErrorData();//!!!STUB
+    public native Object	QSPGetLastErrorData();
     public native String 	QSPGetErrorDesc(int errorNum);
     public native boolean 	QSPLoadGameWorld(String fileName);
     public native boolean 	QSPLoadGameWorldFromData(byte data[], int dataSize, String fileName);

@@ -401,20 +401,37 @@ jboolean Java_com_qsp_player_QspPlayerStart_QSPExecUserInput(JNIEnv * env, jobje
 ///* Ошибки */
 //
 ///* Получить информацию о последней ошибке */
-jint Java_com_qsp_player_QspPlayerStart_QSPGetLastErrorData(JNIEnv * env, jobject this)
+jobject Java_com_qsp_player_QspPlayerStart_QSPGetLastErrorData(JNIEnv * env, jobject this)
 {
-	//!!!STUB
+	jclass clazz = (*env)->FindClass (env, "com/qsp/player/JniResult");
+	if (clazz == 0)
+			return NULL;
+	jfieldID fid = (*env)->GetFieldID (env, clazz, "str1", "Ljava/lang/String;");
+	jfieldID fid2 = (*env)->GetFieldID (env, clazz, "int1", "I");
+	jfieldID fid3 = (*env)->GetFieldID (env, clazz, "int2", "I");
+	jfieldID fid4 = (*env)->GetFieldID (env, clazz, "int3", "I");
+	if (fid == 0 || fid2 == 0 || fid3 == 0 || fid4 == 0)
+			return NULL;
+	jobject obj = (*env)->AllocObject (env, clazz);
+	(*env)->DeleteLocalRef( env, clazz );
+
 	int errorNum;
-	unsigned short *dummyLoc;
-	int dummyIndex;
-	int dummyLine;
-	//int *errorNum, QSP_CHAR **errorLoc, int *errorActIndex, int *errorLine
-//	*errorNum = qspErrorNum;
-//	*errorLoc = (qspErrorLoc >= 0 && qspErrorLoc < qspLocsCount ? qspLocs[qspErrorLoc].Name : 0);
-//	*errorActIndex = qspErrorActIndex;
-//	*errorLine = qspErrorLine;
-	QSPGetLastErrorData(&errorNum, &dummyLoc, &dummyIndex, &dummyLine);
-	return errorNum;
+	char *locName;
+	int index;
+	int line;
+
+	QSPGetLastErrorData(&errorNum, &locName, &index, &line);
+
+	char * sz = qspW2C(locName);
+	jstring jLocName = (*env)->NewStringUTF(env, sz);
+	if (sz!=NULL)
+		free(sz);
+
+	(*env)->SetObjectField (env, obj, fid, jLocName);
+	(*env)->SetIntField (env, obj, fid2, errorNum);
+	(*env)->SetIntField (env, obj, fid3, index);
+	(*env)->SetIntField (env, obj, fid4, line);
+	return obj;
 }
 ///* Получить описание ошибки по ее номеру */
 jstring Java_com_qsp_player_QspPlayerStart_QSPGetErrorDesc(JNIEnv * env, jobject this, jint errorNum)
