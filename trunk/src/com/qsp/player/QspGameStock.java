@@ -5,11 +5,9 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -452,13 +450,36 @@ public class QspGameStock extends TabActivity {
     	final String urlToDownload = file_url;
     	final String unzipLocation = Utility.GetDefaultPath().concat("/").concat(name).concat("/");
     	final String gameName = name;
+    	final int totalSize = Integer.parseInt(file_size);
     	downloadProgressDialog = new ProgressDialog(uiContext);
     	downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-    	downloadProgressDialog.setMax(Integer.parseInt(file_size));
+    	downloadProgressDialog.setMax(totalSize);
     	downloadProgressDialog.setCancelable(false);
     	Thread t = new Thread() {
             public void run() {
-            	try {
+        		//set the path where we want to save the file
+        		//in this case, going to save it in program cache directory
+        		//on sd card.
+        		File SDCardRoot = Environment.getExternalStorageDirectory();
+        		
+        		File cacheDir = new File (SDCardRoot.getPath().concat("/Android/data/com.qsp.player/cache/"));
+        		if (!cacheDir.exists())
+        		{
+        			if (!cacheDir.mkdirs())
+        			{
+        				Utility.WriteLog("Cannot create cache folder");
+        				return;
+        			}
+        		}
+
+        		//create a new file, specifying the path, and the filename
+        		//which we want to save the file as.
+        		String filename = String.valueOf(System.currentTimeMillis()).concat("_game.zip");
+        		File file = new File(cacheDir, filename);
+        		
+        		boolean successDownload = false;
+
+        		try {
             		//set the download URL, a url that points to a file on the internet
             		//this is the file to be downloaded
             		URL url = new URL(urlToDownload);
@@ -472,27 +493,6 @@ public class QspGameStock extends TabActivity {
 
             		//and connect!
             		urlConnection.connect();
-
-            		//set the path where we want to save the file
-            		//in this case, going to save it in program cache directory
-            		//on sd card.
-            		File SDCardRoot = Environment.getExternalStorageDirectory();
-            		
-            		File cacheDir = new File (SDCardRoot.getPath().concat("/Android/data/com.qsp.player/cache/"));
-            		if (!cacheDir.exists())
-            		{
-            			if (!cacheDir.mkdirs())
-            			{
-            				Utility.WriteLog("Cannot create cache folder");
-            				return;
-            			}
-            		}
-
-            		//create a new file, specifying the path, and the filename
-            		//which we want to save the file as.
-            		String filename = String.valueOf(System.currentTimeMillis()).concat("_game.zip");
-            		
-            		File file = new File(cacheDir, filename);
 
             		//this will be used to write the downloaded data into the file we created
             		FileOutputStream fileOutput = new FileOutputStream(file);
@@ -515,70 +515,84 @@ public class QspGameStock extends TabActivity {
             		}
             		//close the output stream when done
             		fileOutput.close();
+            		successDownload = totalSize == downloadedCount;
+            	} catch (Exception e) {
+            		e.printStackTrace();
+    				Utility.WriteLog("Error while trying to download file");
+            	}
             		
-            		updateSpinnerProgress(false, "", "", 0);
+        		updateSpinnerProgress(false, "", "", 0);
 
-            		//Unzip
-            		Unzip(file.getPath(), unzipLocation, gameName);
-            		
-            		file.delete();
-            	 
-            		updateSpinnerProgress(false, "", "", 0);
-            		
-            		final String checkGame = gameName; 
-
+        		final String checkGame = gameName; 
+        		
+        		if (!successDownload)
+        		{
+        			if (file.exists())
+        				file.delete();
             		runOnUiThread(new Runnable() {
             			public void run() {
-            				RefreshLists();
-            				GameItem selectedGame = gamesMap.get(checkGame);
-            				
-            				//Если игра не появилась в списке, значит она не соответствует формату "Полки игр"
-            				boolean success = (selectedGame != null) && selectedGame.downloaded;
-            				
-            				if (!success)
-            				{
-            					//Удаляем неудачно распакованную игру
-            					File gameFolder = new File(Utility.GetDefaultPath().concat("/").concat(checkGame));
-            					Utility.DeleteRecursive(gameFolder);
-            				}
-            				
+        					String desc = "Не удалось скачать игру \"" + checkGame + "\".";
             				if (isActive)
-            				{
-	            	    		if ( !success )
-	            	    		{
-	            	        		//Показываем сообщение об ошибке
-	            	    			Utility.ShowError(uiContext, "Не удалось распаковать игру \"" + checkGame + "\".");
-	            	    		}
-	            	    		else
-	            	    		{
-	            	    			ShowGameInfo(checkGame);
-	            	    		}
-            				}
+               	    			Utility.ShowError(uiContext, desc);
             				else
-            				{
-            					String msg = null;
-            					String desc = null;
-            					if ( !success )
-            					{
-            						msg = "Ошибка при загрузке игры";
-            						desc = "Не удалось распаковать игру \"" + checkGame + "\"";
-            					}
-            					else
-            					{
-            						msg = "Игра загружена";
-            						desc = "Игра \"" + checkGame + "\" успешно загружена";
-            					}
-               					Notify(msg, desc);
-            				}
+               					Notify("Ошибка при загрузке игры", desc);
             			}
             		});
+            		return;
+        		}
 
-            	//catch some possible errors...
-            	} catch (MalformedURLException e) {
-            		e.printStackTrace();
-            	} catch (IOException e) {
-            		e.printStackTrace();
-            	}
+        		//Unzip
+        		Unzip(file.getPath(), unzipLocation, gameName);
+        		
+        		file.delete();
+        	 
+        		updateSpinnerProgress(false, "", "", 0);
+
+        		runOnUiThread(new Runnable() {
+        			public void run() {
+        				RefreshLists();
+        				GameItem selectedGame = gamesMap.get(checkGame);
+        				
+        				//Если игра не появилась в списке, значит она не соответствует формату "Полки игр"
+        				boolean success = (selectedGame != null) && selectedGame.downloaded;
+        				
+        				if (!success)
+        				{
+        					//Удаляем неудачно распакованную игру
+        					File gameFolder = new File(Utility.GetDefaultPath().concat("/").concat(checkGame));
+        					Utility.DeleteRecursive(gameFolder);
+        				}
+        				
+        				if (isActive)
+        				{
+            	    		if ( !success )
+            	    		{
+            	        		//Показываем сообщение об ошибке
+            	    			Utility.ShowError(uiContext, "Не удалось распаковать игру \"" + checkGame + "\".");
+            	    		}
+            	    		else
+            	    		{
+            	    			ShowGameInfo(checkGame);
+            	    		}
+        				}
+        				else
+        				{
+        					String msg = null;
+        					String desc = null;
+        					if ( !success )
+        					{
+        						msg = "Ошибка при загрузке игры";
+        						desc = "Не удалось распаковать игру \"" + checkGame + "\"";
+        					}
+        					else
+        					{
+        						msg = "Игра загружена";
+        						desc = "Игра \"" + checkGame + "\" успешно загружена";
+        					}
+           					Notify(msg, desc);
+        				}
+        			}
+        		});
             }
         };
         
