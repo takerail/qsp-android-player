@@ -913,8 +913,11 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	final String gameFileName = fileName;
     	curGameFile = gameFileName;
         curGameDir = gameFileName.substring(0, gameFileName.lastIndexOf(File.separator, gameFileName.length() - 1) + 1);
+        
+        TextView tv = (TextView)findViewById(R.id.main_desc);
+        int padding = tv.getPaddingLeft() + tv.getPaddingRight();
         imgGetter.SetDirectory(curGameDir);
-        imgGetter.SetScreenWidth(getWindow().getWindowManager().getDefaultDisplay().getWidth());
+        imgGetter.SetScreenWidth(getWindow().getWindowManager().getDefaultDisplay().getWidth()-padding);
         
         //Очищаем все поля
 	    final  QSPItem []emptyItems = new QSPItem[0];
@@ -922,10 +925,10 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         lv.setAdapter(new QSPListAdapter(uiContext, R.layout.act_item, emptyItems));
         lv = (ListView)findViewById(R.id.inv);
         lv.setAdapter(new QSPListAdapter(uiContext, R.layout.obj_item, emptyItems));        
-        TextView tv = (TextView)findViewById(R.id.main_desc);
         tv.setText("");
         tv = (TextView)findViewById(R.id.vars_desc);
         tv.setText("");
+        setCurrentWin(WIN_MAIN);
         
         libThreadHandler.post(new Runnable() {
     		public void run() {
