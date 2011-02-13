@@ -51,45 +51,46 @@ public final class R {
         public static final int translucent_background=0x7f02000e;
     }
     public static final class id {
-        public static final int acts=0x7f0c0011;
-        public static final int all_tab=0x7f0c0009;
-        public static final int color_picker_view=0x7f0c0002;
-        public static final int downloaded_tab=0x7f0c0007;
-        public static final int game_author=0x7f0c0006;
-        public static final int game_title=0x7f0c0005;
-        public static final int gestures=0x7f0c000e;
-        public static final int imagebox=0x7f0c000a;
-        public static final int inputbox_edit=0x7f0c000b;
-        public static final int inv=0x7f0c0012;
-        public static final int item_icon=0x7f0c0000;
-        public static final int item_text=0x7f0c0001;
-        public static final int main=0x7f0c000c;
-        public static final int main_desc=0x7f0c0010;
-        public static final int main_tab=0x7f0c000f;
-        public static final int menu_about=0x7f0c001f;
-        public static final int menu_deletegames=0x7f0c0021;
-        public static final int menu_gamestock=0x7f0c0022;
-        public static final int menu_loadgame=0x7f0c0025;
-        public static final int menu_newgame=0x7f0c0024;
-        public static final int menu_openfile=0x7f0c0020;
-        public static final int menu_options=0x7f0c001e;
-        public static final int menu_resumegame=0x7f0c001d;
-        public static final int menu_savegame=0x7f0c0026;
-        public static final int menugroup_running=0x7f0c0023;
-        public static final int new_color_panel=0x7f0c0004;
-        public static final int old_color_panel=0x7f0c0003;
-        public static final int starred_tab=0x7f0c0008;
-        public static final int title_button_1=0x7f0c001a;
-        public static final int title_button_2=0x7f0c001c;
-        public static final int title_home_button=0x7f0c0016;
-        public static final int title_home_button_sep=0x7f0c0017;
-        public static final int title_layout=0x7f0c0015;
-        public static final int title_sep_1=0x7f0c0019;
-        public static final int title_sep_2=0x7f0c001b;
-        public static final int title_text=0x7f0c0018;
-        public static final int titlebar=0x7f0c000d;
-        public static final int vars_desc=0x7f0c0014;
-        public static final int vars_tab=0x7f0c0013;
+        public static final int acts=0x7f0c0012;
+        public static final int all_tab=0x7f0c000a;
+        public static final int color_picker_view=0x7f0c0003;
+        public static final int downloaded_tab=0x7f0c0008;
+        public static final int game_author=0x7f0c0007;
+        public static final int game_title=0x7f0c0006;
+        public static final int gestures=0x7f0c000f;
+        public static final int imagebox=0x7f0c000b;
+        public static final int inputbox_edit=0x7f0c000c;
+        public static final int inv=0x7f0c0013;
+        public static final int item_icon=0x7f0c0001;
+        public static final int item_number=0x7f0c0000;
+        public static final int item_text=0x7f0c0002;
+        public static final int main=0x7f0c000d;
+        public static final int main_desc=0x7f0c0011;
+        public static final int main_tab=0x7f0c0010;
+        public static final int menu_about=0x7f0c0020;
+        public static final int menu_deletegames=0x7f0c0022;
+        public static final int menu_gamestock=0x7f0c0023;
+        public static final int menu_loadgame=0x7f0c0026;
+        public static final int menu_newgame=0x7f0c0025;
+        public static final int menu_openfile=0x7f0c0021;
+        public static final int menu_options=0x7f0c001f;
+        public static final int menu_resumegame=0x7f0c001e;
+        public static final int menu_savegame=0x7f0c0027;
+        public static final int menugroup_running=0x7f0c0024;
+        public static final int new_color_panel=0x7f0c0005;
+        public static final int old_color_panel=0x7f0c0004;
+        public static final int starred_tab=0x7f0c0009;
+        public static final int title_button_1=0x7f0c001b;
+        public static final int title_button_2=0x7f0c001d;
+        public static final int title_home_button=0x7f0c0017;
+        public static final int title_home_button_sep=0x7f0c0018;
+        public static final int title_layout=0x7f0c0016;
+        public static final int title_sep_1=0x7f0c001a;
+        public static final int title_sep_2=0x7f0c001c;
+        public static final int title_text=0x7f0c0019;
+        public static final int titlebar=0x7f0c000e;
+        public static final int vars_desc=0x7f0c0015;
+        public static final int vars_tab=0x7f0c0014;
     }
     public static final class layout {
         public static final int act_item=0x7f030000;
@@ -107,38 +108,44 @@ public final class R {
         public static final int main_menu=0x7f0b0001;
     }
     public static final class string {
+        public static final int actsColor=0x7f09001f;
         /**  Настройки  
          */
         public static final int appTheme=0x7f090000;
         /**  Прочее 
          */
-        public static final int app_name=0x7f090018;
-        public static final int backColor=0x7f09000d;
-        public static final int dialog_color_picker=0x7f09000b;
+        public static final int app_name=0x7f09001d;
+        public static final int backColor=0x7f09000f;
+        public static final int dialog_color_picker=0x7f09000d;
         public static final int fontSize=0x7f090001;
         public static final int fullscreenSum=0x7f090003;
-        public static final int fullscreenTitle=0x7f090004;
-        public static final int gestures_sum=0x7f090005;
-        public static final int interface_scr_sum=0x7f090007;
-        public static final int interface_screen=0x7f090008;
-        public static final int linkColor=0x7f09000e;
-        public static final int market_details_url=0x7f090019;
-        public static final int menu_about=0x7f090011;
-        public static final int menu_deletegames=0x7f090016;
+        public static final int fullscreenTitle=0x7f090005;
+        public static final int fullscreen_off=0x7f090004;
+        public static final int gestures_off=0x7f090006;
+        public static final int gestures_sum=0x7f090007;
+        public static final int interface_scr_sum=0x7f090009;
+        public static final int interface_screen=0x7f09000a;
+        public static final int linkColor=0x7f090010;
+        public static final int market_details_url=0x7f09001e;
+        public static final int menu_about=0x7f090016;
+        public static final int menu_deletegames=0x7f09001b;
         /**  Меню 
          */
-        public static final int menu_gamestock=0x7f09000f;
-        public static final int menu_load=0x7f090014;
-        public static final int menu_newgame=0x7f090012;
-        public static final int menu_openfile=0x7f090017;
-        public static final int menu_options=0x7f090010;
-        public static final int menu_resumegame=0x7f090013;
-        public static final int menu_save=0x7f090015;
-        public static final int soundSum=0x7f090009;
-        public static final int soundTitle=0x7f09000a;
-        public static final int textColor=0x7f09000c;
+        public static final int menu_gamestock=0x7f090014;
+        public static final int menu_load=0x7f090019;
+        public static final int menu_newgame=0x7f090017;
+        public static final int menu_openfile=0x7f09001c;
+        public static final int menu_options=0x7f090015;
+        public static final int menu_resumegame=0x7f090018;
+        public static final int menu_save=0x7f09001a;
+        public static final int opt_highlight_acts=0x7f090012;
+        public static final int opt_show_acts_hot_keys=0x7f090011;
+        public static final int optdesc_highlight_acts=0x7f090013;
+        public static final int soundSum=0x7f09000b;
+        public static final int soundTitle=0x7f09000c;
+        public static final int textColor=0x7f09000e;
         public static final int typeface=0x7f090002;
-        public static final int using_gestures=0x7f090006;
+        public static final int using_gestures=0x7f090008;
     }
     public static final class style {
         /**  Base application theme is the default theme. 

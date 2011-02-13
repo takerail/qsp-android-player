@@ -100,6 +100,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	
 	private boolean gui_debug_mode = true;
 	private boolean hotKeys = false;
+	private boolean highlightActs = true;
 
 	private class QSPItem {
 		private Drawable icon;
@@ -140,7 +141,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             if (o != null){
             	int textColor = settings.getInt("textColor", 0xffffffff);
             	if(id == R.layout.act_item){
-            		textColor = settings.getInt("actsColor", 0xffffd700);
+            		if (highlightActs)
+            			textColor = settings.getInt("actsColor", 0xffffd700);
             		TextView nv = (TextView)v.findViewById(R.id.item_number);
             		nv.setVisibility(hotKeys ? View.VISIBLE : View.GONE);
             		if(hotKeys){
@@ -278,6 +280,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         	gestures.addOnGesturePerformedListener(this);
 
 		hotKeys = settings.getBoolean("acts_hot_keys", false);
+		highlightActs = settings.getBoolean("highlight_acts", true);
         ApplyViewSettings();
         
         if (gameIsRunning && !waitForImageBox)
@@ -353,7 +356,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         	moveTaskToBack(true);
         	return true;
         }
-        if (hotKeys && currentWin == WIN_MAIN && keyCode >= KeyEvent.KEYCODE_1 && keyCode <= KeyEvent.KEYCODE_9) {
+        if (currentWin == WIN_MAIN && keyCode >= KeyEvent.KEYCODE_1 && keyCode <= KeyEvent.KEYCODE_9) {
         	int position = keyCode - KeyEvent.KEYCODE_1; //переводим код клавиши в индекс :)
         	ListView lv = (ListView)findViewById(R.id.acts);
         	if(position <lv.getCount()){
