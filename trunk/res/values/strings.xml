@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="gestures_off">смена экрана только тапом иконки</string>
+    <string name="fullscreen_off">показывать строку состояния</string>
 	<!-- Настройки  -->
     <string name="appTheme">Тема оформления</string>
     <string name="fontSize">Размер шрифта</string>
@@ -7,7 +9,7 @@
     <string name="fullscreenSum">скрывать строку состояния</string>
     <string name="fullscreenTitle">Полноэкранный режим</string>
     <string name="gestures_sum">смена экрана при помощи жестов</string>
-    <string name="using_gestures">Использовать жесты</string>
+    <string name="using_gestures">Жесты</string>
     <string name="interface_scr_sum">настройка внешнего вида плеера</string>
     <string name="interface_screen">Настройки отображения</string>
     <string name="soundSum">использование звуков и музыки</string>
@@ -16,6 +18,9 @@
   	<string name="textColor">Цвет текста</string> 
   	<string name="backColor">Цвет фона</string> 
   	<string name="linkColor">Цвет ссылок</string> 
+    <string name="acts_hot_keys_off">выбор действия только листанием</string>
+    <string name="acts_hot_keys_on">можно выбрать действие цифрой</string>
+    <string name="acts_hot_keys">Горячие клавиши действий</string>
       
     <!-- Меню -->
     <string name="menu_gamestock">Полка игр</string>
@@ -31,4 +36,5 @@
     <!-- Прочее -->
     <string name="app_name">Quest Player</string>
     <string name="market_details_url">market://details?id=com.qsp.player</string>
+<string name="actsColor">Цвет действий</string>
 </resources>
