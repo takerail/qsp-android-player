@@ -99,6 +99,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	final private ReentrantLock musicLock = new ReentrantLock();
 	
 	private boolean gui_debug_mode = true;
+	private boolean hotKeys = false;
 
 	private class QSPItem {
 		private Drawable icon;
@@ -136,14 +137,26 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
                 v = vi.inflate(id, null);
             }
             QSPItem o = items[position];
-            if (o != null) {
+            if (o != null){
+            	int textColor = settings.getInt("textColor", 0xffffffff);
+            	if(id == R.layout.act_item){
+            		textColor = settings.getInt("actsColor", 0xffffd700);
+            		TextView nv = (TextView)v.findViewById(R.id.item_number);
+            		nv.setVisibility(hotKeys ? View.VISIBLE : View.GONE);
+            		if(hotKeys){
+            			if(nv != null){
+            				ApplyFontSettingsToTextView(nv, textColor);
+            				nv.setText(new StringBuilder().append("[").append(position+1).append("]").toString());
+            			}
+            		}
+            	}
                 ImageView iv = (ImageView) v.findViewById(R.id.item_icon);
                 TextView tv = (TextView) v.findViewById(R.id.item_text);
                 if (iv != null) {
                     iv.setImageDrawable(o.getIcon());
                 }
                 if(tv != null){
-                	ApplyFontSettingsToTextView(tv);
+                	ApplyFontSettingsToTextView(tv, textColor);
                     tv.setText(o.getText());
                 }
             }
@@ -264,6 +277,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         if(settings.getBoolean("gestures", false))
         	gestures.addOnGesturePerformedListener(this);
 
+		hotKeys = settings.getBoolean("acts_hot_keys", false);
         ApplyViewSettings();
         
         if (gameIsRunning && !waitForImageBox)
@@ -339,6 +353,14 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         	moveTaskToBack(true);
         	return true;
         }
+        if (hotKeys && currentWin == WIN_MAIN && keyCode >= KeyEvent.KEYCODE_1 && keyCode <= KeyEvent.KEYCODE_9) {
+        	int position = keyCode - KeyEvent.KEYCODE_1; //переводим код клавиши в индекс :)
+        	ListView lv = (ListView)findViewById(R.id.acts);
+        	if(position <lv.getCount()){
+        		lv.setSelection(position);
+        		actionExecute(position);
+        	}
+        }
 
         return super.onKeyDown(keyCode, event);
     }
@@ -380,7 +402,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	startActivityForResult(myIntent, ACTIVITY_SELECT_GAME);
     }
     
-    private void ApplyFontSettingsToTextView(TextView tv)
+    private void ApplyFontSettingsToTextView(TextView tv, int textColor)
     {
         Typeface tf = Typeface.DEFAULT;
         switch(Integer.parseInt(settings.getString("typeface", "0"))) {
@@ -390,21 +412,22 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         }
         tv.setTypeface(tf);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, Float.parseFloat(settings.getString("fontsize", "16")));
-        tv.setTextColor(settings.getInt("textColor", 0xffffffff));
+        tv.setTextColor(textColor);
         tv.setLinkTextColor(settings.getInt("linkColor", 0xff0000ff));
     }
     
     private void ApplyViewSettings()
     {
+    	int textColor = settings.getInt("textColor", 0xffffffff);
     	int backColor = settings.getInt("backColor", 0xff000000);
         View v = findViewById(R.id.main);
         v.setBackgroundColor(backColor);
         ListView lv = (ListView)findViewById(R.id.inv);
         lv.setCacheColorHint(backColor);
         TextView tv = (TextView)findViewById(R.id.main_desc);
-        ApplyFontSettingsToTextView(tv);
+        ApplyFontSettingsToTextView(tv, textColor);
         tv = (TextView)findViewById(R.id.vars_desc);
-        ApplyFontSettingsToTextView(tv);
+        ApplyFontSettingsToTextView(tv, textColor);
         if (mActListAdapter != null)
         	mActListAdapter.notifyDataSetChanged();
         if (mItemListAdapter != null)
@@ -1592,6 +1615,24 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	}
 	}
     
+	private void actionExecute(int position){
+		if (libraryThreadIsRunning)
+			return;
+		final int actionIndex = position;
+		libThreadHandler.post(new Runnable() {
+			public void run() {
+	    		if (libraryThreadIsRunning)
+	    			return;
+            	libraryThreadIsRunning = true;
+        		boolean result = QSPSetSelActionIndex(actionIndex, false);
+				CheckQspResult(result, "actListClickListener: QSPSetSelActionIndex");
+        		result = QSPExecuteSelActionCode(true);
+				CheckQspResult(result, "actListClickListener: QSPExecuteSelActionCode");
+        		libraryThreadIsRunning = false;
+			}
+		});		
+	}
+	
     public void OnUrlClicked (String href)
     {
     	//Контекст UI
@@ -1623,21 +1664,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	@Override
     	public void onItemClick(AdapterView<?> parent, View arg1, int position, long arg3) 
     	{
-    		if (libraryThreadIsRunning)
-    			return;
-    		final int actionIndex = position;
-    		libThreadHandler.post(new Runnable() {
-    			public void run() {
-    	    		if (libraryThreadIsRunning)
-    	    			return;
-                	libraryThreadIsRunning = true;
-            		boolean result = QSPSetSelActionIndex(actionIndex, false);
-					CheckQspResult(result, "actListClickListener: QSPSetSelActionIndex");
-            		result = QSPExecuteSelActionCode(true);
-					CheckQspResult(result, "actListClickListener: QSPExecuteSelActionCode");
-            		libraryThreadIsRunning = false;
-    			}
-    		});
+    		actionExecute(position); 
     	}
     };
     
