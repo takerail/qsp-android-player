@@ -46,6 +46,8 @@ public class Utility {
     	if (str!=null && str.length() > 0)
     	{
     		str = str.replaceAll("\r", "<br>");
+    		str = str.replaceAll("(?i)</td>", " ");
+    		str = str.replaceAll("(?i)</tr>", "<br>");
     		result = Html.fromHtml(str, imgGetter, null);
     	}
     	return result;

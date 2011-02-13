@@ -865,7 +865,9 @@ public class QspGameStock extends TabActivity {
     					{
     						//!!! STUB
     						// Обрезаем многоточие, пока у нас есть привязка к имени папки.
-    						String valTruncated = val.endsWith("...") ? val.substring(0, val.length()-3) : val; 
+    						String valTruncated = val.endsWith("...") ? val.substring(0, val.length()-3) : val;
+    						// Меняем двоеточие на запятую, пока у нас есть привязка к имени папки.
+    						valTruncated = valTruncated.replace(':', ',');
     						curItem.title = valTruncated;
     					}
     					else if (lastTagName.equals("lang"))
