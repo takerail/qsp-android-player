@@ -1487,7 +1487,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		runOnUiThread(new Runnable() {
 			public void run() {
 				inputboxResult = "";
-			    inputboxDialog.setTitle(inputboxTitle);
+			    inputboxDialog.setMessage(inputboxTitle);
 			    inputboxDialog.show();
 				Utility.WriteLog("InputBox(UI): dialog showed");
 			}
