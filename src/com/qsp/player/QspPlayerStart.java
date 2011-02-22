@@ -1379,12 +1379,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			msgValue = message;
 		
 		dialogHasResult = false;
+    	JniResult htmlResult = (JniResult) QSPGetVarValues("USEHTML", 0);
+    	final boolean html = htmlResult.success && (htmlResult.int1 != 0);
 
     	final String msg = msgValue;
 		runOnUiThread(new Runnable() {
 			public void run() {
-		    	new AlertDialog.Builder(uiContext)
-		        .setMessage(msg)
+		    	AlertDialog msgBox = new AlertDialog.Builder(uiContext)
 		        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int whichButton) {
 						dialogHasResult = true;
@@ -1392,8 +1393,13 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		            	setThreadUnpark();
 		            }
 		        })
-		        .setCancelable(false)
-		        .show();
+		    	.create();
+				if (html)
+					msgBox.setMessage(Utility.QspStrToHtml(msg, imgGetter));
+				else
+					msgBox.setMessage(msg);
+		        msgBox.setCancelable(false);
+		        msgBox.show();
 				Utility.WriteLog("ShowMessage(UI): dialog showed");
 			}
 		});
@@ -1481,13 +1487,18 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 			promptValue = prompt;
 		
 		dialogHasResult = false;
+    	JniResult htmlResult = (JniResult) QSPGetVarValues("USEHTML", 0);
+    	final boolean html = htmlResult.success && (htmlResult.int1 != 0);
 
     	final String inputboxTitle = promptValue;
     	
 		runOnUiThread(new Runnable() {
 			public void run() {
 				inputboxResult = "";
-			    inputboxDialog.setMessage(inputboxTitle);
+				if (html)
+					inputboxDialog.setMessage(Utility.QspStrToHtml(inputboxTitle, imgGetter));
+				else
+					inputboxDialog.setMessage(inputboxTitle);
 			    inputboxDialog.show();
 				Utility.WriteLog("InputBox(UI): dialog showed");
 			}
