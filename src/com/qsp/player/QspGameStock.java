@@ -2,10 +2,15 @@ package com.qsp.player;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -52,6 +57,8 @@ public class QspGameStock extends TabActivity {
 
 	public class GameItem {
 		//Parsed
+		String game_id;
+		String list_id;
 		String author;
 		String ported_by;
 		String version;
@@ -59,7 +66,7 @@ public class QspGameStock extends TabActivity {
 		String lang;
 		String player;
 		String file_url;
-		String file_size;
+		int file_size;
 		String desc_url;
 		String pub_date;
 		String mod_date;
@@ -70,6 +77,8 @@ public class QspGameStock extends TabActivity {
 		String game_file;
 		GameItem()
 		{
+			game_id = "";
+			list_id = "";
 			author = "";
 			ported_by = "";
 			version = "";
@@ -77,7 +86,7 @@ public class QspGameStock extends TabActivity {
 			lang = "";
 			player = "";
 			file_url = "";
-			file_size = "";
+			file_size = 0;
 			desc_url = "";
 			pub_date = "";
 			mod_date = "";
@@ -100,6 +109,8 @@ public class QspGameStock extends TabActivity {
     public static final int DOWNLOADED_TABNUM = 0;
     public static final int STARRED_TABNUM = 1;
     public static final int ALL_TABNUM = 2;
+    
+    public static final String GAME_INFO_FILENAME = "gamestockInfo";
     
     public static boolean isActive;
     public static boolean showProgressDialog;
@@ -170,8 +181,8 @@ public class QspGameStock extends TabActivity {
         // 3. Кэширование списка игр
         // 4v. Доступ к играм, даже когда сервер недоступен
         // 5. Вывод игр в папке "Загруженные" в порядке последнего доступа к ним
-        // 6. Возможность открыть файл из любой папки(через специальное меню этой активити)
-        // 7. Доступ к настройкам приложения через меню этой активити
+        // 6v. Возможность открыть файл из любой папки(через специальное меню этой активити)
+        // 7v. Доступ к настройкам приложения через меню этой активити
     	Utility.WriteLog("[G]onCreate/");
     }
     
@@ -350,25 +361,25 @@ public class QspGameStock extends TabActivity {
                        note);
     }
     
-    private String getGameNameByPosition(int position)
+    private String getGameIdByPosition(int position)
     {
-		String value = null;
+		String value = "";
 		int tab = getTabHost().getCurrentTab();
 		switch (tab) {
 		case DOWNLOADED_TABNUM:
 			//Загруженные
 			GameItem tt1 = (GameItem) lvDownloaded.getAdapter().getItem(position);
-			value = tt1.title;
+			value = tt1.game_id;
 			break;
 		case STARRED_TABNUM:
 			//Отмеченные
 			GameItem tt2 = (GameItem) lvStarred.getAdapter().getItem(position);
-			value = tt2.title;
+			value = tt2.game_id;
 			break;
 		case ALL_TABNUM:
 			//Все
 			GameItem tt3 = (GameItem) lvAll.getAdapter().getItem(position);
-			value = tt3.title;
+			value = tt3.game_id;
 			break;
 		}
 		return value;
@@ -380,7 +391,7 @@ public class QspGameStock extends TabActivity {
     	@Override
     	public void onItemClick(AdapterView<?> parent, View arg1, int position, long arg3) 
     	{
-    		String value = getGameNameByPosition(position);
+    		String value = getGameIdByPosition(position);
     		ShowGameInfo(value);
     	}
     };
@@ -391,7 +402,7 @@ public class QspGameStock extends TabActivity {
     	@Override
     	public boolean onItemLongClick(AdapterView<?> parent, View arg1, int position, long arg3) 
     	{
-    		String value = getGameNameByPosition(position);
+    		String value = getGameIdByPosition(position);
     		selectedGame = gamesMap.get(value);
     		if (selectedGame.downloaded){
     			//Если игра загружена, стартуем
@@ -401,14 +412,14 @@ public class QspGameStock extends TabActivity {
     			finish();
     		}else
     			//иначе загружаем
-    			DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.title);						
+    			DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.game_id);						
     		return true;
     	}
     };
     
-    private void ShowGameInfo(String name)
+    private void ShowGameInfo(String gameId)
     {
-		selectedGame = gamesMap.get(name);
+		selectedGame = gamesMap.get(gameId);
 		if (selectedGame == null)
 			return;
 		
@@ -417,8 +428,8 @@ public class QspGameStock extends TabActivity {
 				txt.append("Автор: ").append(selectedGame.author);
 			if(selectedGame.version.length()>0)
 				txt.append("\nВерсия: ").append(selectedGame.version);
-			if(selectedGame.file_size.length()>0)
-				txt.append("\nРазмер: ").append(Integer.parseInt(selectedGame.file_size)/1024).append(" килобайт");
+			if(selectedGame.file_size>0)
+				txt.append("\nРазмер: ").append(selectedGame.file_size/1024).append(" килобайт");
 			AlertDialog.Builder bld = new AlertDialog.Builder(uiContext).setMessage(txt)
 			.setTitle(selectedGame.title)
 			.setIcon(R.drawable.icon)
@@ -433,7 +444,7 @@ public class QspGameStock extends TabActivity {
 	    			finish();
 	    		}else
 	    			//иначе загружаем
-	    			DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.title);						
+	    			DownloadGame(selectedGame.file_url, selectedGame.file_size, selectedGame.game_id);						
 			}
 		})
 			.setNegativeButton("Закрыть", new DialogInterface.OnClickListener() {
@@ -445,12 +456,16 @@ public class QspGameStock extends TabActivity {
 			bld.create().show();
     }
     
-    private void DownloadGame(String file_url, String file_size, String name)
+    private void DownloadGame(String file_url, int file_size, String game_id)
     {
-    	final String urlToDownload = file_url;
-    	final String unzipLocation = Utility.GetDefaultPath().concat("/").concat(name).concat("/");
-    	final String gameName = name;
-    	final int totalSize = Integer.parseInt(file_size);
+		GameItem gameToDownload = gamesMap.get(game_id);
+		String folderName = Utility.ConvertGameTitleToCorrectFolderName(gameToDownload.title);
+
+		final String urlToDownload = file_url;
+    	final String unzipLocation = Utility.GetDefaultPath().concat("/").concat(folderName).concat("/");
+    	final String gameId = game_id;
+    	final String gameName = gameToDownload.title;
+    	final int totalSize = file_size;
     	downloadProgressDialog = new ProgressDialog(uiContext);
     	downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
     	downloadProgressDialog.setMax(totalSize);
@@ -523,7 +538,8 @@ public class QspGameStock extends TabActivity {
             		
         		updateSpinnerProgress(false, "", "", 0);
 
-        		final String checkGame = gameName; 
+        		final String checkGameName = gameName; 
+        		final String checkGameId = gameId; 
         		
         		if (!successDownload)
         		{
@@ -531,7 +547,7 @@ public class QspGameStock extends TabActivity {
         				file.delete();
             		runOnUiThread(new Runnable() {
             			public void run() {
-        					String desc = "Не удалось скачать игру \"" + checkGame + "\".";
+        					String desc = "Не удалось скачать игру \"" + checkGameName + "\".";
             				if (isActive)
                	    			Utility.ShowError(uiContext, desc);
             				else
@@ -542,16 +558,17 @@ public class QspGameStock extends TabActivity {
         		}
 
         		//Unzip
-        		Unzip(file.getPath(), unzipLocation, gameName);
-        		
+        		Unzip(file.getPath(), unzipLocation, gameName);        		
         		file.delete();
+        		//Пишем информацию об игре
+        		WriteGameInfo(gameId);
         	 
         		updateSpinnerProgress(false, "", "", 0);
 
         		runOnUiThread(new Runnable() {
         			public void run() {
         				RefreshLists();
-        				GameItem selectedGame = gamesMap.get(checkGame);
+        				GameItem selectedGame = gamesMap.get(checkGameId);
         				
         				//Если игра не появилась в списке, значит она не соответствует формату "Полки игр"
         				boolean success = (selectedGame != null) && selectedGame.downloaded;
@@ -559,7 +576,7 @@ public class QspGameStock extends TabActivity {
         				if (!success)
         				{
         					//Удаляем неудачно распакованную игру
-        					File gameFolder = new File(Utility.GetDefaultPath().concat("/").concat(checkGame));
+        					File gameFolder = new File(Utility.GetDefaultPath().concat("/").concat(Utility.ConvertGameTitleToCorrectFolderName(checkGameName)));
         					Utility.DeleteRecursive(gameFolder);
         				}
         				
@@ -568,11 +585,11 @@ public class QspGameStock extends TabActivity {
             	    		if ( !success )
             	    		{
             	        		//Показываем сообщение об ошибке
-            	    			Utility.ShowError(uiContext, "Не удалось распаковать игру \"" + checkGame + "\".");
+            	    			Utility.ShowError(uiContext, "Не удалось распаковать игру \"" + checkGameName + "\".");
             	    		}
             	    		else
             	    		{
-            	    			ShowGameInfo(checkGame);
+            	    			ShowGameInfo(checkGameId);
             	    		}
         				}
         				else
@@ -582,12 +599,12 @@ public class QspGameStock extends TabActivity {
         					if ( !success )
         					{
         						msg = "Ошибка при загрузке игры";
-        						desc = "Не удалось распаковать игру \"" + checkGame + "\"";
+        						desc = "Не удалось распаковать игру \"" + checkGameName + "\"";
         					}
         					else
         					{
         						msg = "Игра загружена";
-        						desc = "Игра \"" + checkGame + "\" успешно загружена";
+        						desc = "Игра \"" + checkGameName + "\" успешно загружена";
         					}
            					Notify(msg, desc);
         				}
@@ -655,6 +672,54 @@ public class QspGameStock extends TabActivity {
     	if(!f.isDirectory()) { 
     		f.mkdirs(); 
     	} 
+    }
+    
+    private void WriteGameInfo(String gameId)
+    {
+    	//Записываем всю информацию об игре
+		GameItem game = gamesMap.get(gameId);
+		if (game==null)
+			return;
+		
+		File gameFolder = new File(Utility.GetDefaultPath().concat("/").concat(Utility.ConvertGameTitleToCorrectFolderName(game.title)));
+		if (!gameFolder.exists())
+			return;
+		
+		String infoFilePath = gameFolder.getPath().concat("/").concat(GAME_INFO_FILENAME);
+		FileOutputStream fOut;
+		try {
+			fOut = new FileOutputStream(infoFilePath);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			Utility.WriteLog("Creating game info file failed");
+			return;
+		}
+		OutputStreamWriter osw = new OutputStreamWriter(fOut);	
+		
+		try {
+			osw.write("<game>\n");
+			osw.write("\t<id><![CDATA[".concat(game.game_id.substring(3)).concat("]]></id>\n"));
+			osw.write("\t<list_id><![CDATA[".concat(game.list_id).concat("]]></list_id>\n"));
+			osw.write("\t<author><![CDATA[".concat(game.author).concat("]]></author>\n"));
+			osw.write("\t<ported_by><![CDATA[".concat(game.ported_by).concat("]]></ported_by>\n"));
+			osw.write("\t<version><![CDATA[".concat(game.version).concat("]]></version>\n"));
+			osw.write("\t<title><![CDATA[".concat(game.title).concat("]]></title>\n"));
+			osw.write("\t<lang><![CDATA[".concat(game.lang).concat("]]></lang>\n"));
+			osw.write("\t<player><![CDATA[".concat(game.player).concat("]]></player>\n"));
+			osw.write("\t<file_url><![CDATA[".concat(game.file_url).concat("]]></file_url>\n"));
+			osw.write("\t<file_size><![CDATA[".concat(String.valueOf(game.file_size)).concat("]]></file_size>\n"));
+			osw.write("\t<desc_url><![CDATA[".concat(game.desc_url).concat("]]></desc_url>\n"));
+			osw.write("\t<pub_date><![CDATA[".concat(game.pub_date).concat("]]></pub_date>\n"));
+			osw.write("\t<mod_date><![CDATA[".concat(game.mod_date).concat("]]></mod_date>\n"));
+			osw.write("</game>");
+
+			osw.flush();
+			osw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			Utility.WriteLog("Writing to game info file failed");
+			return;
+		}
     }
 
     private void updateSpinnerProgress(boolean enabled, String title, String message, int nProgress)
@@ -742,17 +807,49 @@ public class QspGameStock extends TabActivity {
         for (int i=0; i<qspGameDirs.size(); i++)
         {
         	File d = qspGameDirs.get(i);
-        	String displayName = d.getName();
-        	GameItem game = gamesMap.get(displayName);
+        	GameItem game = null;
+        	File infoFile = new File(d.getPath().concat("/").concat(GAME_INFO_FILENAME));
+        	if (infoFile.exists())
+        	{
+				String text = "";
+        		try {
+        			FileInputStream instream = new FileInputStream(infoFile.getPath());
+        			if (instream != null) {
+        				InputStreamReader inputreader = new InputStreamReader(instream);
+        				BufferedReader buffreader = new BufferedReader(inputreader);
+        				boolean exit = false;
+        				while (!exit) {
+        					String line = null;
+							try {
+								line = buffreader.readLine();
+							} catch (IOException e) {
+								e.printStackTrace();
+			        			Utility.WriteLog("Reading game info file failed");
+							}
+        					exit = line == null;
+        					if (!exit)
+        						text = text.concat(line);
+        				}
+        			}
+					instream.close();
+        		} catch (IOException e) {
+        			e.printStackTrace();
+        			Utility.WriteLog("Reading game info file failed");
+        			continue;
+				}
+            	game = ParseGameInfo(text);
+        	}
         	if (game == null)
         	{
         		game = new GameItem();
+            	String displayName = d.getName();
         		game.title = displayName;
+        		game.game_id = displayName;
         	}
         	File f = qspGameFiles.get(i);
     		game.game_file = f.getPath();
     		game.downloaded = true;
-    		gamesMap.put(displayName, game);
+    		gamesMap.put(game.game_id, game);
         }
     
         return true;
@@ -807,6 +904,88 @@ public class QspGameStock extends TabActivity {
         }
     }
     
+    private GameItem ParseGameInfo(String xml)
+    {
+    	//Читаем информацию об игре
+    	GameItem resultItem = null;
+    	GameItem curItem = null;
+    	try {
+    		XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+    		factory.setNamespaceAware(true);
+    		XmlPullParser xpp = factory.newPullParser();
+
+    		xpp.setInput( new StringReader ( xml ) );
+    		int eventType = xpp.getEventType();
+    		boolean doc_started = false;
+    		boolean game_started = false;
+    		String lastTagName = "";
+    		while (eventType != XmlPullParser.END_DOCUMENT) {
+    			if(eventType == XmlPullParser.START_DOCUMENT) {
+    				doc_started = true;
+    			} else if(eventType == XmlPullParser.END_DOCUMENT) {
+    				//Never happens
+    			} else if(eventType == XmlPullParser.START_TAG) {
+    				if (doc_started)
+    				{
+    					lastTagName = xpp.getName();
+						if (lastTagName.equals("game"))
+						{
+    						game_started = true;
+							curItem = new GameItem();
+						}
+    				}
+    			} else if(eventType == XmlPullParser.END_TAG) {
+    				if (doc_started && game_started)
+    				{
+    					if (xpp.getName().equals("game"))
+    						resultItem = curItem;
+    					lastTagName = "";
+    				}
+    			} else if(eventType == XmlPullParser.CDSECT) {
+    				if (doc_started && game_started)
+    				{
+    					String val = xpp.getText();
+    					if (lastTagName.equals("id"))
+    						curItem.game_id = "id:".concat(val);
+    					else if (lastTagName.equals("list_id"))
+    						curItem.list_id = val;
+    					else if (lastTagName.equals("author"))
+    						curItem.author = val;
+    					else if (lastTagName.equals("ported_by"))
+    						curItem.ported_by = val;
+    					else if (lastTagName.equals("version"))
+    						curItem.version = val;
+    					else if (lastTagName.equals("title"))
+    						curItem.title = val;
+    					else if (lastTagName.equals("lang"))
+    						curItem.lang = val;
+    					else if (lastTagName.equals("player"))
+    						curItem.player = val;
+    					else if (lastTagName.equals("file_url"))
+    						curItem.file_url = val;
+    					else if (lastTagName.equals("file_size"))
+    						curItem.file_size = Integer.parseInt(val);
+    					else if (lastTagName.equals("desc_url"))
+    						curItem.desc_url = val;
+    					else if (lastTagName.equals("pub_date"))
+    						curItem.pub_date = val;
+    					else if (lastTagName.equals("mod_date"))
+    						curItem.mod_date = val;
+    				}
+    			}
+    			eventType = xpp.nextToken();
+    		}
+    	} catch (XmlPullParserException e) {
+    		String errTxt = "Exception occured while trying to parse game info, XML corrupted at line ".
+    		concat(String.valueOf(e.getLineNumber())).concat(", column ").
+    		concat(String.valueOf(e.getColumnNumber())).concat(".");
+    		Utility.WriteLog(errTxt);
+    	} catch (Exception e) {
+    		Utility.WriteLog("Exception occured while trying to parse game info, unknown error");
+    	}
+    	return resultItem;
+    }
+    
     private boolean ParseGameList(String xml)
     {
     	boolean parsed = false;
@@ -821,6 +1000,8 @@ public class QspGameStock extends TabActivity {
     		boolean doc_started = false;
     		boolean list_started = false;
     		String lastTagName = "";
+    		String listId = "unknown";
+    		String listTitle = "";
     		while (eventType != XmlPullParser.END_DOCUMENT) {
     			if(eventType == XmlPullParser.START_DOCUMENT) {
     				doc_started = true;
@@ -833,11 +1014,16 @@ public class QspGameStock extends TabActivity {
     					if (lastTagName.equals("game_list"))
     					{
     						list_started = true;
+    						listId = xpp.getAttributeValue(null, "id");
+    						listTitle = xpp.getAttributeValue(null, "title");
     					}
     					if (list_started)
     					{
     						if (lastTagName.equals("game"))
+    						{
     							curItem = new GameItem();
+    							curItem.list_id = listId;
+    						}
     					}            		 
     				}
     			} else if(eventType == XmlPullParser.END_TAG) {
@@ -845,7 +1031,7 @@ public class QspGameStock extends TabActivity {
     				{
     					if (xpp.getName().equals("game"))
     					{
-    						gamesMap.put(curItem.title, curItem);
+    						gamesMap.put(curItem.game_id, curItem);
     					}
     					if (xpp.getName().equals("game_list"))
     						parsed = true;
@@ -855,21 +1041,16 @@ public class QspGameStock extends TabActivity {
     				if (doc_started && list_started)
     				{
     					String val = xpp.getText();
-    					if (lastTagName.equals("author"))
+    					if (lastTagName.equals("id"))
+    						curItem.game_id = "id:".concat(val);
+    					else if (lastTagName.equals("author"))
     						curItem.author = val;
     					else if (lastTagName.equals("ported_by"))
     						curItem.ported_by = val;
     					else if (lastTagName.equals("version"))
     						curItem.version = val;
     					else if (lastTagName.equals("title"))
-    					{
-    						//!!! STUB
-    						// Обрезаем многоточие, пока у нас есть привязка к имени папки.
-    						String valTruncated = val.endsWith("...") ? val.substring(0, val.length()-3) : val;
-    						// Меняем двоеточие на запятую, пока у нас есть привязка к имени папки.
-    						valTruncated = valTruncated.replace(':', ',');
-    						curItem.title = valTruncated;
-    					}
+    						curItem.title = val;
     					else if (lastTagName.equals("lang"))
     						curItem.lang = val;
     					else if (lastTagName.equals("player"))
@@ -877,7 +1058,7 @@ public class QspGameStock extends TabActivity {
     					else if (lastTagName.equals("file_url"))
     						curItem.file_url = val;
     					else if (lastTagName.equals("file_size"))
-    						curItem.file_size = val;
+    						curItem.file_size = Integer.parseInt(val);
     					else if (lastTagName.equals("desc_url"))
     						curItem.desc_url = val;
     					else if (lastTagName.equals("pub_date"))
