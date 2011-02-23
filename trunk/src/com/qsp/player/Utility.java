@@ -39,6 +39,15 @@ public class Utility {
         listView.setLayoutParams(params);
         listView.requestLayout();
     }
+    
+    public static String ConvertGameTitleToCorrectFolderName(String title)
+    {
+		// Обрезаем многоточие
+		String folder = title.endsWith("...") ? title.substring(0, title.length()-3) : title;
+		// Меняем двоеточие на запятую
+		folder = folder.replace(':', ',');
+		return folder;
+    }
 
     public static Spanned QspStrToHtml(String str, ImageGetter imgGetter)
     {
