@@ -1,6 +1,7 @@
 package com.qsp.player;
 
 import android.app.Application;
+
 import org.acra.*;
 import org.acra.annotation.*;
 
@@ -9,7 +10,8 @@ public class QspApp extends Application {
 	@Override
     public void onCreate() {
         // The following line triggers the initialization of ACRA
-        ACRA.init(this);
+        if (!Utility.signedWithDebugKey(this,this.getClass()))
+        	ACRA.init(this);
         super.onCreate();
     }
 }
