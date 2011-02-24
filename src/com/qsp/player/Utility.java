@@ -4,8 +4,12 @@ import java.io.File;
 import java.io.IOException;
 
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.os.Environment;
 import android.text.Html;
 import android.text.Html.ImageGetter;
@@ -157,5 +161,29 @@ public class Utility {
             	DeleteRecursive(currentFile);
     	}
     	f.delete();
+    }
+    
+    static final String DEBUGKEY = 
+        "308201e53082014ea00302010202044cab9b17300d06092a864886f70d01010505003037310b30090603550406130255533110300e060355040a1307416e64726f6964311630140603550403130d416e64726f6964204465627567301e170d3130313030353231333933355a170d3131313030353231333933355a3037310b30090603550406130255533110300e060355040a1307416e64726f6964311630140603550403130d416e64726f696420446562756730819f300d06092a864886f70d010101050003818d00308189028181009c705d592a4c65c4c96ffc4996de8e2e9371c40cebc63982d24e9f2d59979276a5cbcf6e937d538c895cd129b6b04c91861c514a25435d8ac57ff6bbe1bdfd5149e58f6dc1e97b6b77c8248fa02a5791f4f3fd9d4c2dd94fc1affff962d484c29d6394cb3578cfed523638a83c06b0d028ce4ba67b1a5e8017dfa218845ce04f0203010001300d06092a864886f70d010105050003818100011fd28bd2c4d853632eb0a47259bb36cea5522249c14dc0ff3a0fd94071a76df8fb3d8674d65362df8a7340c1f3b57d6680cd43b035154219643f5f7344e104de6c7588ad905aefaf92ec1811d52ee42f3e74c0068f447dece91df8d8f70cefbb53c22323538de9a9b101906005c4ac701c1c8af565fd78073bb9dcb769525b";
+
+    public static boolean signedWithDebugKey(Context context, Class<?> cls) 
+    {
+    	boolean result = false;
+    	try {
+    		ComponentName comp = new ComponentName(context, cls);
+    		PackageInfo pinfo = context.getPackageManager().getPackageInfo(comp.getPackageName(),PackageManager.GET_SIGNATURES);
+    		Signature sigs[] = pinfo.signatures;
+    		for ( int i = 0; i < sigs.length;i++)
+    			WriteLog(sigs[i].toCharsString());
+    		if (DEBUGKEY.equals(sigs[0].toCharsString())) {
+    			result = true;
+    			WriteLog("package has been signed with the debug key");
+    		} else {
+    			WriteLog("package signed with a key other than the debug key");
+    		}
+    	} catch (android.content.pm.PackageManager.NameNotFoundException e) {
+    		return false;
+    	}
+    	return result;
     }
 }
