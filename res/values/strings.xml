@@ -32,6 +32,7 @@
     <string name="menu_save">Сохранить</string>
     <string name="menu_deletegames">Удаление игр</string>
     <string name="menu_openfile">Открыть файл</string>
+    <string name="menu_closeapp">Закрыть Quest Player</string>
     
     <!-- Прочее -->
     <string name="app_name">Quest Player</string>

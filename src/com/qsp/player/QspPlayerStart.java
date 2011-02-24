@@ -352,8 +352,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	//Ловим кнопку "Back", и не закрываем активити, а только
     	//отправляем в бэкграунд (как будто нажали "Home")
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-        	Utility.WriteLog("Back pressed! Going to background");
-        	moveTaskToBack(true);
+        	ShowExitDialog();
         	return true;
         }
         if (currentWin == WIN_MAIN && keyCode >= KeyEvent.KEYCODE_1 && keyCode <= KeyEvent.KEYCODE_9) {
@@ -450,6 +449,32 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
         findViewById(R.id.main).requestLayout();
+    }
+    
+    private void ShowExitDialog()
+    {
+    	AlertDialog.Builder builder = new AlertDialog.Builder(uiContext);
+        final CharSequence[] items = new String[2];
+        items[0] = getString(R.string.menu_gamestock);
+        items[1] = getString(R.string.menu_closeapp);
+    	builder.setItems(items, new DialogInterface.OnClickListener()
+    	{
+    		@Override
+    		public void onClick(DialogInterface dialog, int which) 
+    		{
+    			if (which==0)
+    			{
+    				ShowGameStock();    			}
+    			else if (which==1)
+    			{
+    		    	Utility.WriteLog("App closed by user! Going to background");
+    		    	moveTaskToBack(true);
+    			}
+    		}    	
+    	}
+    	);
+    	AlertDialog alert = builder.create();
+    	alert.show();
     }
 
    private void LoadSlots(MenuItem rootItem, String name)
