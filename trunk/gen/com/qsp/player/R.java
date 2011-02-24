@@ -108,13 +108,13 @@ public final class R {
         public static final int main_menu=0x7f0b0001;
     }
     public static final class string {
-        public static final int actsColor=0x7f09001f;
+        public static final int actsColor=0x7f090020;
         /**  Настройки  
          */
         public static final int appTheme=0x7f090000;
         /**  Прочее 
          */
-        public static final int app_name=0x7f09001d;
+        public static final int app_name=0x7f09001e;
         public static final int backColor=0x7f09000f;
         public static final int dialog_color_picker=0x7f09000d;
         public static final int fontSize=0x7f090001;
@@ -126,8 +126,9 @@ public final class R {
         public static final int interface_scr_sum=0x7f090009;
         public static final int interface_screen=0x7f09000a;
         public static final int linkColor=0x7f090010;
-        public static final int market_details_url=0x7f09001e;
+        public static final int market_details_url=0x7f09001f;
         public static final int menu_about=0x7f090016;
+        public static final int menu_closeapp=0x7f09001d;
         public static final int menu_deletegames=0x7f09001b;
         /**  Меню 
          */
