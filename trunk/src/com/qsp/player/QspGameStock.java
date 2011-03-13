@@ -112,8 +112,8 @@ public class QspGameStock extends TabActivity {
     
     public static final String GAME_INFO_FILENAME = "gamestockInfo";
     
-    public static boolean isActive;
-    public static boolean showProgressDialog;
+    private boolean isActive;
+    private boolean showProgressDialog;
 	
 	private String _zipFile; 
 	private String _location; 
