@@ -1140,15 +1140,15 @@ public class QspGameStock extends TabActivity {
 		@Override
 		public void onClick(DialogInterface dialog, int which) 
 		{
+			if (!((AlertDialog)dialog).isShowing())
+				return;
+			dialog.dismiss();
 			boolean canGoUp = !backPath.equals("");
 			int shift = 0;
 			if (canGoUp)
 				shift = 1;
 			if (which == 0 && canGoUp)
-			{
-				dialog.dismiss();
 				BrowseGame(backPath, false);
-			}
 			else
 			{
 				File f = qspGamesBrowseList.get(which - shift);
