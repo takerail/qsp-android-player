@@ -38,6 +38,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -129,6 +130,7 @@ public class QspGameStock extends TabActivity {
 	ListView lvDownloaded;
 	ListView lvStarred;
     ProgressDialog downloadProgressDialog = null;
+    Thread downloadThread = null;
 
 	private NotificationManager mNotificationManager;
 	private int QSP_NOTIFICATION_ID;
@@ -289,6 +291,20 @@ public class QspGameStock extends TabActivity {
 
         }        
         return false;
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event)  {
+    	//Ловим кнопку "Back", и не закрываем активити, а только
+    	//отправляем в бэкграунд (как будто нажали "Home"), 
+    	//при условии, что запущен поток скачивания игры
+        if ((downloadThread != null) && downloadThread.isAlive() && 
+        		(keyCode == KeyEvent.KEYCODE_BACK) && (event.getRepeatCount() == 0)) {
+	    	moveTaskToBack(true);
+        	return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
     }
 
     private void InitListViews()
@@ -470,7 +486,7 @@ public class QspGameStock extends TabActivity {
     	downloadProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
     	downloadProgressDialog.setMax(totalSize);
     	downloadProgressDialog.setCancelable(false);
-    	Thread t = new Thread() {
+    	downloadThread = new Thread() {
             public void run() {
         		//set the path where we want to save the file
         		//in this case, going to save it in program cache directory
@@ -612,8 +628,7 @@ public class QspGameStock extends TabActivity {
         		});
             }
         };
-        
-        t.start();
+        downloadThread.start();
     }
     
     private void Unzip(String zipFile, String location, String gameName)
