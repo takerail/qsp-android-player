@@ -1,6 +1,8 @@
 package com.qsp.player;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import android.app.AlertDialog;
@@ -10,6 +12,8 @@ import android.content.DialogInterface;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.text.Html;
 import android.text.Html.ImageGetter;
@@ -185,5 +189,36 @@ public class Utility {
     		return false;
     	}
     	return result;
+    }
+    
+    //decodes image and scales it to reduce memory consumption 
+    //(пока что не используется)
+    public static Bitmap decodeImageFile(File f){ 
+    	try { 
+    		//Decode image size 
+    		BitmapFactory.Options o = new BitmapFactory.Options(); 
+    		o.inJustDecodeBounds = true; 
+    		BitmapFactory.decodeStream(new FileInputStream(f),null,o);
+
+    		//The new size we want to scale to
+    		final int REQUIRED_SIZE=70;
+
+    		//Find the correct scale value. It should be the power of 2.
+    		int width_tmp=o.outWidth, height_tmp=o.outHeight;
+    		int scale=1;
+    		while(true){
+    			if(width_tmp/2<REQUIRED_SIZE || height_tmp/2<REQUIRED_SIZE)
+    				break;
+    			width_tmp/=2;
+    			height_tmp/=2;
+    			scale*=2;
+    		}
+
+    		//Decode with inSampleSize
+    		BitmapFactory.Options o2 = new BitmapFactory.Options();
+    		o2.inSampleSize=scale;
+    		return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
+    	} catch (FileNotFoundException e) {}
+    	return null;
     }
 }
