@@ -1187,7 +1187,7 @@ public class QspGameStock extends TabActivity {
     		return;
     	
     	if (!startpath.endsWith("/"))
-    		startpath.concat("/");
+    		startpath = startpath.concat("/");
     	
     	//Устанавливаем путь "выше"    	
     	if (!start)
@@ -1209,6 +1209,11 @@ public class QspGameStock extends TabActivity {
     	
         //Ищем все файлы .qsp и .gam в корне флэшки
         File sdcardRoot = new File (startpath);
+        if ((sdcardRoot == null) || !sdcardRoot.exists())
+        {
+        	Utility.ShowError(uiContext, "Не удалось найти путь: ".concat(startpath));
+        	return;
+        }
         File[] sdcardFiles = sdcardRoot.listFiles();        
         qspGamesBrowseList = new ArrayList<File>();
         //Сначала добавляем все папки
