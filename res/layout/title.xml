@@ -30,6 +30,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentBottom="true"
+        android:onClick="onTitleClick"
+        android:clickable="true"
         android:layout_toRightOf="@id/title_home_button_sep"
         android:textSize="@dimen/text_size_medium"
         android:paddingLeft="12dip"
