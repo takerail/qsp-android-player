@@ -56,6 +56,8 @@ import java.util.Vector;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.acra.ErrorReporter;
+
 
 
 
@@ -101,6 +103,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 	private boolean gui_debug_mode = true;
 	private boolean hotKeys = false;
 	private boolean highlightActs = true;
+	private boolean sdcard_mounted = false;
 
 	private class QSPItem {
 		private Drawable icon;
@@ -245,15 +248,23 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         .setCancelable(false)
         .create();
         
-        if (!gameIsRunning)
+        if (Utility.GetDefaultPath() == null)
         {
-       		//текущий вид - основное описание
-        	invBack = 0; //нет фона
-        	varBack = 0; //нет фона
-        	setCurrentWin(currentWin=WIN_MAIN);
-        	ShowGameStock();
+        	sdcard_mounted = false;
+        	Utility.ShowError(uiContext, "SD-карта не подключена, Quest Player не может быть запущен. Подключите SD-карту и перезапустите Quest Player.");
         }
-
+        else
+        {
+        	sdcard_mounted =  true;
+        	if (!gameIsRunning)
+	        {
+	       		//текущий вид - основное описание
+	        	invBack = 0; //нет фона
+	        	varBack = 0; //нет фона
+	        	setCurrentWin(currentWin=WIN_MAIN);
+	        	ShowGameStock();
+	        }
+        }
     	Utility.WriteLog("onCreate/");
     }
     
@@ -283,7 +294,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
 		highlightActs = settings.getBoolean("highlight_acts", true);
         ApplyViewSettings();
         
-        if (gameIsRunning && !waitForImageBox)
+        if (sdcard_mounted && gameIsRunning && !waitForImageBox)
     	{
     		//Запускаем таймер
             timerHandler.postDelayed(timerUpdateTask, timerInterval);
@@ -351,7 +362,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	//Контекст UI
     	//Ловим кнопку "Back", и не закрываем активити, а только
     	//отправляем в бэкграунд (как будто нажали "Home")
-        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+        if (sdcard_mounted && keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
         	ShowExitDialog();
         	return true;
         }
@@ -370,6 +381,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	//Контекст UI
+    	if (!sdcard_mounted)
+    		return false;
+    	
         // Сохраняем ссылку
         menuMain = menu;
         
@@ -383,6 +397,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     @Override
     public boolean onPrepareOptionsMenu (Menu menu) {
     	//Контекст UI
+    	if (!sdcard_mounted)
+    		return false;
+    	
     	//Прячем или показываем группу пунктов меню "Начать заново", "Загрузить", "Сохранить"
     	menu.setGroupVisible(R.id.menugroup_running, gameIsRunning);
     	if (gameIsRunning)
@@ -963,7 +980,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	qspInited = true;
     	final String gameFileName = fileName;
     	curGameFile = gameFileName;
+    	ErrorReporter.getInstance().putCustomData("curGameFile", curGameFile);
         curGameDir = gameFileName.substring(0, gameFileName.lastIndexOf(File.separator, gameFileName.length() - 1) + 1);
+        ErrorReporter.getInstance().putCustomData("curGameDir", curGameDir);
         
         TextView tv = (TextView)findViewById(R.id.main_desc);
         int padding = tv.getPaddingLeft() + tv.getPaddingRight();
@@ -1090,7 +1109,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             gameIsRunning = false;
 		}
 		curGameDir = "";
+		ErrorReporter.getInstance().removeCustomData("curGameDir");
 		curGameFile = "";
+		ErrorReporter.getInstance().removeCustomData("curGameFile");
 
 		//Очищаем библиотеку
 		if (restart || libraryThreadIsRunning)

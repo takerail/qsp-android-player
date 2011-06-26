@@ -1,5 +1,7 @@
 package com.qsp.player;
 
+import org.acra.ErrorReporter;
+
 import android.graphics.drawable.Drawable;
 import android.text.Html.ImageGetter;
 
@@ -23,6 +25,7 @@ public class QspImageGetter implements ImageGetter {
           if ((source != null) && (!source.contains("://")))
           {
         	  source = mDirectory.concat(source);
+        	  ErrorReporter.getInstance().putCustomData("QspImageGetterFile", source);
               drawable = Drawable.createFromPath(source);
               if (drawable != null)
               {
