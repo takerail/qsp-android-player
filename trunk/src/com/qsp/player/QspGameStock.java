@@ -338,15 +338,23 @@ public class QspGameStock extends TabActivity {
         	@Override
         	public void onTabChanged(String tabId) {
         		int tabNum = getTabHost().getCurrentTab();
-        	    if(((tabNum == STARRED_TABNUM) || (tabNum == ALL_TABNUM)) && (xmlGameListCached == null)) {
-        	    	if (!gameListIsLoading)
-        	    	{
-        	    		gameListIsLoading = true;
-        	    		triedToLoadGameList = true;
-        	    		LoadGameListThread tLoadGameList = new LoadGameListThread();
-        	    		tLoadGameList.start();
-        	    	}
-        	    }
+        		if (((tabNum == STARRED_TABNUM) || (tabNum == ALL_TABNUM)) && (xmlGameListCached == null) && !gameListIsLoading) {
+        			if (Utility.haveInternet(uiContext))
+        			{
+        				gameListIsLoading = true;
+        				triedToLoadGameList = true;
+        				LoadGameListThread tLoadGameList = new LoadGameListThread();
+        				tLoadGameList.start();
+        			}
+        			else
+        			{
+        				if (!triedToLoadGameList)
+        				{
+        					Utility.ShowError(uiContext, "Не удалось загрузить список игр. Проверьте интернет-подключение.");
+        					triedToLoadGameList = true;
+        				}
+        			}
+        		}
         	}
         });
         
@@ -474,6 +482,11 @@ public class QspGameStock extends TabActivity {
     
     private void DownloadGame(String file_url, int file_size, String game_id)
     {
+		if (!Utility.haveInternet(uiContext))
+		{
+			Utility.ShowError(uiContext, "Не удалось загрузить игру. Проверьте интернет-подключение.");
+			return;
+		}
 		GameItem gameToDownload = gamesMap.get(game_id);
 		String folderName = Utility.ConvertGameTitleToCorrectFolderName(gameToDownload.title);
 

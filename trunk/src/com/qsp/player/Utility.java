@@ -14,6 +14,8 @@ import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Environment;
 import android.text.Html;
 import android.text.Html.ImageGetter;
@@ -220,5 +222,17 @@ public class Utility {
     		return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
     	} catch (FileNotFoundException e) {}
     	return null;
+    }
+    
+    /*
+    * @return boolean return true if the application can access the internet
+    */
+    public static boolean haveInternet(Context context)
+    {
+            NetworkInfo info = ((ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
+            if (info==null || !info.isConnected()) {
+                    return false;
+            }
+            return true;
     }
 }
