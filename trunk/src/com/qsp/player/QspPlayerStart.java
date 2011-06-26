@@ -845,6 +845,15 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     	setCurrentWin(WIN_MAIN);
     }
     
+    //обработчик текста в заголовке
+    public void onTitleClick(View v) {
+    	if (currentWin>0)
+    		currentWin--;
+    	else
+    		currentWin = 2;
+    	setCurrentWin(currentWin);
+    }
+
     //обработчик "Инвентарь" в заголовке
     public void onInvClick(View v) {
     	setCurrentWin(WIN_INV);
