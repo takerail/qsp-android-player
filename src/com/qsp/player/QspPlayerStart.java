@@ -2,6 +2,7 @@ package com.qsp.player;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -84,6 +85,8 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     public static final int WIN_EXT = 2;
     public static final int SLOTS_MAX = 5;
     public static final int ACTIVITY_SELECT_GAME = 0;
+    
+    public static final int QSP_MAXACTIONS = 50;
 	Resources res;
 	SharedPreferences settings;
 	
@@ -549,7 +552,12 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             case R.id.menu_about:
             	Intent updateIntent = null;
         		updateIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.market_details_url)));
-        		startActivity(updateIntent); 
+        		try {
+            		startActivity(updateIntent);
+        		} catch (ActivityNotFoundException e) {
+        			Utility.ShowError(uiContext, "Не найдено приложение Market.");
+        			return false;
+        		}
                 return true;
 
             case R.id.menu_newgame:
@@ -1705,8 +1713,10 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
     public void OnUrlClicked (String href)
     {
     	//Контекст UI
-    	String tag = href.substring(0, 5).toLowerCase();
-    	if (tag.equals("exec:"))
+    	if ((href == null) || (href.length() == 0))
+    		return;
+    	
+    	if (href.toLowerCase().startsWith("exec:"))
     	{
     		if (libraryThreadIsRunning)
     			return;
@@ -1723,6 +1733,26 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
             		libraryThreadIsRunning = false;
     			}
     		});
+    	}
+    	else
+    	{
+	    	try {
+	    		int actNum = Integer.parseInt(href);
+	    		if ((actNum > 0) && (actNum <= QSP_MAXACTIONS))
+	    		{
+	    			actionExecute(actNum - 1);
+	    		}
+	    	} catch (NumberFormatException e) {
+	    		String url = href;
+	    		if (!url.toLowerCase().startsWith("http://") && !url.toLowerCase().startsWith("https://"))
+	    			url = "http://" + url;
+	    		Intent viewIntent = new Intent("android.intent.action.VIEW", Uri.parse(url));
+        		try {
+    	    		startActivity(viewIntent);	    		
+        		} catch (ActivityNotFoundException viewException) {
+        			Utility.ShowError(uiContext, "Не удалось найти браузер.");
+        		}
+	        } 
     	}
     }
 
