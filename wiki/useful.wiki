@@ -1,6 +1,6 @@
 Установка необходимого софта для разработки:
-http://mindtherobot.com/blog/209/android-beginners-from-bare-windows-to-your-first-app/
-http://mindtherobot.com/blog/452/android-beginners-ndk-setup-step-by-step/
+"1":http://mindtherobot.com/blog/209/android-beginners-from-bare-windows-to-your-first-app/
+"2":http://mindtherobot.com/blog/452/android-beginners-ndk-setup-step-by-step/
 
 Далее импортируем проект File->Import->General->Existing Projects into Workspace.
 
