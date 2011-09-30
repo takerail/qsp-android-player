@@ -1,8 +1,19 @@
-SVN+Eclipse: настройка Eclipse так, чтобы он не трогал папки .svn
-http://www.damonkohler.com/2009/07/make-eclipse-ignore-svn-directories.html
+Установка необходимого софта для разработки:
+http://mindtherobot.com/blog/209/android-beginners-from-bare-windows-to-your-first-app/
+http://mindtherobot.com/blog/452/android-beginners-ndk-setup-step-by-step/
+
+Далее импортируем проект File->Import->General->Existing Projects into Workspace.
 
 Если после импорта появляется ошибка "Android requires compiler compliance level", выбираем проект правой кнопкой в Package Explorer, "Android Tools" -> "Fix Project Properties".
 Далее Project -> Clean.
 
 
 Если после импорта лезут ошибки "the method must override superclass", открываем Project->Properties->Java Compiler, выставляем "1.6" в настройке "Compiler compliance level".
+
+
+
+----
+Небольшой трюк, использовать на свой страх и риск.
+
+SVN+Eclipse: настройка Eclipse так, чтобы он не трогал папки .svn
+http://www.damonkohler.com/2009/07/make-eclipse-ignore-svn-directories.html
