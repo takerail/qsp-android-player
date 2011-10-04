@@ -56,6 +56,18 @@ public class Utility {
 		String folder = title.endsWith("...") ? title.substring(0, title.length()-3) : title;
 		// Меняем двоеточие на запятую
 		folder = folder.replace(':', ',');
+		// Убираем кавычки
+		folder = folder.replace('"', '_');
+		// Убираем знак вопроса
+		folder = folder.replace('?', '_');
+		// Убираем звездочку
+		folder = folder.replace('*', '_');
+		// Убираем вертикальную черту
+		folder = folder.replace('|', '_');
+		// Убираем знак "меньше"
+		folder = folder.replace('<', '_');
+		// Убираем знак "больше"
+		folder = folder.replace('>', '_');
 		return folder;
     }
 
