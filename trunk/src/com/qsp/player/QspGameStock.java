@@ -1017,93 +1017,96 @@ public class QspGameStock extends TabActivity {
     private boolean ParseGameList(String xml)
     {
     	boolean parsed = false;
-    	GameItem curItem = null;
-    	try {
-    		XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-    		factory.setNamespaceAware(true);
-    		XmlPullParser xpp = factory.newPullParser();
-
-    		xpp.setInput( new StringReader ( xml ) );
-    		int eventType = xpp.getEventType();
-    		boolean doc_started = false;
-    		boolean list_started = false;
-    		String lastTagName = "";
-    		String listId = "unknown";
-    		String listTitle = "";
-    		while (eventType != XmlPullParser.END_DOCUMENT) {
-    			if(eventType == XmlPullParser.START_DOCUMENT) {
-    				doc_started = true;
-    			} else if(eventType == XmlPullParser.END_DOCUMENT) {
-    				//Never happens
-    			} else if(eventType == XmlPullParser.START_TAG) {
-    				if (doc_started)
-    				{
-    					lastTagName = xpp.getName();
-    					if (lastTagName.equals("game_list"))
-    					{
-    						list_started = true;
-    						listId = xpp.getAttributeValue(null, "id");
-    						listTitle = xpp.getAttributeValue(null, "title");
-    					}
-    					if (list_started)
-    					{
-    						if (lastTagName.equals("game"))
-    						{
-    							curItem = new GameItem();
-    							curItem.list_id = listId;
-    						}
-    					}            		 
-    				}
-    			} else if(eventType == XmlPullParser.END_TAG) {
-    				if (doc_started && list_started)
-    				{
-    					if (xpp.getName().equals("game"))
-    					{
-    						gamesMap.put(curItem.game_id, curItem);
-    					}
-    					if (xpp.getName().equals("game_list"))
-    						parsed = true;
-    					lastTagName = "";
-    				}
-    			} else if(eventType == XmlPullParser.CDSECT) {
-    				if (doc_started && list_started)
-    				{
-    					String val = xpp.getText();
-    					if (lastTagName.equals("id"))
-    						curItem.game_id = "id:".concat(val);
-    					else if (lastTagName.equals("author"))
-    						curItem.author = val;
-    					else if (lastTagName.equals("ported_by"))
-    						curItem.ported_by = val;
-    					else if (lastTagName.equals("version"))
-    						curItem.version = val;
-    					else if (lastTagName.equals("title"))
-    						curItem.title = val;
-    					else if (lastTagName.equals("lang"))
-    						curItem.lang = val;
-    					else if (lastTagName.equals("player"))
-    						curItem.player = val;
-    					else if (lastTagName.equals("file_url"))
-    						curItem.file_url = val;
-    					else if (lastTagName.equals("file_size"))
-    						curItem.file_size = Integer.parseInt(val);
-    					else if (lastTagName.equals("desc_url"))
-    						curItem.desc_url = val;
-    					else if (lastTagName.equals("pub_date"))
-    						curItem.pub_date = val;
-    					else if (lastTagName.equals("mod_date"))
-    						curItem.mod_date = val;
-    				}
-    			}
-   				eventType = xpp.nextToken();
-    		}
-    	} catch (XmlPullParserException e) {
-    		String errTxt = "Exception occured while trying to parse game list, XML corrupted at line ".
-    					concat(String.valueOf(e.getLineNumber())).concat(", column ").
-    					concat(String.valueOf(e.getColumnNumber())).concat(".");
-    		Utility.WriteLog(errTxt);
-    	} catch (Exception e) {
-    		Utility.WriteLog("Exception occured while trying to parse game list, unknown error");
+    	if (xml != null)
+    	{
+        	GameItem curItem = null;
+	    	try {
+	    		XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+	    		factory.setNamespaceAware(true);
+	    		XmlPullParser xpp = factory.newPullParser();
+	
+	    		xpp.setInput( new StringReader ( xml ) );
+	    		int eventType = xpp.getEventType();
+	    		boolean doc_started = false;
+	    		boolean list_started = false;
+	    		String lastTagName = "";
+	    		String listId = "unknown";
+	    		String listTitle = "";
+	    		while (eventType != XmlPullParser.END_DOCUMENT) {
+	    			if(eventType == XmlPullParser.START_DOCUMENT) {
+	    				doc_started = true;
+	    			} else if(eventType == XmlPullParser.END_DOCUMENT) {
+	    				//Never happens
+	    			} else if(eventType == XmlPullParser.START_TAG) {
+	    				if (doc_started)
+	    				{
+	    					lastTagName = xpp.getName();
+	    					if (lastTagName.equals("game_list"))
+	    					{
+	    						list_started = true;
+	    						listId = xpp.getAttributeValue(null, "id");
+	    						listTitle = xpp.getAttributeValue(null, "title");
+	    					}
+	    					if (list_started)
+	    					{
+	    						if (lastTagName.equals("game"))
+	    						{
+	    							curItem = new GameItem();
+	    							curItem.list_id = listId;
+	    						}
+	    					}            		 
+	    				}
+	    			} else if(eventType == XmlPullParser.END_TAG) {
+	    				if (doc_started && list_started)
+	    				{
+	    					if (xpp.getName().equals("game"))
+	    					{
+	    						gamesMap.put(curItem.game_id, curItem);
+	    					}
+	    					if (xpp.getName().equals("game_list"))
+	    						parsed = true;
+	    					lastTagName = "";
+	    				}
+	    			} else if(eventType == XmlPullParser.CDSECT) {
+	    				if (doc_started && list_started)
+	    				{
+	    					String val = xpp.getText();
+	    					if (lastTagName.equals("id"))
+	    						curItem.game_id = "id:".concat(val);
+	    					else if (lastTagName.equals("author"))
+	    						curItem.author = val;
+	    					else if (lastTagName.equals("ported_by"))
+	    						curItem.ported_by = val;
+	    					else if (lastTagName.equals("version"))
+	    						curItem.version = val;
+	    					else if (lastTagName.equals("title"))
+	    						curItem.title = val;
+	    					else if (lastTagName.equals("lang"))
+	    						curItem.lang = val;
+	    					else if (lastTagName.equals("player"))
+	    						curItem.player = val;
+	    					else if (lastTagName.equals("file_url"))
+	    						curItem.file_url = val;
+	    					else if (lastTagName.equals("file_size"))
+	    						curItem.file_size = Integer.parseInt(val);
+	    					else if (lastTagName.equals("desc_url"))
+	    						curItem.desc_url = val;
+	    					else if (lastTagName.equals("pub_date"))
+	    						curItem.pub_date = val;
+	    					else if (lastTagName.equals("mod_date"))
+	    						curItem.mod_date = val;
+	    				}
+	    			}
+	   				eventType = xpp.nextToken();
+	    		}
+	    	} catch (XmlPullParserException e) {
+	    		String errTxt = "Exception occured while trying to parse game list, XML corrupted at line ".
+	    					concat(String.valueOf(e.getLineNumber())).concat(", column ").
+	    					concat(String.valueOf(e.getColumnNumber())).concat(".");
+	    		Utility.WriteLog(errTxt);
+	    	} catch (Exception e) {
+	    		Utility.WriteLog("Exception occured while trying to parse game list, unknown error");
+	    	}
     	}
     	if ( !parsed && isActive && triedToLoadGameList )
     	{
