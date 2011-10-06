@@ -18,6 +18,7 @@ import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -224,8 +225,9 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGestu
         
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
-       	//будем использовать свой вид заголовка
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+       	//будем использовать свой вид заголовка, поэтому на девайсах < 3.0 отключаем заголовок 
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB)
+        	requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
         res = getResources();
 
