@@ -5,7 +5,7 @@ import android.app.Application;
 import org.acra.*;
 import org.acra.annotation.*;
 
-@ReportsCrashes(formKey = "dF9nZ1dZT2FHR1NWRGdQeWZrX1M0a1E6MQ") 
+@ReportsCrashes(formUri = "http://www.bugsense.com/api/acra?api_key=dd0e611c", formKey = "") 
 public class QspApp extends Application {
 	@Override
     public void onCreate() {
