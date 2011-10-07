@@ -15,5 +15,4 @@
 		<com.att.preference.colorpicker.ColorPickerPreference android:defaultValue="#ff000000" android:title="@string/backColor" android:key="backColor"/> 
 	</PreferenceScreen>
 	<CheckBoxPreference android:key="sound" android:title="@string/soundTitle" android:summary="@string/soundSum" android:defaultValue="true"/>
-    <CheckBoxPreference android:key="gestures" android:title="@string/using_gestures" android:enabled="true" android:summaryOff="@string/gestures_off" android:summaryOn="@string/gestures_sum"/>
 </PreferenceScreen> 
