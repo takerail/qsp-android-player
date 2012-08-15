@@ -858,6 +858,7 @@ public class QspGameStock extends TabActivity {
         					if (!exit)
         						text = text.concat(line);
         				}
+    					buffreader.close();
         			}
 					instream.close();
         		} catch (IOException e) {
@@ -1128,7 +1129,7 @@ public class QspGameStock extends TabActivity {
     		});
             try {
             	updateSpinnerProgress(true, "", "Загрузка списка игр", 0);
-            	URL updateURL = new URL("http://qsp.su/gamestock/gamestock.php");
+            	URL updateURL = new URL("http://qsp.su/tools/gamestock/gamestock.php");
                 URLConnection conn = updateURL.openConnection();
                 InputStream is = conn.getInputStream();
                 BufferedInputStream bis = new BufferedInputStream(is);

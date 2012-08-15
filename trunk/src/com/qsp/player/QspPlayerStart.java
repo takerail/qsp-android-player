@@ -579,13 +579,21 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
 		try {
 			fIn = new FileInputStream(f);
 		} catch (FileNotFoundException e) {
+        	Utility.ShowError(uiContext, "Не удалось открыть файл");
         	e.printStackTrace();
     		return;
 		}
 		try {
 			size = fIn.available();
 		} catch (IOException e) {
+        	Utility.ShowError(uiContext, "Не удалось получить доступ к файлу");
 			e.printStackTrace();
+			try {
+				fIn.close();
+			} catch (IOException e1) {
+	        	Utility.ShowError(uiContext, "Не удалось освободить дескриптор файла");
+				e1.printStackTrace();
+			}
     		return;
 		}
         
@@ -894,6 +902,12 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
     			} catch (IOException e) {
     				e.printStackTrace();
     	        	Utility.ShowError(uiContext, "Не удалось получить доступ к файлу");
+    	        	try {
+						fIn.close();
+					} catch (IOException e1) {
+	    	        	Utility.ShowError(uiContext, "Не удалось освободить дескриптор файла");
+						e1.printStackTrace();
+					}
     	        	return;
     			}
     	        
