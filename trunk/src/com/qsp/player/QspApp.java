@@ -10,8 +10,8 @@ public class QspApp extends Application {
 	@Override
     public void onCreate() {
         // The following line triggers the initialization of ACRA
-        if (!Utility.signedWithDebugKey(this,this.getClass()))
-        	ACRA.init(this);
+//        if (!Utility.signedWithDebugKey(this,this.getClass()))
+//        	ACRA.init(this);
         super.onCreate();
     }
 }
