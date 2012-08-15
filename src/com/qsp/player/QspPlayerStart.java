@@ -9,6 +9,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.gesture.Gesture;
+import android.gesture.GestureOverlayView;
+import android.gesture.GestureStroke;
+import android.gesture.GestureOverlayView.OnGesturePerformedListener;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
@@ -32,11 +36,14 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.View.OnClickListener;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -46,6 +53,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
@@ -70,8 +78,12 @@ import org.acra.ErrorReporter;
 };
 */
 
-public class QspPlayerStart extends Activity implements UrlClickCatcher{
+public class QspPlayerStart extends Activity implements UrlClickCatcher, OnGesturePerformedListener{
 
+    public static final int SWIPE_MIN = 120;
+    public static final int WIN_INV = 0;
+    public static final int WIN_MAIN = 1;
+    public static final int WIN_EXT = 2;
     public static final int SLOTS_MAX = 5;
     public static final int ACTIVITY_SELECT_GAME = 0;
     
@@ -84,7 +96,10 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
 	private QSPListAdapter mActListAdapter = null;
 	private QSPListAdapter mItemListAdapter = null;
 		
+	boolean invUnread, varUnread;
 	int invBack, varBack;
+	int currentWin;
+	private boolean holdPanelAnimationsForFirstUpdate = false;
 	
 	final private Context uiContext = this;
 	final private ReentrantLock musicLock = new ReentrantLock();
@@ -158,6 +173,27 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
         }
 	}
 
+	public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
+    	//Контекст UI
+		if(gesture.getLength()>SWIPE_MIN) {
+			ArrayList<GestureStroke> strokes = gesture.getStrokes();
+			float[] points = strokes.get(0).points; 
+			if(points[0]>points[points.length-1]){
+                //swipe left
+            	if(currentWin>0)
+            		currentWin--;
+            	else
+            		currentWin = 2;
+			}else{
+            	if(currentWin<2) 
+            		currentWin++;
+            	else
+            		currentWin = 0;
+			}
+			setCurrentWin(currentWin); 				
+		}
+	}
+	
 	public QspPlayerStart() {
     	//Контекст UI
     	Utility.WriteLog("constructor\\");
@@ -227,7 +263,10 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
         	sdcard_mounted =  true;
         	if (!gameIsRunning)
 	        {
-	       		//При старте показываем полку игр
+	       		//текущий вид - основное описание
+	        	invBack = 0; //нет фона
+	        	varBack = 0; //нет фона
+	        	setCurrentWin(currentWin=WIN_MAIN);
 	        	ShowGameStock();
 	        }
         }
@@ -249,6 +288,12 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
     	
     	//полноэкранный режим если надо
         updateFullscreenStatus(settings.getBoolean("fullscreen", false)); 
+
+        //подключаем жесты
+        GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
+    	gestures.removeAllOnGesturePerformedListeners();
+        if(settings.getBoolean("gestures", false))
+        	gestures.addOnGesturePerformedListener(this);
 
 		hotKeys = settings.getBoolean("acts_hot_keys", false);
 		highlightActs = settings.getBoolean("highlight_acts", true);
@@ -326,7 +371,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
         	ShowExitDialog();
         	return true;
         }
-        if (keyCode >= KeyEvent.KEYCODE_1 && keyCode <= KeyEvent.KEYCODE_9) {
+        if (currentWin == WIN_MAIN && keyCode >= KeyEvent.KEYCODE_1 && keyCode <= KeyEvent.KEYCODE_9) {
         	int position = keyCode - KeyEvent.KEYCODE_1; //переводим код клавиши в индекс :)
         	ListView lv = (ListView)findViewById(R.id.acts);
         	if(position <lv.getCount()){
@@ -620,6 +665,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
 	    			return;
 	    		}
             	libraryThreadIsRunning = true;
+            	holdPanelAnimationsForFirstUpdate = true;
             	
             	boolean result = QSPOpenSavedGameFromData(inputBuffer, bufferSize, true);
 				CheckQspResult(result, "LoadSlot: QSPOpenSavedGameFromData");
@@ -784,6 +830,101 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
     //****** \ THREADS / ***********************************************************
     //******************************************************************************
     //******************************************************************************
+
+    //устанавливаем текст заголовка окна
+    private void setTitle(String second) {
+   		TextView winTitle = (TextView) findViewById(R.id.title_text);
+   		winTitle.setText(second);
+		updateTitle();
+    }	
+    
+    //анимация иконок при смене содержимого скрытых окон
+    private void updateTitle() {
+		ImageButton image = (ImageButton) findViewById(R.id.title_button_1);
+		image.clearAnimation();
+		if(invUnread){
+    		Animation update = AnimationUtils.loadAnimation(this, R.anim.update);
+    		image.startAnimation(update);
+    		image.setBackgroundResource(invBack=R.drawable.btn_bg_pressed);
+    		invUnread = false;
+    	}
+		image = (ImageButton) findViewById(R.id.title_button_2);
+		image.clearAnimation();
+    	if(varUnread){
+    		Animation update = AnimationUtils.loadAnimation(this, R.anim.update);
+    		image.startAnimation(update);
+    		image.setBackgroundResource(varBack=R.drawable.btn_bg_pressed);
+    		varUnread = false;
+    	}	
+    }	
+    
+    //обработчик "Описание" в заголовке
+    public void onHomeClick(View v) {
+    	setCurrentWin(WIN_MAIN);
+    }
+    
+    //обработчик текста в заголовке
+    public void onTitleClick(View v) {
+    	if (currentWin>0)
+    		currentWin--;
+    	else
+    		currentWin = 2;
+    	setCurrentWin(currentWin);
+    }
+
+    //обработчик "Инвентарь" в заголовке
+    public void onInvClick(View v) {
+    	setCurrentWin(WIN_INV);
+    }
+    
+    //обработчик "Доп" в заголовке
+    public void onExtClick(View v) {
+    	setCurrentWin(WIN_EXT);
+    }
+    
+    //смена активного экрана
+    private void setCurrentWin(int win) {
+    	switch(win){
+    	case WIN_INV: 
+       		toggleInv(true);
+       		toggleMain(false);
+       		toggleExt(false);
+       		invUnread = false;
+       		invBack = 0;
+       		setTitle("Инвентарь");
+       		break;
+    	case WIN_MAIN: 
+       		toggleInv(false);
+       		toggleMain(true);
+       		toggleExt(false);
+       		setTitle("Описание");
+       		break;
+    	case WIN_EXT: 
+       		toggleInv(false);
+       		toggleMain(false);
+       		toggleExt(true);
+       		varUnread = false;
+       		varBack = 0;
+       		setTitle("Доп. описание");
+       		break;
+    	}
+    	currentWin = win;
+    }
+    
+    private void toggleInv(boolean vis) {
+    	findViewById(R.id.inv).setVisibility(vis ? View.VISIBLE : View.GONE);
+		findViewById(R.id.title_button_1).setBackgroundResource(vis ? R.drawable.btn_bg_active : invBack);
+    }
+    
+    private void toggleMain(boolean vis) {
+    	findViewById(R.id.main_tab).setVisibility(vis ? View.VISIBLE : View.GONE);
+		findViewById(R.id.title_home_button).setBackgroundResource(vis ? R.drawable.btn_bg_active : 0);
+    }
+    
+    private void toggleExt(boolean vis) {
+    	findViewById(R.id.vars_tab).setVisibility(vis ? View.VISIBLE : View.GONE);
+		findViewById(R.id.title_button_2).setBackgroundResource(vis ? R.drawable.btn_bg_active : varBack);
+   }
     
     private Runnable timerUpdateTask = new Runnable() {
     	//Контекст UI
@@ -866,9 +1007,11 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
     	qspInited = true;
     	final String gameFileName = fileName;
     	curGameFile = gameFileName;
-    	ErrorReporter.getInstance().putCustomData("curGameFile", curGameFile);
+// ACRA    	
+//    	ErrorReporter.getInstance().putCustomData("curGameFile", curGameFile);
         curGameDir = gameFileName.substring(0, gameFileName.lastIndexOf(File.separator, gameFileName.length() - 1) + 1);
-        ErrorReporter.getInstance().putCustomData("curGameDir", curGameDir);
+// ACRA    	
+//      ErrorReporter.getInstance().putCustomData("curGameDir", curGameDir);
         
         TextView tv = (TextView)findViewById(R.id.main_desc);
         int padding = tv.getPaddingLeft() + tv.getPaddingRight();
@@ -884,6 +1027,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
         tv.setText("");
         tv = (TextView)findViewById(R.id.vars_desc);
         tv.setText("");
+        setCurrentWin(WIN_MAIN);
         
         libThreadHandler.post(new Runnable() {
     		public void run() {
@@ -968,6 +1112,7 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
     	    	            });
     	    	            
     	    	            gameIsRunning = true;
+    	    	            holdPanelAnimationsForFirstUpdate = true;
 	    				}
 	    			});
 	    		}
@@ -999,9 +1144,11 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
             gameIsRunning = false;
 		}
 		curGameDir = "";
-		ErrorReporter.getInstance().removeCustomData("curGameDir");
+// ACRA
+//		ErrorReporter.getInstance().removeCustomData("curGameDir");
 		curGameFile = "";
-		ErrorReporter.getInstance().removeCustomData("curGameFile");
+// ACRA
+//		ErrorReporter.getInstance().removeCustomData("curGameFile");
 
 		//Очищаем библиотеку
 		if (restart || libraryThreadIsRunning)
@@ -1250,6 +1397,10 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
 		    }
 			runOnUiThread(new Runnable() {
 				public void run() {
+					if ((currentWin != WIN_INV) && !holdPanelAnimationsForFirstUpdate){
+						invUnread = true;
+						updateTitle();
+					}
 					ListView lvInv = (ListView)findViewById(R.id.inv);
 			        mItemListAdapter = new QSPListAdapter(uiContext, R.layout.obj_item, objs);
 			        lvInv.setAdapter(mItemListAdapter);
@@ -1263,6 +1414,10 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
 			final String txtVarsDesc = QSPGetVarsDesc();			
 			runOnUiThread(new Runnable() {
 				public void run() {
+					if ((currentWin != WIN_EXT) && !holdPanelAnimationsForFirstUpdate) {
+						varUnread = true;
+						updateTitle();
+					}
 					TextView tvVarsDesc = (TextView) findViewById(R.id.vars_desc);
 					if (html)
 					{
@@ -1274,6 +1429,12 @@ public class QspPlayerStart extends Activity implements UrlClickCatcher{
 				}
 			});
     	}
+    	if (holdPanelAnimationsForFirstUpdate)
+			runOnUiThread(new Runnable() {
+				public void run() {
+			    	holdPanelAnimationsForFirstUpdate = false;
+				}
+			});
     }
     
     private void SetTimer(int msecs)
